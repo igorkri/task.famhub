@@ -38,9 +38,7 @@ class TaskForm
                     // Правая часть: метаданные
                     Section::make('Додатково')
                         ->schema([
-//                            TextInput::make('parent_id')
-//                                ->label('Батьківське завдання')
-//                                ->numeric(),
+                            \Filament\Forms\Components\View::make('components.task-timer'),
                             Toggle::make('is_completed')
                                 ->label('Завершено')
                                 ->default(false)
@@ -90,7 +88,7 @@ class TaskForm
                                 ->required()
                                 ->default(0),
                         ])
-                        ->grow(false)   // не росте
+                        ->grow(false)
                         ->maxWidth('300px'), // або задаєш жорстку межу
                 ])->from('md'),
             ])
