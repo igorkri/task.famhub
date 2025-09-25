@@ -36,7 +36,25 @@ class Navigation
             'PERMISSION' => 'viewAny projects',
             'SORT' => 3,
             'URL' => '/projects',
-        ]
+        ],
+        'TASK' => [
+            'ICON' => 'heroicon-o-check-badge',
+            'GROUP' => self::MANAGEMENT,
+            'LABEL' => 'Задачі',
+            'BREADCRUMBS' => ['Tasks' => '/tasks', 'All Tasks' => '/tasks'],
+            'PERMISSION' => 'viewAny tasks',
+            'SORT' => 4,
+            'URL' => '/tasks',
+        ],
+        'TIME' => [
+            'ICON' => 'heroicon-o-clock',
+            'GROUP' => self::MANAGEMENT,
+            'LABEL' => 'Час',
+            'BREADCRUMBS' => ['Times' => '/times', 'All Times' => '/times'],
+            'PERMISSION' => 'viewAny times',
+            'SORT' => 5,
+            'URL' => '/times',
+        ],
     ];
 
 }
