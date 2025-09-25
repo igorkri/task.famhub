@@ -3,7 +3,11 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\TaskTimerController;
 
-Route::middleware('auth:sanctum')->group(function () {
-    Route::post('/task/{task}/timer', [TaskTimerController::class, 'store']);
-    Route::get('/task/{task}/timer', [TaskTimerController::class, 'show']);
+
+Route::post('/task/{task}/timer', [TaskTimerController::class, 'store']);
+Route::get('/task/{task}/timer', [TaskTimerController::class, 'show']);
+
+Route::get('/test-api', function () {
+    \Illuminate\Support\Facades\Log::info('test-api route hit');
+    return ['ok' => true];
 });

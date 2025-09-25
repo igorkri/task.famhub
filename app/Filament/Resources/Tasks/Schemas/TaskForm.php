@@ -11,6 +11,7 @@ use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\ViewField;
 use Filament\Schemas\Components\Flex;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -38,18 +39,37 @@ class TaskForm
                     // Правая часть: метаданные
                     Section::make('Додатково')
                         ->schema([
-                            \Filament\Forms\Components\View::make('components.task-timer'),
+                            ViewField::make('timer')
+                                ->view('components.task-timer')
+                                ->viewData([
+                                    'task' => fn ($record) => $record,   // так правильно!
+                                    'user' => fn () => auth()->user(),
+                                    'time_id' => fn ($record) => optional($record)
+                                        ?->times()
+                                        ->where('user_id', auth()->id())
+                                        ->value('id'),
+                                ])
+                                ->columnSpanFull(),
+
                             Toggle::make('is_completed')
                                 ->label('Завершено')
                                 ->default(false)
                                 ->inline(false),
-
-                            Radio::make('status')
+//                            Radio::make('status')
+//                                ->label('Статус')
+//                                ->options(Task::$statuses)
+//                                ->required()
+//                                ->default('new'),
+                            Select::make('status')
                                 ->label('Статус')
                                 ->options(Task::$statuses)
                                 ->required()
-                                ->default('new'),
-                            Radio::make('priority')
+                                ->default(Task::STATUS_NEW),
+//                            Radio::make('priority')
+//                                ->label('Пріоритет')
+//                                ->options(Task::$priorities)
+//                                ->nullable(),
+                            Select::make('priority')
                                 ->label('Пріоритет')
                                 ->options(Task::$priorities)
                                 ->nullable(),
