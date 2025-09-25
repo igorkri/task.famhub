@@ -11,6 +11,11 @@ class EditProject extends EditRecord
 {
     protected static string $resource = ProjectResource::class;
 
+    public function getTitle(): string
+    {
+        return 'Редагування проєкту: ' . $this->record->name;
+    }
+
     protected function getHeaderActions(): array
     {
         return [

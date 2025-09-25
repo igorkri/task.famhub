@@ -9,6 +9,7 @@ use App\Filament\Resources\Projects\Pages\ViewProject;
 use App\Filament\Resources\Projects\Schemas\ProjectForm;
 use App\Filament\Resources\Projects\Schemas\ProjectInfolist;
 use App\Filament\Resources\Projects\Tables\ProjectsTable;
+use App\Models\Navigation;
 use App\Models\Project;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -20,7 +21,28 @@ class ProjectResource extends Resource
 {
     protected static ?string $model = Project::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Navigation::NAVIGATION['PROJECT']['ICON']; //Heroicon::OutlinedRectangleStack;
+    protected static string|null|\UnitEnum $navigationGroup = Navigation::NAVIGATION['PROJECT']['GROUP'];
+    protected static ?int $navigationSort = Navigation::NAVIGATION['PROJECT']['SORT'];
+
+    // назва в меню
+    protected static ?string $navigationLabel = Navigation::NAVIGATION['PROJECT']['LABEL'];
+
+    // 👇 ось так правильно
+    public static function getModelLabel(): string
+    {
+        return Navigation::NAVIGATION['PROJECT']['LABEL'];
+    }
+
+    public static function getPluralLabel(): string
+    {
+        return Navigation::NAVIGATION['PROJECT']['LABEL'];
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return Navigation::NAVIGATION['PROJECT']['LABEL'];
+    }
 
     protected static ?string $recordTitleAttribute = 'name';
 

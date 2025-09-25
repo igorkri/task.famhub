@@ -6,8 +6,10 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Forms\Components\ToggleButtons;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Table;
 
 class ProjectsTable
@@ -16,26 +18,20 @@ class ProjectsTable
     {
         return $table
             ->columns([
-                TextColumn::make('gid')
-                    ->searchable(),
-                TextColumn::make('icon')
-                    ->searchable(),
+
                 TextColumn::make('name')
-                    ->searchable(),
-                TextColumn::make('description')
+                    ->label('Назва')
                     ->searchable(),
                 TextColumn::make('workspace_id')
-                    ->numeric()
+                    ->label('Робоче пространство')
+                    ->getStateUsing(fn ($record) => $record->workspace->name)
                     ->sortable(),
-                IconColumn::make('is_active')
-                    ->boolean(),
-                IconColumn::make('is_favorite')
-                    ->boolean(),
-                IconColumn::make('is_archived')
-                    ->boolean(),
-                TextColumn::make('sort')
-                    ->numeric()
-                    ->sortable(),
+                ToggleColumn::make('is_active')
+                    ->label('Активний проект'),
+                ToggleColumn::make('is_favorite')
+                    ->label('Вибране'),
+                ToggleColumn::make('is_archived')
+                    ->label('Архівований'),
                 TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -45,11 +41,13 @@ class ProjectsTable
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->defaultSort('sort')
+            ->reorderable('sort')
             ->filters([
                 //
             ])
             ->recordActions([
-                ViewAction::make(),
+//                ViewAction::make(),
                 EditAction::make(),
             ])
             ->toolbarActions([

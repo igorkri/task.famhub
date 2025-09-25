@@ -5,19 +5,38 @@ namespace App\Models;
 class Navigation
 {
 
+    const MANAGEMENT = 'КЕРУВАННЯ';
     const GROUPS = [
         'MANAGEMENT' => ['LABEL' => 'Керування', 'SORT' => 1, 'ICON' => 'heroicon-o-cog-6-tooth'],
     ];
-    public static $navigation = [
+    const NAVIGATION = [
         'WORKSPACE' => [
-            'icon' => 'heroicon-o-rectangle-stack',
-            'group' => 'Робочі простори',
-            'label' => 'Робочі простори',
-            'breadcrumbs' => ['Workspaces' => '/workspaces', 'All Workspaces' => '/workspaces'],
-            'permission' => 'viewAny workspaces',
-            'sort' => 1,
-            'url' => '/workspaces',
+            'ICON' => 'heroicon-o-cog-6-tooth',
+            'GROUP' => self::MANAGEMENT,
+            'LABEL' => 'Робочі простори',
+            'BREADCRUMBS' => ['Workspaces' => '/workspaces', 'All Workspaces' => '/workspaces'],
+            'PERMISSION' => 'viewAny workspaces',
+            'SORT' => 1,
+            'URL' => '/workspaces',
         ],
+        'PROJECT_USER' => [
+            'ICON' => 'heroicon-o-users',
+            'GROUP' => self::MANAGEMENT,
+            'LABEL' => 'Користувачі проєктів',
+            'BREADCRUMBS' => ['Project Users' => '/project-users', 'All Project Users' => '/project-users'],
+            'PERMISSION' => 'viewAny project users',
+            'SORT' => 2,
+            'URL' => '/project-users',
+        ],
+        'PROJECT' => [
+            'ICON' => 'heroicon-o-briefcase',
+            'GROUP' => self::MANAGEMENT,
+            'LABEL' => 'Проєкти',
+            'BREADCRUMBS' => ['Projects' => '/projects', 'All Projects' => '/projects'],
+            'PERMISSION' => 'viewAny projects',
+            'SORT' => 3,
+            'URL' => '/projects',
+        ]
     ];
 
 }

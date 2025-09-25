@@ -22,27 +22,27 @@ class WorkspaceResource extends Resource
 {
     protected static ?string $model = Workspace::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Navigation::GROUPS['MANAGEMENT']['ICON']; //Heroicon::OutlinedRectangleStack;
-    protected static string|null|\UnitEnum $navigationGroup = Navigation::GROUPS['MANAGEMENT']['LABEL'];
-    protected static ?int $navigationSort = Navigation::GROUPS['MANAGEMENT']['SORT'];
+    protected static string|BackedEnum|null $navigationIcon = Navigation::NAVIGATION['WORKSPACE']['ICON']; //Heroicon::OutlinedRectangleStack;
+    protected static string|null|\UnitEnum $navigationGroup = Navigation::NAVIGATION['WORKSPACE']['GROUP'];
+    protected static ?int $navigationSort = Navigation::NAVIGATION['WORKSPACE']['SORT'];
 
     // назва в меню
-    protected static ?string $navigationLabel = Navigation::GROUPS['MANAGEMENT']['LABEL'];
+    protected static ?string $navigationLabel = Navigation::NAVIGATION['WORKSPACE']['LABEL'];
 
     // 👇 ось так правильно
     public static function getModelLabel(): string
     {
-        return Navigation::$navigation['WORKSPACE']['label'];
+        return Navigation::NAVIGATION['WORKSPACE']['LABEL'];
     }
 
     public static function getPluralLabel(): string
     {
-        return Navigation::$navigation['WORKSPACE']['label'];
+        return Navigation::NAVIGATION['WORKSPACE']['LABEL'];
     }
 
     public static function getNavigationLabel(): string
     {
-        return Navigation::$navigation['WORKSPACE']['label'];
+        return Navigation::NAVIGATION['WORKSPACE']['LABEL'];
     }
     // опис
 

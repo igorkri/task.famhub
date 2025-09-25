@@ -7,6 +7,7 @@ use App\Filament\Resources\ProjectUsers\Pages\EditProjectUser;
 use App\Filament\Resources\ProjectUsers\Pages\ListProjectUsers;
 use App\Filament\Resources\ProjectUsers\Schemas\ProjectUserForm;
 use App\Filament\Resources\ProjectUsers\Tables\ProjectUsersTable;
+use App\Models\Navigation;
 use App\Models\ProjectUser;
 use BackedEnum;
 use Filament\Resources\Resource;
@@ -18,7 +19,29 @@ class ProjectUserResource extends Resource
 {
     protected static ?string $model = ProjectUser::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Navigation::NAVIGATION['PROJECT_USER']['ICON'];
+    protected static string|null|\UnitEnum $navigationGroup = Navigation::NAVIGATION['PROJECT_USER']['GROUP'];
+    protected static ?int $navigationSort = Navigation::NAVIGATION['PROJECT_USER']['SORT'];
+
+    // назва в меню
+    protected static ?string $navigationLabel = Navigation::NAVIGATION['PROJECT_USER']['LABEL'];
+
+    // 👇 ось так правильно
+    public static function getModelLabel(): string
+    {
+        return Navigation::NAVIGATION['PROJECT_USER']['LABEL'];
+    }
+
+    public static function getPluralLabel(): string
+    {
+        return Navigation::NAVIGATION['PROJECT_USER']['LABEL'];
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return Navigation::NAVIGATION['PROJECT_USER']['LABEL'];
+    }
+
 
     public static function form(Schema $schema): Schema
     {

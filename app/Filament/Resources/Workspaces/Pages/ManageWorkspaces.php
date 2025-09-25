@@ -13,7 +13,7 @@ class ManageWorkspaces extends ManageRecords
 
     public function getTitle(): string
     {
-        return Navigation::$navigation['WORKSPACE']['label'];
+        return Navigation::NAVIGATION['WORKSPACE']['LABEL'];
     }
 
     protected function getHeaderActions(): array
