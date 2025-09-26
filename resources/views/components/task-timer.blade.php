@@ -7,9 +7,9 @@
     <div id="timer-display" style="font-size: 2em; font-family: monospace;">00:00:00</div>
 
     <div style="display: flex; gap: 8px;">
-        <button type="button" id="timer-start" class="filament-button timer-btn timer-btn-start" style="background: #4caf50; color: #fff;">Старт</button>
-        <button type="button" id="timer-pause" class="filament-button timer-btn timer-btn-pause" style="background: #ff9800; color: #fff; display: none;">Пауза</button>
-        <button type="button" id="timer-stop" class="filament-button timer-btn timer-btn-stop" style="background: #f44336; color: #fff; display: none;">Стоп</button>
+        <button type="button" id="timer-start" class="filament-button fi-btn timer-btn timer-btn-start" style="background: #4caf50; color: #fff;">Старт</button>
+        <button type="button" id="timer-pause" class="filament-button fi-btn timer-btn timer-btn-pause" style="background: #ff9800; color: #fff; display: none;">Пауза</button>
+        <button type="button" id="timer-stop" class="filament-button fi-btn timer-btn timer-btn-stop" style="background: #f44336; color: #fff; display: none;">Стоп</button>
     </div>
 
     <script>

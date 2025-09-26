@@ -162,7 +162,7 @@ class TaskForm
 
                 Repeater::make('times')
                     ->relationship('times')
-                    ->label('Тайминги')
+                    ->label('Записи часу')
                     ->schema([
 
                         TimePicker::make('duration')
@@ -177,16 +177,19 @@ class TaskForm
                         // user_id
                         Select::make('user_id')
                             ->label('Користувач')
+                            ->default(auth()->id())
                             ->relationship('user', 'name')
                             ->required(),
                         // task_id aвтоматично ставляється
 
                         Select::make('coefficient')
                             ->label('Коефіцієнт')
+                            ->default(Time::COEFFICIENT_STANDARD)
                             ->options(collect(Time::$coefficients)->mapWithKeys(fn($v, $k) => [(string)$k => $v])->toArray())
                             ->required(),
                         Select::make('status')
                             ->label('Статус')
+                            ->default(Time::STATUS_PLANNED)
                             ->options(Time::$statuses)
                             ->required(),
                         TextInput::make('title')
@@ -196,14 +199,18 @@ class TaskForm
                             ->label('Опис')->columnSpanFull(),
                     ])
                     ->defaultItems(0)
-                    ->addActionLabel('Добавить тайминг')
+                    ->addActionLabel('Додати')
                     // сворачиваемый
                     ->collapsible()
                     // по умолчанию свернутый
                     ->collapsed()
                     // делаем название из поля title
-                    ->itemLabel(fn ($state) => $state['title'] .' Час: '. $state['duration'] ?? 'Новий тайминг')
-                    ->columns(4),
+                   ->itemLabel(fn ($state) =>
+                        ($state['title'] ?? '') .
+                        ' Час: ' . ($state['duration'] ?? '') .
+                        ' Статус: ' . (Time::$statuses[$state['status']] ?? '~ Новий ~')
+                    )
+                    ->columns(4)
             ])
             ->columnSpanFull();
     }

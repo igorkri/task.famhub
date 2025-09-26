@@ -24,6 +24,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Time extends Model
 {
+     const COEFFICIENT_STANDARD = 1.2; // стандартний коефіцієнт
+
     // заплановано, в процесі, завершено, скасовано
     const STATUS_NEW = 'new'; // новий
     const STATUS_IN_PROGRESS = 'in_progress'; // в процесі

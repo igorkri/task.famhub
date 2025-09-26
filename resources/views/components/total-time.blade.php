@@ -5,5 +5,5 @@
     $s = str_pad($totalSeconds % 60, 2, '0', STR_PAD_LEFT);
 @endphp
 <div>
-    <b>Общее время:</b> {{ $h }}:{{ $m }}:{{ $s }}
+    <b>Загальний час:</b> {{ $h }}:{{ $m }}:{{ $s }}
 </div>

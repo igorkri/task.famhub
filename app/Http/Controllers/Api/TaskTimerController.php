@@ -49,19 +49,15 @@ class TaskTimerController extends Controller
             $time = $timeQ->first();
         }
         if (!$time) {
-            // ищем существующую запись для этого пользователя и задачи
-            $time = Time::where('user_id', $userId)->where('task_id', $taskId)->first();
-        }
-        if (!$time) {
             // создаем новую запись времени
             $time = new Time();
             $time->user_id = $userId;
             $time->task_id = $taskId;
-            $time->title = 'Time entry for task ' . $taskId . ' by user ' . $userId;
-            $time->description = 'Auto-generated time entry';
-            $time->coefficient = 1.2;
+            $time->title = 'Створено автоматично'; // можно потом изменить
+            $time->description = 'Створив: ' . User::where('id', $userId)->value('name'); // можно потом изменить
+            $time->coefficient = Time::COEFFICIENT_STANDARD;
             $time->duration = $seconds; // сразу устанавливаем duration
-            $time->status = Time::  STATUS_IN_PROGRESS;
+            $time->status = Time::STATUS_IN_PROGRESS;
             $time->report_status = 'not_submitted';
             $time->is_archived = false;
             $time->save();
@@ -98,7 +94,7 @@ class TaskTimerController extends Controller
         ]);
     }
 
-    public function complete(Request $request)
+    public function complete(Request $request): \Illuminate\Http\JsonResponse
     {
         $timeId = $request->input('time_id');
         $userId = $request->input('user_id');
@@ -116,6 +112,6 @@ class TaskTimerController extends Controller
         $time->duration = $seconds;
         $time->status = Time::STATUS_COMPLETED;
         $time->save();
-        return response()->json(['success' => true, 'duration' => $time->duration, 'time_id' => $time->id]);
+        return response()->json(['success' => true, 'duration' => 0, 'time_id' => $time->id]);
     }
 }
