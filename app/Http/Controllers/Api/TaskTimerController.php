@@ -97,4 +97,25 @@ class TaskTimerController extends Controller
             'time_id' => $time?->id,
         ]);
     }
+
+    public function complete(Request $request)
+    {
+        $timeId = $request->input('time_id');
+        $userId = $request->input('user_id');
+        $taskId = $request->input('task_id');
+        $seconds = (int)$request->input('seconds', 0);
+
+        $time = Time::where('id', $timeId)
+            ->where('user_id', $userId)
+            ->where('task_id', $taskId)
+            ->where('status', Time::STATUS_IN_PROGRESS)
+            ->first();
+        if (!$time) {
+            return response()->json(['error' => 'Time entry not found or already completed'], 404);
+        }
+        $time->duration = $seconds;
+        $time->status = Time::STATUS_COMPLETED;
+        $time->save();
+        return response()->json(['success' => true, 'duration' => $time->duration, 'time_id' => $time->id]);
+    }
 }

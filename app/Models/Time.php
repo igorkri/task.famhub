@@ -44,6 +44,18 @@ class Time extends Model
         'is_archived',
     ];
 
+    protected $casts = [
+        'is_archived' => 'boolean',
+        'duration' => 'integer',
+        'coefficient' => 'float',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+        'description' => 'string',
+        'title' => 'string',
+        'status' => 'string',
+        'report_status' => 'string',
+    ];
+
     public static array $statuses = [
         self::STATUS_NEW                    => 'Новий',
         self::STATUS_IN_PROGRESS            => 'В процесі',
@@ -51,6 +63,24 @@ class Time extends Model
         self::STATUS_COMPLETED              => 'Виконано',
         self::STATUS_CANCELED               => 'Відхилено',
         self::STATUS_PLANNED                => 'Заплановано',
+    ];
+
+    // Коефіцієнти для різних типів робіт
+    public static array $coefficients = [
+        '2.0' => '2.0',
+        '1.8' => '1.8',
+        '1.7' => '1.7',
+        '1.6' => '1.6',
+        '1.5' => '1.5',
+        '1.3' => '1.3',
+        '1.2' => '1.2 (стандартний)',
+        '1.1' => '1.1',
+        '1.0' => '1.0',
+        '0.8' => '0.8',
+        '0.5' => '0.5',
+        '0.3' => '0.3',
+        '0.1' => '0.1',
+        '0.0' => '0.0',
     ];
 
     public static array $reportStatuses = [
@@ -71,6 +101,42 @@ class Time extends Model
     {
         return $this->belongsTo(User::class);
     }
+
+
+    /**
+     * Set the duration attribute.
+     * Accepts input in seconds (integer) or "HH:MM:SS" format.
+     *
+     * @param $value
+     * @return void
+     */
+    public function setDurationAttribute($value)
+    {
+        if (is_numeric($value)) {
+            $this->attributes['duration'] = $value;
+            return;
+        }
+        if (preg_match('/^(\d+):(\d{2}):(\d{2})$/', $value, $matches)) {
+            $this->attributes['duration'] = $matches[1] * 3600 + $matches[2] * 60 + $matches[3];
+        } else {
+            $this->attributes['duration'] = (int) $value;
+        }
+    }
+
+    /**
+     * Get the duration attribute in "HH:MM:SS" format for forms.
+     *
+     * @return string
+     */
+    public function getDurationForFormAttribute()
+    {
+        $seconds = $this->duration ?? 0;
+        $h = str_pad(floor($seconds / 3600), 2, '0', STR_PAD_LEFT);
+        $m = str_pad(floor(($seconds % 3600) / 60), 2, '0', STR_PAD_LEFT);
+        $s = str_pad($seconds % 60, 2, '0', STR_PAD_LEFT);
+        return "{$h}:{$m}:{$s}";
+    }
+
 
     // Additional methods or accessors can be added here
     public function getDurationInHoursAttribute()

@@ -7,9 +7,9 @@
     <div id="timer-display" style="font-size: 2em; font-family: monospace;">00:00:00</div>
 
     <div style="display: flex; gap: 8px;">
-        <button type="button" id="timer-start" class="filament-button">Старт</button>
-        <button type="button" id="timer-pause" class="filament-button">Пауза</button>
-        <button type="button" id="timer-stop" class="filament-button">Стоп</button>
+        <button type="button" id="timer-start" class="filament-button timer-btn timer-btn-start" style="background: #4caf50; color: #fff;">Старт</button>
+        <button type="button" id="timer-pause" class="filament-button timer-btn timer-btn-pause" style="background: #ff9800; color: #fff; display: none;">Пауза</button>
+        <button type="button" id="timer-stop" class="filament-button timer-btn timer-btn-stop" style="background: #f44336; color: #fff; display: none;">Стоп</button>
     </div>
 
     <script>
@@ -18,6 +18,7 @@
             let seconds = 0;
             let isPaused = false;
             let lastSavedMinute = 0;
+            let isCompleted = false;
 
             const container = document.getElementById('task-timer');
             const display   = document.getElementById('timer-display');
@@ -34,6 +35,23 @@
                 const m = String(Math.floor((seconds % 3600) / 60)).padStart(2, '0');
                 const s = String(seconds % 60).padStart(2, '0');
                 display.textContent = `${h}:${m}:${s}`;
+            }
+
+            function updateButtons() {
+                if (isCompleted) {
+                    startBtn.style.display = '';
+                    pauseBtn.style.display = 'none';
+                    stopBtn.style.display = 'none';
+                    startBtn.disabled = true;
+                } else if (timerInterval && !isPaused) {
+                    startBtn.style.display = 'none';
+                    pauseBtn.style.display = '';
+                    stopBtn.style.display = '';
+                } else {
+                    startBtn.style.display = '';
+                    pauseBtn.style.display = 'none';
+                    stopBtn.style.display = timerInterval ? '' : 'none';
+                }
             }
 
             function saveTime() {
@@ -60,6 +78,7 @@
             }
 
             function startTimer() {
+                if (isCompleted) return;
                 if (timerInterval === null) {
                     timerInterval = setInterval(() => {
                         if (!isPaused) {
@@ -74,11 +93,13 @@
                 }
                 isPaused = false;
                 saveTime();
+                updateButtons();
             }
 
             function pauseTimer() {
                 isPaused = true;
                 saveTime();
+                updateButtons();
             }
 
             function stopTimer() {
@@ -86,7 +107,25 @@
                     clearInterval(timerInterval);
                     timerInterval = null;
                 }
-                saveTime();
+                // Отправляем запрос на завершение
+                fetch(`/api/task/${taskId}/timer/complete`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content'),
+                    },
+                    body: JSON.stringify({
+                        time_id: timeId,
+                        user_id: userId,
+                        task_id: taskId,
+                        seconds: seconds,
+                    }),
+                })
+                .then(r => r.json())
+                .then(data => {
+                    isCompleted = true;
+                    updateButtons();
+                });
             }
 
             // При загрузке подтягиваем текущее накопленное время
@@ -111,6 +150,7 @@
             stopBtn.addEventListener('click', stopTimer);
 
             updateDisplay();
+            updateButtons();
         })();
     </script>
 </div>
