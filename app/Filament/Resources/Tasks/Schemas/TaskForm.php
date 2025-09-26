@@ -13,6 +13,7 @@ use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\ViewField;
 use Filament\Schemas\Components\Flex;
+use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 
@@ -24,7 +25,7 @@ class TaskForm
             ->components([
                 Flex::make([
                     // Левая часть: основное
-                    Section::make('Основне')
+                    Section::make('Опис та назва')
                         ->schema([
                             TextInput::make('title')
                                 ->label('Назва')
@@ -42,7 +43,7 @@ class TaskForm
                             ViewField::make('timer')
                                 ->view('components.task-timer')
                                 ->viewData([
-                                    'task' => fn ($record) => $record,   // так правильно!
+                                    'task' => fn ($record) => $record,
                                     'user' => fn () => auth()->user(),
                                     'time_id' => fn ($record) => optional($record)
                                         ?->times()
@@ -55,61 +56,65 @@ class TaskForm
                                 ->label('Завершено')
                                 ->default(false)
                                 ->inline(false),
-//                            Radio::make('status')
-//                                ->label('Статус')
-//                                ->options(Task::$statuses)
-//                                ->required()
-//                                ->default('new'),
-                            Select::make('status')
-                                ->label('Статус')
-                                ->options(Task::$statuses)
-                                ->required()
-                                ->default(Task::STATUS_NEW),
-//                            Radio::make('priority')
-//                                ->label('Пріоритет')
-//                                ->options(Task::$priorities)
-//                                ->nullable(),
-                            Select::make('priority')
-                                ->label('Пріоритет')
-                                ->options(Task::$priorities)
-                                ->nullable(),
 
-                            Select::make('project_id')
-                                ->label('Проєкт')
-                                ->relationship('project', 'name')
-                                ->required(),
+                            Section::make('Робочі параметри') // группа, которую можно свернуть
+                            ->schema([
+                                Select::make('status')
+                                    ->label('Статус')
+                                    ->options(Task::$statuses)
+                                    ->required()
+                                    ->default(Task::STATUS_NEW),
 
-                            Select::make('user_id')
-                                ->label('Виконавець')
-                                ->relationship('user', 'name'),
+                                Select::make('priority')
+                                    ->label('Пріоритет')
+                                    ->options(Task::$priorities)
+                                    ->nullable(),
 
-                            TextInput::make('budget')
-                                ->label('Бюджет (години)')
-                                ->numeric(),
+                                Select::make('project_id')
+                                    ->label('Проєкт')
+                                    ->relationship('project', 'name')
+                                    ->required(),
 
-                            TextInput::make('spent')
-                                ->label('Витрачено (годин)')
-                                ->numeric()
-                                ->required()
-                                ->default(0),
+                                Select::make('user_id')
+                                    ->label('Виконавець')
+                                    ->relationship('user', 'name'),
+                            ])
+                                ->collapsible() // делаем секцию сворачиваемой
+                                ->collapsed(false),  // по умолчанию скрыта
 
-                            DateTimePicker::make('start_date')
-                                ->label('Початок'),
 
-                            DateTimePicker::make('end_date')
-                                ->label('Завершення'),
+                            Section::make('Час і бюджет')
+                                ->schema([
+                                    TextInput::make('budget')
+                                        ->label('Бюджет (години)')
+                                        ->numeric(),
 
-                            DatePicker::make('deadline')
-                                ->label('Дедлайн'),
+                                    TextInput::make('spent')
+                                        ->label('Витрачено (годин)')
+                                        ->numeric()
+                                        ->required()
+                                        ->default(0),
 
-                            TextInput::make('progress')
-                                ->label('Прогрес (%)')
-                                ->numeric()
-                                ->required()
-                                ->default(0),
+                                    DateTimePicker::make('start_date')
+                                        ->label('Початок'),
+
+                                    DateTimePicker::make('end_date')
+                                        ->label('Завершення'),
+
+                                    DatePicker::make('deadline')
+                                        ->label('Дедлайн'),
+
+                                    TextInput::make('progress')
+                                        ->label('Прогрес (%)')
+                                        ->numeric()
+                                        ->required()
+                                        ->default(0),
+                                ])
+                                ->collapsible()
+                                ->collapsed(), // можно свернуть по умолчанию
                         ])
                         ->grow(false)
-                        ->maxWidth('300px'), // або задаєш жорстку межу
+                        ->maxWidth('300px')// або задаєш жорстку межу
                 ])->from('md'),
             ])
             ->columns(1);

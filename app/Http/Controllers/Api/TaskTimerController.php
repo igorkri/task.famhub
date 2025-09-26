@@ -67,7 +67,7 @@ class TaskTimerController extends Controller
             $time->save();
         } else {
             // обновляем duration
-            $time->duration = $time->duration + $seconds;
+            $time->duration = $seconds;
             $time->status = Time::STATUS_IN_PROGRESS;
             $time->save();
         }
@@ -77,17 +77,24 @@ class TaskTimerController extends Controller
 
     public function show($task)
     {
-        \Log::info('TaskTimerController@show reached', ['task_param' => $task]);
+        Log::info('TaskTimerController@show reached', ['task_param' => $task]);
         $taskModel = \App\Models\Task::find($task);
         if (!$taskModel) {
-            \Log::warning('Task not found', ['task_param' => $task]);
+            Log::warning('Task not found', ['task_param' => $task]);
             return response()->json(['error' => 'Task not found'], 404);
         }
-        $user = Auth::user();
-        if (!$user) {
-            return response()->json(['error' => 'Unauthorized'], 401);
-        }
-        $time = Time::where('task_id', $taskModel->id)->where('user_id', $user->id)->first();
-        return response()->json(['duration' => $time?->duration ?? 0]);
+//        $user = Auth::user();
+//        if (!$user) {
+//            Log::info('User not authenticated');
+//            return response()->json(['error' => 'Unauthorized'], 401);
+//        }
+        $time = Time::where('task_id', $taskModel->id)
+//            ->where('user_id', $user->id)
+            ->where('status', Time::STATUS_IN_PROGRESS)
+            ->first();
+        return response()->json([
+            'duration' => $time?->duration ?? 0,
+            'time_id' => $time?->id,
+        ]);
     }
 }

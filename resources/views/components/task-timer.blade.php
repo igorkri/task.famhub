@@ -60,23 +60,25 @@
             }
 
             function startTimer() {
-                saveTime();
-                if (timerInterval) return;
-                isPaused = false;
-                timerInterval = setInterval(() => {
-                    if (!isPaused) {
-                        seconds++;
-                        updateDisplay();
-                        if (seconds % 60 === 0 && seconds !== lastSavedMinute) {
-                            saveTime();
-                            lastSavedMinute = seconds;
+                if (timerInterval === null) {
+                    timerInterval = setInterval(() => {
+                        if (!isPaused) {
+                            seconds++;
+                            updateDisplay();
+                            if (seconds % 60 === 0 && seconds !== lastSavedMinute) {
+                                saveTime();
+                                lastSavedMinute = seconds;
+                            }
                         }
-                    }
-                }, 1000);
+                    }, 1000);
+                }
+                isPaused = false;
+                saveTime();
             }
 
             function pauseTimer() {
                 isPaused = true;
+                saveTime();
             }
 
             function stopTimer() {
@@ -97,6 +99,10 @@
                     if (typeof data.duration === 'number') {
                         seconds = data.duration;
                         updateDisplay();
+                    }
+                    if (data.time_id) {
+                        timeId = data.time_id;
+                        container.dataset.timeId = timeId;
                     }
                 });
 
