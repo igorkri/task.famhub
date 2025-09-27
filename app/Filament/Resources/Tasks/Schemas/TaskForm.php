@@ -205,6 +205,7 @@ class TaskForm
                     )
                     ->columns(4)
             ])
+            ->id('timer-section')
             ->columnSpanFull();
     }
 }

@@ -30,6 +30,27 @@
             const userId = container.dataset.userId;
             let timeId = container.dataset.timeId;
 
+            // Обновление страницы без перезагрузки
+            function updatePage(){
+                fetch(window.location.href, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                    .then(response => response.text())
+                    .then(html => {
+                        const parser = new DOMParser();
+                        const doc = parser.parseFromString(html, 'text/html');
+                        const newContainer = doc.getElementById('task-timer');
+                        const timerList = document.getElementById('timer-list');
+                        if (timerList && doc.getElementById('timer-list')) {
+                            timerList.innerHTML = doc.getElementById('timer-list').innerHTML;
+                        }
+
+                        if (newContainer) {
+                            container.innerHTML = newContainer.innerHTML;
+                            // Повторно инициализируем скрипт
+                            eval(container.querySelector('script').innerText);
+                        }
+                    });
+            }
+
             function updateDisplay() {
                 const h = String(Math.floor(seconds / 3600)).padStart(2, '0');
                 const m = String(Math.floor((seconds % 3600) / 60)).padStart(2, '0');
@@ -125,6 +146,7 @@
                 .then(data => {
                     isCompleted = true;
                     updateButtons();
+                    updatePage();
                 });
             }
 
