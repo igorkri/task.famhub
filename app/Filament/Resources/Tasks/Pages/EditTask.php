@@ -9,6 +9,7 @@ use Filament\Resources\Pages\EditRecord;
 class EditTask extends EditRecord
 {
     protected static string $resource = TaskResource::class;
+    protected static bool $hasStickyFooter = false;
 
     protected function getHeaderActions(): array
     {
