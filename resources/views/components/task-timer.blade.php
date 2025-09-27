@@ -30,6 +30,15 @@
             const userId = container.dataset.userId;
             let timeId = container.dataset.timeId;
 
+            function notify(message, type = 'success') {
+                new FilamentNotification()
+                    .title(message)
+                    .body('')
+                    .icon('heroicon-o-clock')
+                    .iconColor(type)
+                    .send()
+            }
+
             // Обновление страницы без перезагрузки
             function updatePage(){
                 fetch(window.location.href, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
@@ -144,9 +153,11 @@
                 })
                 .then(r => r.json())
                 .then(data => {
+                    console.log(data);
                     isCompleted = true;
                     updateButtons();
                     updatePage();
+                    notify(data.message, data.type);
                 });
             }
 

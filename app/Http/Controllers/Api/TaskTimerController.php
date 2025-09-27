@@ -107,11 +107,11 @@ class TaskTimerController extends Controller
             ->where('status', Time::STATUS_IN_PROGRESS)
             ->first();
         if (!$time) {
-            return response()->json(['error' => 'Time entry not found or already completed'], 404);
+            return response()->json(['error' => 'Time entry not found or already completed', 'message' => 'Не збережено! Не знайдено запис. Обнови сторінку', 'type' => 'error'], 404);
         }
         $time->duration = $seconds;
         $time->status = Time::STATUS_COMPLETED;
         $time->save();
-        return response()->json(['success' => true, 'duration' => 0, 'time_id' => $time->id]);
+        return response()->json(['success' => true, 'duration' => 0, 'time_id' => $time->id, 'message' => 'Збережено!', 'type' => 'success']);
     }
 }
