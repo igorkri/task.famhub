@@ -37,7 +37,8 @@ class TaskForm
                         ->badge(fn ($record) => optional($record)?->times()->count() ?? 0)
                         ->schema([
                             self::timerSection(),
-                        ]),
+                        ])
+                        ->visible(fn ($record) => $record !== null), // показываем только для существующих записей
                 ])
                 ->persistTabInQueryString()
                 ->columnSpanFull(),
@@ -74,6 +75,7 @@ class TaskForm
                                 ->where('user_id', auth()->id())
                                 ->value('id'),
                         ])
+                        ->visible(fn ($record) => $record !== null)
                         ->columnSpanFull(),
 
                     Toggle::make('is_completed')
