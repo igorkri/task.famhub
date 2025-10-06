@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Workspace extends Model
 {
-    protected $fillable = ['name', 'description'];
+    protected $fillable = ['gid', 'name', 'description'];
 
     public function projects()
     {

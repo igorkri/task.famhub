@@ -1,7 +1,6 @@
 <?php
 
 return [
-
     /*
     |--------------------------------------------------------------------------
     | Third Party Services
@@ -35,4 +34,8 @@ return [
         ],
     ],
 
+    'asana' => [
+        'token' => env('ASANA_TOKEN'),
+        'workspace_id' => env('ASANA_WORKSPACE_ID'),
+    ],
 ];
