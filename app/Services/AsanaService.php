@@ -47,4 +47,29 @@ class AsanaService
         $projects = iterator_to_array($iterator);
         return $projects;
     }
+
+    /**
+     * Получить задачи из проекта Asana.
+     * @param string $projectId
+     * @return array
+     */
+    public function getProjectTasks(string $projectId): array
+    {
+        // Используем базовый вызов без дополнительных параметров
+        $iterator = $this->client->tasks->findByProject($projectId);
+        /** @var array<array{gid: string, name: string}> $tasks */
+        $tasks = iterator_to_array($iterator);
+        return $tasks;
+    }
+
+    /**
+     * Получить детальную информацию о задаче.
+     * @param string $taskId
+     * @return array
+     */
+    public function getTaskDetails(string $taskId): array
+    {
+        $task = $this->client->tasks->findById($taskId);
+        return (array) $task;
+    }
 }
