@@ -77,4 +77,28 @@ class ProjectResource extends Resource
             'edit' => EditProject::route('/{record}/edit'),
         ];
     }
+
+    /**
+     * Матод для отримання запиту Eloquent з урахуванням політик доступу.
+     *
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        /** @var \Illuminate\Foundation\Auth\User $user */
+        $user = auth()->user();
+        $query = parent::getEloquentQuery();
+        // Ограничение доступа через политику
+        if ($user) {
+            // Если есть scope или связь, используйте її. Пример:
+            // return $query->where('user_id', $user->id);
+            // Или через policy:
+            // return $query->whereIn('id', $user->accessibleProjectIds());
+            // Здесь просто пример, адаптируйте під вашу бізнес-логіку:
+            if (method_exists($user, 'accessibleProjectIds')) {
+                return $query->whereIn('id', $user->accessibleProjectIds());
+            }
+        }
+        return $query;
+    }
 }
