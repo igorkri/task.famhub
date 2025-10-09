@@ -1,7 +1,7 @@
 {
     "mcpServers": {
         "laravel-boost": {
-            "command": "/usr/bin/php8.3",
+            "command": "/usr/bin/php8.4",
             "args": [
                 "/home/igor/developer/task.famhub.local/artisan",
                 "boost:mcp"
