@@ -10,6 +10,11 @@ use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Table;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\Filter;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\TextInput;
+use Illuminate\Database\Eloquent\Builder;
 
 class TasksTable
 {
@@ -87,7 +92,53 @@ class TasksTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
+                SelectFilter::make('project_id')
+                    ->label('Проєкт')
+                    ->relationship('project', 'name'),
+                SelectFilter::make('user_id')
+                    ->label('Відповідальний')
+                    ->relationship('user', 'name'),
+                SelectFilter::make('status')
+                    ->label('Статус')
+                    ->options(Task::$statuses),
+                SelectFilter::make('priority')
+                    ->label('Пріоритет')
+                    ->options(Task::$priorities),
+                Filter::make('is_completed')
+                    ->label('Завершено')
+                    ->query(fn (Builder $query) => $query->where('is_completed', true)),
+                Filter::make('created_at')
+                    ->label('Створено від/до')
+                    ->form([
+                        DatePicker::make('created_from')->label('Від'),
+                        DatePicker::make('created_to')->label('До'),
+                    ])
+                    ->query(fn (Builder $query, array $data) => ($data['created_from'] ? $query->whereDate('created_at', '>=', $data['created_from']) : $query)
+                        ->when($data['created_to'], fn (Builder $q) => $q->whereDate('created_at', '<=', $data['created_to']))),
+                Filter::make('deadline')
+                    ->label('Дедлайн від/до')
+                    ->form([
+                        DatePicker::make('from')->label('Від'),
+                        DatePicker::make('to')->label('До'),
+                    ])
+                    ->query(fn (Builder $query, array $data) => ($data['from'] ? $query->whereDate('deadline', '>=', $data['from']) : $query)
+                        ->when($data['to'], fn (Builder $q) => $q->whereDate('deadline', '<=', $data['to']))),
+                Filter::make('budget')
+                    ->label('Бюджет від/до')
+                    ->form([
+                        TextInput::make('min')->label('Мін')->numeric(),
+                        TextInput::make('max')->label('Макс')->numeric(),
+                    ])
+                    ->query(fn (Builder $query, array $data) => (filled($data['min']) ? $query->where('budget', '>=', $data['min']) : $query)
+                        ->when(filled($data['max']), fn (Builder $q) => $q->where('budget', '<=', $data['max']))),
+                Filter::make('progress')
+                    ->label('Прогрес від/до')
+                    ->form([
+                        TextInput::make('min')->label('Мін')->numeric(),
+                        TextInput::make('max')->label('Макс')->numeric(),
+                    ])
+                    ->query(fn (Builder $query, array $data) => (filled($data['min']) ? $query->where('progress', '>=', $data['min']) : $query)
+                        ->when(filled($data['max']), fn (Builder $q) => $q->where('progress', '<=', $data['max']))),
             ])
             ->recordActions([
                 EditAction::make(),
