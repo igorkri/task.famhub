@@ -82,12 +82,12 @@ class AsanaService
     /**
      * Получить детальную информацию о задаче.
      *
-     * @return array{gid: string, name: string, notes: string, completed: bool, due_on: string|null}
+     * @return array{gid: string, name: string, notes: string, completed: bool, due_on: string|null, start_on: string|null, assignee: array|null, memberships: array}
      */
     public function getTaskDetails(string $taskId): array
     {
         $task = $this->client->tasks->findById($taskId, [
-            'opt_fields' => 'gid,name,notes,completed,due_on',
+            'opt_fields' => 'gid,name,notes,completed,due_on,start_on,assignee.gid,assignee.name,assignee.email,memberships.section',
         ]);
 
         return (array) $task;
