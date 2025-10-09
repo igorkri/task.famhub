@@ -102,4 +102,14 @@ class AsanaService
 
         return (array) $response;
     }
+
+    /**
+     * Переместить задачу в секцию проекта.
+     */
+    public function moveTaskToSection(string $taskId, string $sectionId): array
+    {
+        $response = $this->client->sections->addTask($sectionId, ['task' => $taskId]);
+
+        return (array) $response;
+    }
 }
