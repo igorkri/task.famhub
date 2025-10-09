@@ -2,11 +2,17 @@
 
 namespace App\Providers\Filament;
 
-use Filament\Http\Middleware\Authenticate;
+use App\Filament\Resources\Sections\SectionResource;
+use App\Filament\Resources\Tasks\TaskResource;
+use App\Models\Project;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
+use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\NavigationBuilder;
+use Filament\Navigation\NavigationGroup;
+use Filament\Navigation\NavigationItem;
 use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
@@ -19,11 +25,6 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
-use Filament\Navigation\NavigationBuilder;
-use Filament\Navigation\NavigationGroup;
-use Filament\Navigation\NavigationItem;
-use App\Models\Project;
-use App\Filament\Resources\Tasks\TaskResource;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -64,15 +65,15 @@ class AdminPanelProvider extends PanelProvider
             ->navigation(function (NavigationBuilder $builder): NavigationBuilder {
                 $projectItems = Project::where('is_active', true)
                     ->get()
-                    ->map(fn(Project $project) =>
-                        NavigationItem::make($project->name)
-                            ->url(TaskResource::getUrl('index', [
-                                'filters' => [
-                                    'project_id' => ['value' => $project->id],
-                                ],
-                            ]))
+                    ->map(fn (Project $project) => NavigationItem::make($project->name)
+                        ->url(TaskResource::getUrl('index', [
+                            'filters' => [
+                                'project_id' => ['value' => $project->id],
+                            ],
+                        ]))
                     )
                     ->all();
+
                 return $builder
                     ->groups([
                         NavigationGroup::make('Проекти')
@@ -83,6 +84,7 @@ class AdminPanelProvider extends PanelProvider
                         ...Dashboard::getNavigationItems(),
                         ...\App\Filament\Resources\Projects\ProjectResource::getNavigationItems(),
                         ...TaskResource::getNavigationItems(),
+                        ...SectionResource::getNavigationItems(),
                     ]);
             })
             ->authMiddleware([

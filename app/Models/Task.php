@@ -6,21 +6,28 @@ use Illuminate\Database\Eloquent\Model;
 
 class Task extends Model
 {
-
     const STATUS_NEW = 'new'; // новий
+
     const STATUS_IN_PROGRESS = 'in_progress'; // в процесі
+
     const STATUS_COMPLETED = 'completed'; // виконано
+
     const STATUS_CANCELED = 'canceled'; // відхилено
+
     const STATUS_NEEDS_CLARIFICATION = 'needs_clarification'; // потребує уточнення
 
     const PRIORITY_LOW = 'low';
+
     const PRIORITY_MEDIUM = 'medium';
+
     const PRIORITY_HIGH = 'high';
+
     protected $fillable = [
         'gid',
         'parent_id',
         'project_id',
         'user_id',
+        'section_id',
         'title',
         'description',
         'is_completed',
@@ -33,7 +40,6 @@ class Task extends Model
         'start_date',
         'end_date',
     ];
-
 
     public static array $statuses = [
         self::STATUS_NEW => 'Новий',
@@ -67,6 +73,11 @@ class Task extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function section()
+    {
+        return $this->belongsTo(Section::class);
     }
 
     public function times()
