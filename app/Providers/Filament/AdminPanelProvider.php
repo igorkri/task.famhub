@@ -19,6 +19,11 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Filament\Navigation\NavigationBuilder;
+use Filament\Navigation\NavigationGroup;
+use Filament\Navigation\NavigationItem;
+use App\Models\Project;
+use App\Filament\Resources\Tasks\TaskResource;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -56,6 +61,30 @@ class AdminPanelProvider extends PanelProvider
             ->plugins([
                 FilamentShieldPlugin::make(),
             ])
+            ->navigation(function (NavigationBuilder $builder): NavigationBuilder {
+                $projectItems = Project::where('is_active', true)
+                    ->get()
+                    ->map(fn(Project $project) =>
+                        NavigationItem::make($project->name)
+                            ->url(TaskResource::getUrl('index', [
+                                'filters' => [
+                                    'project_id' => ['value' => $project->id],
+                                ],
+                            ]))
+                    )
+                    ->all();
+                return $builder
+                    ->groups([
+                        NavigationGroup::make('Проекти')
+                            ->icon('heroicon-o-folder-open')
+                            ->items($projectItems),
+                    ])
+                    ->items([
+                        ...Dashboard::getNavigationItems(),
+                        ...\App\Filament\Resources\Projects\ProjectResource::getNavigationItems(),
+                        ...TaskResource::getNavigationItems(),
+                    ]);
+            })
             ->authMiddleware([
                 Authenticate::class,
             ]);
