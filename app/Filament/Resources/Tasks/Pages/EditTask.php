@@ -20,6 +20,9 @@ class EditTask extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            $this->getCancelFormAction()
+                ->label('До списку')
+                ->formId('form'),
             Action::make('syncFromAsana')
                 ->label('Отримати з Asana')
                 ->color('info')
@@ -29,7 +32,7 @@ class EditTask extends EditRecord
                 ->color('primary')
                 ->action('syncToAsana'),
             $this->getSaveFormAction()
-                ->formId('form'),
+                ->formId('form')->color('success'),
             DeleteAction::make(),
         ];
     }
