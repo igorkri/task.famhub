@@ -42,11 +42,18 @@ class AsanaService
      */
     public function getWorkspaceProjects(string $workspaceId): array
     {
-        /** @var \Traversable<array{gid: string, name: string, notes: string}> $iterator */
+        /** @var \Traversable<\stdClass> $iterator */
         $iterator = $this->client->projects->findByWorkspace($workspaceId);
         $projects = iterator_to_array($iterator);
 
-        return $projects;
+        // Конвертируем объекты в массивы
+        return array_map(function ($project) {
+            return [
+                'gid' => $project->gid ?? '',
+                'name' => $project->name ?? '',
+                'notes' => $project->notes ?? '',
+            ];
+        }, $projects);
     }
 
     /**
@@ -56,13 +63,48 @@ class AsanaService
      */
     public function getProjectTasks(string $projectId): array
     {
-        /** @var \Traversable<array{gid: string, name: string, notes: string, completed: bool, due_on: string|null, assignee: array|null, memberships: array}> $iterator */
+        /** @var \Traversable<\stdClass> $iterator */
         $iterator = $this->client->tasks->findByProject($projectId, [
             'opt_fields' => 'gid,name,notes,completed,due_on,assignee.name,assignee.email,memberships.section',
         ]);
         $tasks = iterator_to_array($iterator);
 
-        return $tasks;
+        // Конвертируем объекты в массивы
+        return array_map(function ($task) {
+            $result = [
+                'gid' => $task->gid ?? '',
+                'name' => $task->name ?? '',
+                'notes' => $task->notes ?? '',
+                'completed' => (bool) ($task->completed ?? false),
+                'due_on' => $task->due_on ?? null,
+                'assignee' => null,
+                'memberships' => [],
+            ];
+
+            // Обрабатываем assignee
+            if (isset($task->assignee) && $task->assignee) {
+                $result['assignee'] = [
+                    'name' => $task->assignee->name ?? '',
+                    'email' => $task->assignee->email ?? '',
+                ];
+            }
+
+            // Обрабатываем memberships
+            if (isset($task->memberships) && is_array($task->memberships)) {
+                foreach ($task->memberships as $membership) {
+                    $membershipData = [];
+                    if (isset($membership->section) && $membership->section) {
+                        $membershipData['section'] = [
+                            'gid' => $membership->section->gid ?? '',
+                            'name' => $membership->section->name ?? '',
+                        ];
+                    }
+                    $result['memberships'][] = $membershipData;
+                }
+            }
+
+            return $result;
+        }, $tasks);
     }
 
     /**
@@ -72,11 +114,17 @@ class AsanaService
      */
     public function getProjectSections(string $projectId): array
     {
-        /** @var \Traversable<array{gid: string, name: string}> $iterator */
+        /** @var \Traversable<\stdClass> $iterator */
         $iterator = $this->client->sections->findByProject($projectId);
         $sections = iterator_to_array($iterator);
 
-        return $sections;
+        // Конвертируем объекты в массивы
+        return array_map(function ($section) {
+            return [
+                'gid' => $section->gid ?? '',
+                'name' => $section->name ?? '',
+            ];
+        }, $sections);
     }
 
     /**
@@ -90,7 +138,70 @@ class AsanaService
             'opt_fields' => 'gid,name,notes,completed,due_on,start_on,assignee.gid,assignee.name,assignee.email,memberships.section,custom_fields',
         ]);
 
-        return (array) $task;
+        // Конвертируем stdClass в массив правильным образом
+        $result = [
+            'gid' => $task->gid ?? '',
+            'name' => $task->name ?? '',
+            'notes' => $task->notes ?? '',
+            'completed' => (bool) ($task->completed ?? false),
+            'due_on' => $task->due_on ?? null,
+            'start_on' => $task->start_on ?? null,
+            'assignee' => null,
+            'memberships' => [],
+            'custom_fields' => [],
+        ];
+
+        // Обрабатываем assignee
+        if (isset($task->assignee) && $task->assignee) {
+            $result['assignee'] = [
+                'gid' => $task->assignee->gid ?? '',
+                'name' => $task->assignee->name ?? '',
+                'email' => $task->assignee->email ?? '',
+            ];
+        }
+
+        // Обрабатываем memberships
+        if (isset($task->memberships) && is_array($task->memberships)) {
+            foreach ($task->memberships as $membership) {
+                $membershipData = [
+                    'section' => null,
+                ];
+
+                if (isset($membership->section) && $membership->section) {
+                    $membershipData['section'] = [
+                        'gid' => $membership->section->gid ?? '',
+                        'name' => $membership->section->name ?? '',
+                    ];
+                }
+
+                $result['memberships'][] = $membershipData;
+            }
+        }
+
+        // Обрабатываем custom_fields
+        if (isset($task->custom_fields) && is_array($task->custom_fields)) {
+            foreach ($task->custom_fields as $field) {
+                $fieldData = [
+                    'gid' => $field->gid ?? '',
+                    'name' => $field->name ?? '',
+                    'type' => $field->type ?? '',
+                    'enum_value' => null,
+                    'number_value' => $field->number_value ?? null,
+                    'text_value' => $field->text_value ?? null,
+                ];
+
+                if (isset($field->enum_value) && $field->enum_value) {
+                    $fieldData['enum_value'] = [
+                        'gid' => $field->enum_value->gid ?? '',
+                        'name' => $field->enum_value->name ?? '',
+                    ];
+                }
+
+                $result['custom_fields'][] = $fieldData;
+            }
+        }
+
+        return $result;
     }
 
     /**
@@ -109,6 +220,53 @@ class AsanaService
     public function moveTaskToSection(string $taskId, string $sectionId): array
     {
         $response = $this->client->sections->addTask($sectionId, ['task' => $taskId]);
+
+        return (array) $response;
+    }
+
+    /**
+     * Получить комментарии задачи из Asana.
+     *
+     * @return array<array{gid: string, text: string, created_by: array, created_at: string}>
+     */
+    public function getTaskComments(string $taskId): array
+    {
+        /** @var \Traversable<\stdClass> $iterator */
+        $iterator = $this->client->stories->findByTask($taskId, [
+            'opt_fields' => 'gid,text,created_by.name,created_by.email,created_at,type',
+        ]);
+        $stories = iterator_to_array($iterator);
+
+        // Фильтруем только комментарии (тип comment) и конвертируем в массивы
+        $comments = array_filter($stories, function ($story) {
+            return isset($story->type) && $story->type === 'comment' && ! empty($story->text);
+        });
+
+        // Конвертируем объекты в массивы
+        return array_map(function ($story) {
+            return [
+                'gid' => $story->gid ?? null,
+                'text' => $story->text ?? '',
+                'created_by' => [
+                    'name' => $story->created_by->name ?? '',
+                    'email' => $story->created_by->email ?? '',
+                ],
+                'created_at' => $story->created_at ?? null,
+                'type' => $story->type ?? '',
+            ];
+        }, $comments);
+    }
+
+    /**
+     * Добавить комментарий к задаче в Asana.
+     *
+     * @return array{gid: string, text: string, created_by: array, created_at: string}
+     */
+    public function addCommentToTask(string $taskId, string $text): array
+    {
+        $response = $this->client->stories->createOnTask($taskId, [
+            'text' => $text,
+        ]);
 
         return (array) $response;
     }

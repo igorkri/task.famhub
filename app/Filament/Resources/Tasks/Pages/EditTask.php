@@ -4,12 +4,16 @@ namespace App\Filament\Resources\Tasks\Pages;
 
 use App\Filament\Resources\Tasks\TaskResource;
 use App\Models\Section;
+use App\Models\TaskComment;
+use App\Models\User;
 use App\Services\AsanaService;
 use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
+use Filament\Schemas\Components\Section as FormSection;
+use Filament\Schemas\Schema;
 
 class EditTask extends EditRecord
 {
@@ -17,29 +21,208 @@ class EditTask extends EditRecord
 
     protected static bool $hasStickyFooter = false;
 
+    protected array $pendingComments = [];
+
     protected function getHeaderActions(): array
     {
         return [
             $this->getCancelFormAction()
                 ->label('До списку')
-                ->formId('form'),
-            Action::make('syncFromAsana')
-                ->label('Отримати з Asana')
-                ->color('info')
-                ->action('syncFromAsana'),
-            Action::make('syncToAsana')
-                ->label('Відправити в Asana')
-                ->color('primary')
-                ->action('syncToAsana'),
+                ->formId('form')
+                ->icon('heroicon-m-arrow-left')
+                ->labeledFrom('md'),
+
             $this->getSaveFormAction()
-                ->formId('form')->color('success'),
-            DeleteAction::make(),
+                ->formId('form')
+                ->color('success')
+                ->icon('heroicon-m-check')
+                ->labeledFrom('md'),
+
+            DeleteAction::make()
+                ->icon('heroicon-m-trash')
+                ->labeledFrom('md'),
         ];
+    }
+
+    public function content(Schema $schema): Schema
+    {
+        return $schema->components([
+            FormSection::make('sync')
+                ->schema([])
+                ->afterHeader([
+                    Action::make('syncFromAsana')
+                        ->label('Отримати з Asana')
+                        ->icon('heroicon-m-arrow-path')
+                        ->color('info')
+                        ->action(function (): void {
+                            // Принудительно сохраняем форму перед синхронизацией
+                            $this->save();
+
+                            $this->syncFromAsana();
+                        }),
+
+                    Action::make('syncCommentsFromAsana')
+                        ->label('Отримати коментарі')
+                        ->icon('heroicon-m-chat-bubble-bottom-center-text')
+                        ->color('info')
+                        ->action(function (): void {
+                            $this->save();
+
+                            $this->syncCommentsFromAsana();
+                        }),
+
+                    Action::make('syncCommentsToAsana')
+                        ->label('Відправити нові коментарі')
+                        ->icon('heroicon-m-arrow-up-tray')
+                        ->color('warning')
+                        ->action(function (): void {
+                            $this->save();
+
+                            $this->syncCommentsToAsana();
+                        }),
+
+                    Action::make('syncToAsana')
+                        ->label('Відправити в Asana')
+                        ->icon('heroicon-m-paper-airplane')
+                        ->color('primary')
+                        ->action(function (): void {
+                            $this->save();
+
+                            $this->syncToAsana();
+                        }),
+                ]),
+
+            $this->getFormContentComponent(),
+            $this->getRelationManagersContentComponent(),
+        ]);
     }
 
     protected function getFormActions(): array
     {
         return [];
+    }
+
+    public function syncCommentsFromAsana(): void
+    {
+        if (! $this->record->gid) {
+            Notification::make()
+                ->danger()
+                ->title('Помилка')
+                ->body('Задача не має GID з Asana')
+                ->send();
+
+            return;
+        }
+
+        $service = app(AsanaService::class);
+        try {
+            $asanaComments = $service->getTaskComments($this->record->gid);
+
+            foreach ($asanaComments as $asanaComment) {
+                // Проверяем, существует ли уже комментарий с таким gid
+                $existingComment = TaskComment::where('asana_gid', $asanaComment['gid'])->first();
+
+                if (! $existingComment) {
+                    // Находим пользователя по email из Asana
+                    $user = null;
+                    if (isset($asanaComment['created_by']['email'])) {
+                        $user = User::where('email', $asanaComment['created_by']['email'])->first();
+                    }
+
+                    // Создаем новый комментарий
+                    TaskComment::create([
+                        'task_id' => $this->record->id,
+                        'user_id' => $user ? $user->id : auth()->id(),
+                        'asana_gid' => $asanaComment['gid'],
+                        'content' => $asanaComment['text'],
+                        'asana_created_at' => isset($asanaComment['created_at']) ? Carbon::parse($asanaComment['created_at']) : now(),
+                    ]);
+                }
+            }
+
+            Notification::make()
+                ->success()
+                ->title('Коментарі успішно отримані з Asana')
+                ->body('Синхронізовано '.count($asanaComments).' коментарів')
+                ->send();
+
+            $this->refresh();
+        } catch (\Exception $e) {
+            Notification::make()
+                ->danger()
+                ->title('Помилка при отриманні коментарів')
+                ->body($e->getMessage())
+                ->send();
+        }
+    }
+
+    public function syncCommentsToAsana(): void
+    {
+        if (! $this->record->gid) {
+            Notification::make()
+                ->danger()
+                ->title('Помилка')
+                ->body('Задача не має GID з Asana')
+                ->send();
+
+            return;
+        }
+
+        $service = app(AsanaService::class);
+        $syncedCount = 0;
+        $errorCount = 0;
+
+        // Получаем все комментарии без asana_gid (не синхронизированные)
+        $unsyncedComments = $this->record->comments()->whereNull('asana_gid')->get();
+
+        foreach ($unsyncedComments as $comment) {
+            try {
+                $result = $service->addCommentToTask($this->record->gid, $comment->content);
+
+                // Обновляем комментарий с GID из Asana
+                $comment->update([
+                    'asana_gid' => $result['gid'] ?? null,
+                ]);
+
+                $syncedCount++;
+
+                \Log::info('Comment synced to Asana', [
+                    'task_id' => $this->record->id,
+                    'comment_id' => $comment->id,
+                    'comment_gid' => $result['gid'] ?? null,
+                ]);
+            } catch (\Exception $e) {
+                $errorCount++;
+                \Log::error('Failed to sync comment to Asana', [
+                    'task_id' => $this->record->id,
+                    'comment_id' => $comment->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        if ($syncedCount > 0) {
+            Notification::make()
+                ->success()
+                ->title('Коментарі відправлені в Asana')
+                ->body("Успішно відправлено {$syncedCount} коментарів".
+                      ($errorCount > 0 ? ", помилок: {$errorCount}" : ''))
+                ->send();
+        } elseif ($errorCount > 0) {
+            Notification::make()
+                ->danger()
+                ->title('Помилка відправки коментарів')
+                ->body("Помилок при відправці: {$errorCount}")
+                ->send();
+        } else {
+            Notification::make()
+                ->info()
+                ->title('Немає нових коментарів')
+                ->body('Всі коментарі вже синхронізовані з Asana')
+                ->send();
+        }
+
+        $this->refresh();
     }
 
     public function syncFromAsana(): void
@@ -66,7 +249,7 @@ class EditTask extends EditRecord
 
             // Исполнитель
             if (isset($data['assignee']) && $data['assignee']) {
-                $assigneeGid = $data['assignee']->gid ?? null;
+                $assigneeGid = $data['assignee']['gid'] ?? null;
                 if ($assigneeGid) {
                     $user = \App\Models\User::where('asana_gid', $assigneeGid)->first();
                     if ($user) {
@@ -78,8 +261,8 @@ class EditTask extends EditRecord
             // Статус на основе секции
             if (isset($data['memberships']) && is_array($data['memberships'])) {
                 foreach ($data['memberships'] as $membership) {
-                    if (isset($membership->section) && $membership->section) {
-                        $section = \App\Models\Section::where('asana_gid', $membership->section->gid)->first();
+                    if (isset($membership['section']) && $membership['section']) {
+                        $section = \App\Models\Section::where('asana_gid', $membership['section']['gid'])->first();
                         if ($section && $section->status) {
                             $updateData['status'] = $section->status;
                             break;
@@ -91,8 +274,8 @@ class EditTask extends EditRecord
             // Кастомные поля
             if (isset($data['custom_fields']) && is_array($data['custom_fields'])) {
                 foreach ($data['custom_fields'] as $customField) {
-                    $fieldGid = $customField->gid ?? null;
-                    $value = $customField->enum_value ?? $customField->number_value ?? $customField->text_value ?? null;
+                    $fieldGid = $customField['gid'] ?? null;
+                    $value = $customField['enum_value'] ?? $customField['number_value'] ?? $customField['text_value'] ?? null;
 
                     if ($fieldGid === '1202674799521449' && $value) { // Приоритет
                         $priorityMap = [
@@ -101,7 +284,8 @@ class EditTask extends EditRecord
                             'Низький' => 'low',
                             'Призупинена' => 'low', // или добавить новый статус
                         ];
-                        $updateData['priority'] = $priorityMap[$value->name ?? ''] ?? 'low';
+                        $valueName = is_array($value) ? ($value['name'] ?? '') : '';
+                        $updateData['priority'] = $priorityMap[$valueName] ?? 'low';
                     }
 
                     if ($fieldGid === '1205860710071790' && $value) { // Тип задачі
@@ -115,17 +299,18 @@ class EditTask extends EditRecord
                             'Обслуговування' => 'in_progress',
                             'Новий проект (розробка)' => 'new',
                         ];
-                        if ($section && empty($section->status)) {
-                            $updateData['status'] = $typeMap[$value->name ?? ''] ?? $updateData['status'] ?? 'new';
+                        $valueName = is_array($value) ? ($value['name'] ?? '') : '';
+                        if (! isset($updateData['status'])) {
+                            $updateData['status'] = $typeMap[$valueName] ?? 'new';
                         }
                     }
 
-                    if ($fieldGid === '1202687202895300' && isset($customField->number_value)) { // Бюджет (часы план)
-                        $updateData['budget'] = (float) $customField->number_value;
+                    if ($fieldGid === '1202687202895300' && isset($customField['number_value'])) { // Бюджет (часы план)
+                        $updateData['budget'] = (float) $customField['number_value'];
                     }
 
-                    if ($fieldGid === '1202687202895302' && isset($customField->number_value)) { // Витрачено (часы факт)
-                        $updateData['spent'] = (float) $customField->number_value;
+                    if ($fieldGid === '1202687202895302' && isset($customField['number_value'])) { // Витрачено (часы факт)
+                        $updateData['spent'] = (float) $customField['number_value'];
                     }
                 }
             }
@@ -310,6 +495,83 @@ class EditTask extends EditRecord
                 'task_id' => $this->record->id,
                 'status' => $this->record->status,
                 'project_id' => $this->record->project_id,
+            ]);
+        }
+    }
+
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        // Если есть новые комментарии, планируем их синхронизацию после сохранения
+        $this->pendingComments = [];
+
+        if (isset($data['comments']) && is_array($data['comments'])) {
+            foreach ($data['comments'] as $commentData) {
+                // Если комментарий новый (нет asana_gid и нет id) и есть content
+                if (empty($commentData['asana_gid']) && empty($commentData['id']) && ! empty($commentData['content'])) {
+                    $this->pendingComments[] = $commentData['content'];
+                }
+            }
+        }
+
+        return $data;
+    }
+
+    protected function afterSave(): void
+    {
+        // Синхронизируем новые комментарии после сохранения
+        if (! empty($this->pendingComments) && $this->record->gid) {
+            $this->syncPendingCommentsToAsana();
+        }
+    }
+
+    private function syncPendingCommentsToAsana(): void
+    {
+        $service = app(AsanaService::class);
+
+        foreach ($this->pendingComments as $content) {
+            try {
+                $result = $service->addCommentToTask($this->record->gid, $content);
+
+                \Log::info('New comment automatically synced to Asana', [
+                    'task_id' => $this->record->id,
+                    'comment_gid' => $result['gid'] ?? null,
+                ]);
+
+                // Обновляем последний несинхронизированный комментарий с GID
+                $comment = $this->record->comments()->whereNull('asana_gid')->latest()->first();
+                if ($comment) {
+                    $comment->update(['asana_gid' => $result['gid'] ?? null]);
+                }
+
+            } catch (\Exception $e) {
+                \Log::error('Failed to auto-sync comment to Asana', [
+                    'task_id' => $this->record->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        $this->pendingComments = [];
+    }
+
+    private function syncNewCommentToAsana(string $content): void
+    {
+        if (! $this->record->gid) {
+            return;
+        }
+
+        try {
+            $service = app(AsanaService::class);
+            $result = $service->addCommentToTask($this->record->gid, $content);
+
+            \Log::info('Comment synced to Asana', [
+                'task_id' => $this->record->id,
+                'comment_gid' => $result['gid'] ?? null,
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Failed to sync comment to Asana', [
+                'task_id' => $this->record->id,
+                'error' => $e->getMessage(),
             ]);
         }
     }

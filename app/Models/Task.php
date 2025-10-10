@@ -2,10 +2,14 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Task extends Model
 {
+    use HasFactory;
+
     const STATUS_NEW = 'new'; // новий
 
     const STATUS_IN_PROGRESS = 'in_progress'; // в процесі
@@ -15,6 +19,12 @@ class Task extends Model
     const STATUS_CANCELED = 'canceled'; // відхилено
 
     const STATUS_NEEDS_CLARIFICATION = 'needs_clarification'; // потребує уточнення
+    //етапи
+    const STATUS_ETAP = 'etap'; // етап
+    // archived
+    const STATUS_ARCHIVED = 'archived'; // архівований
+    // ідеї
+    const STATUS_IDEA = 'idea'; // ідея
 
     const PRIORITY_LOW = 'low';
 
@@ -47,6 +57,10 @@ class Task extends Model
         self::STATUS_NEEDS_CLARIFICATION => 'Потребує уточнення',
         self::STATUS_COMPLETED => 'Виконано',
         self::STATUS_CANCELED => 'Відхилено',
+        self::STATUS_ETAP => 'Етап',
+        self::STATUS_ARCHIVED => 'Архівований',
+        self::STATUS_IDEA => 'Ідеї',
+
     ];
 
     public static array $priorities = [
@@ -83,5 +97,10 @@ class Task extends Model
     public function times()
     {
         return $this->hasMany(Time::class);
+    }
+
+    public function comments(): HasMany
+    {
+        return $this->hasMany(TaskComment::class);
     }
 }
