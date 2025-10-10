@@ -19,12 +19,18 @@ class Task extends Model
     const STATUS_CANCELED = 'canceled'; // відхилено
 
     const STATUS_NEEDS_CLARIFICATION = 'needs_clarification'; // потребує уточнення
-    //етапи
+
+    // етапи
     const STATUS_ETAP = 'etap'; // етап
+
     // archived
     const STATUS_ARCHIVED = 'archived'; // архівований
+
     // ідеї
     const STATUS_IDEA = 'idea'; // ідея
+
+    // other
+    const STATUS_OTHER = 'other'; // інше
 
     const PRIORITY_LOW = 'low';
 
@@ -60,7 +66,7 @@ class Task extends Model
         self::STATUS_ETAP => 'Етап',
         self::STATUS_ARCHIVED => 'Архівований',
         self::STATUS_IDEA => 'Ідеї',
-
+        self::STATUS_OTHER => 'Інше',
     ];
 
     public static array $priorities = [

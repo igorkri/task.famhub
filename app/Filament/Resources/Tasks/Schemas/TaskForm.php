@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Tasks\Schemas;
 
 use App\Models\Task;
 use App\Models\Time;
+use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\MarkdownEditor;
@@ -67,7 +68,7 @@ class TaskForm
                         ->label('Опис')
                         ->columnSpanFull(),
                 ])
-                ->grow(1), // займає всю доступну ширину
+                ->grow(1), // занимает всю доступную ширину
 
             // Правая часть: метаданные
             Section::make('Додатково')
@@ -104,7 +105,7 @@ class TaskForm
                                 ->nullable(),
 
                             Select::make('project_id')
-                                ->label('Проєкт')
+                                ->label('Проект')
                                 ->relationship('project', 'name')
                                 ->required(),
 
@@ -113,7 +114,7 @@ class TaskForm
                                 ->relationship('user', 'name'),
                         ])
                         ->collapsible() // делаем секцию сворачиваемой
-                        ->collapsed(false),  // по умолчанию скрыта
+                        ->collapsed(false),  // по умолчанию открыта
 
                     Section::make('Час і бюджет')
                         ->schema([
@@ -122,7 +123,7 @@ class TaskForm
                                 ->numeric(),
 
                             TextInput::make('spent')
-                                ->label('Витрачено (годин)')
+                                ->label('Витрачено (години)')
                                 ->numeric()
                                 ->required()
                                 ->default(0),
@@ -146,7 +147,7 @@ class TaskForm
                         ->collapsed(), // можно свернуть по умолчанию
                 ])
                 ->grow(false)
-                ->maxWidth('300px'), // або задаєш жорстку межу
+                ->maxWidth('300px'), // или задаем жесткую ширину
         ])->from('md');
     }
 
@@ -181,7 +182,7 @@ class TaskForm
                             ->default(auth()->id())
                             ->relationship('user', 'name')
                             ->required(),
-                        // task_id aвтоматично ставляється
+                        // task_id автоматически ставится
 
                         Select::make('coefficient')
                             ->label('Коефіцієнт')
@@ -261,7 +262,9 @@ class TaskForm
                     )
                     ->columns(2)
                     ->orderColumn('id')
-                    ->reorderable(false),
+                    ->reorderable(false)
+                    ->deleteAction(fn (Action $action) => $action->requiresConfirmation())
+                    ->cloneAction(fn (Action $action) => $action->label('Клонувати')),
             ])
             ->columnSpanFull();
     }

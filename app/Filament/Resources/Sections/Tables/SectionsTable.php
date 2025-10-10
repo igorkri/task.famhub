@@ -6,7 +6,9 @@ use App\Models\Task;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Notifications\Notification;
 use Filament\Tables;
+use Filament\Tables\Columns\SelectColumn;
 use Filament\Tables\Table;
 
 class SectionsTable
@@ -21,10 +23,9 @@ class SectionsTable
                 Tables\Columns\TextColumn::make('name')
                     ->label('Назва')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('status')
+                SelectColumn::make('status')
                     ->label('Статус')
-                    ->formatStateUsing(fn ($state) => Task::$statuses[$state] ?? $state)
-                    ->sortable(),
+                    ->options(Task::$statuses),
                 Tables\Columns\TextColumn::make('asana_gid')
                     ->label('Asana GID')
                     ->copyable(),
@@ -34,6 +35,25 @@ class SectionsTable
             ])
             ->recordActions([
                 EditAction::make(),
+
+                // // Quick action to change status inline (modal with select)
+                // Tables\Actions\Action::make('setStatus')
+                //     ->label('Змінити статус')
+                //     ->icon('heroicon-m-adjustments')
+                //     ->form([
+                //         Select::make('status')
+                //             ->label('Статус')
+                //             ->options(Task::$statuses)
+                //             ->required(),
+                //     ])
+                //     ->action(function (\App\Models\Section $record, array $data): void {
+                //         $record->update(['status' => $data['status']]);
+
+                //         Notification::make()
+                //             ->success()
+                //             ->title('Статус змінено')
+                //             ->send();
+                //     }),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
