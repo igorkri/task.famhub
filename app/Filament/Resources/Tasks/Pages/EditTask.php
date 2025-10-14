@@ -7,6 +7,7 @@ use App\Models\Section;
 use App\Models\TaskComment;
 use App\Models\User;
 use App\Services\AsanaService;
+use Asana\Errors\AsanaError;
 use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
@@ -14,6 +15,7 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
 use Filament\Schemas\Components\Section as FormSection;
 use Filament\Schemas\Schema;
+use Illuminate\Support\Facades\Log;
 
 class EditTask extends EditRecord
 {
@@ -22,6 +24,11 @@ class EditTask extends EditRecord
     protected static bool $hasStickyFooter = false;
 
     protected array $pendingComments = [];
+
+    protected $listeners = [
+        'timer-stopped' => 'refreshTimerData',
+        'refreshComponent' => 'refreshTimerData',
+    ];
 
     protected function getHeaderActions(): array
     {
@@ -167,14 +174,14 @@ class EditTask extends EditRecord
 
                 $syncedCount++;
 
-                \Log::info('Comment synced to Asana', [
+                Log::info('Comment synced to Asana', [
                     'task_id' => $this->record->id,
                     'comment_id' => $comment->id,
                     'comment_gid' => $result['gid'] ?? null,
                 ]);
             } catch (\Exception $e) {
                 $errorCount++;
-                \Log::error('Failed to sync comment to Asana', [
+                Log::error('Failed to sync comment to Asana', [
                     'task_id' => $this->record->id,
                     'comment_id' => $comment->id,
                     'error' => $e->getMessage(),
@@ -223,7 +230,7 @@ class EditTask extends EditRecord
                 try {
                     $updateData['created_at'] = Carbon::parse($data['created_at']);
                 } catch (\Exception $e) {
-                    \Log::warning('Failed to parse Asana created_at', [
+                    Log::warning('Failed to parse Asana created_at', [
                         'task_id' => $this->record->id,
                         'created_at' => $data['created_at'],
                         'error' => $e->getMessage(),
@@ -235,7 +242,7 @@ class EditTask extends EditRecord
                 try {
                     $updateData['updated_at'] = Carbon::parse($data['modified_at']);
                 } catch (\Exception $e) {
-                    \Log::warning('Failed to parse Asana modified_at', [
+                    Log::warning('Failed to parse Asana modified_at', [
                         'task_id' => $this->record->id,
                         'modified_at' => $data['modified_at'],
                         'error' => $e->getMessage(),
@@ -445,7 +452,7 @@ class EditTask extends EditRecord
         //     return $value !== null && $value !== '' && (! is_array($value) || ! empty($value));
         // });
 
-        \Log::info('Sync to Asana payload', [
+        Log::info('Sync to Asana payload', [
             'task_id' => $this->record->id,
             'task_gid' => $this->record->gid,
             'payload' => $payload,
@@ -490,20 +497,20 @@ class EditTask extends EditRecord
             try {
                 // Перемещаем задачу в новую секцию
                 $result = $service->moveTaskToSection($this->record->gid, $targetSection->asana_gid);
-                \Log::info('Asana task moved to section', [
+                Log::info('Asana task moved to section', [
                     'task_id' => $this->record->id,
                     'section_gid' => $targetSection->asana_gid,
                     'result' => $result,
                 ]);
             } catch (AsanaError $e) {
-                \Log::error('Failed to move Asana task to section', [
+                Log::error('Failed to move Asana task to section', [
                     'task_id' => $this->record->id,
                     'section_gid' => $targetSection->asana_gid,
                     'error' => $e->getMessage(),
                 ]);
             }
         } else {
-            \Log::warning('No target section found for task status', [
+            Log::warning('No target section found for task status', [
                 'task_id' => $this->record->id,
                 'status' => $this->record->status,
                 'project_id' => $this->record->project_id,
@@ -544,7 +551,7 @@ class EditTask extends EditRecord
             try {
                 $result = $service->addCommentToTask($this->record->gid, $content);
 
-                \Log::info('New comment automatically synced to Asana', [
+                Log::info('New comment automatically synced to Asana', [
                     'task_id' => $this->record->id,
                     'comment_gid' => $result['gid'] ?? null,
                 ]);
@@ -556,7 +563,7 @@ class EditTask extends EditRecord
                 }
 
             } catch (\Exception $e) {
-                \Log::error('Failed to auto-sync comment to Asana', [
+                Log::error('Failed to auto-sync comment to Asana', [
                     'task_id' => $this->record->id,
                     'error' => $e->getMessage(),
                 ]);
@@ -576,15 +583,40 @@ class EditTask extends EditRecord
             $service = app(AsanaService::class);
             $result = $service->addCommentToTask($this->record->gid, $content);
 
-            \Log::info('Comment synced to Asana', [
+            Log::info('Comment synced to Asana', [
                 'task_id' => $this->record->id,
                 'comment_gid' => $result['gid'] ?? null,
             ]);
         } catch (\Exception $e) {
-            \Log::error('Failed to sync comment to Asana', [
+            Log::error('Failed to sync comment to Asana', [
                 'task_id' => $this->record->id,
                 'error' => $e->getMessage(),
             ]);
         }
+    }
+
+    public function refreshTimerData($taskId = null)
+    {
+        // Если taskId не передан, используем ID текущей записи
+        $taskId = $taskId ?? $this->record->id;
+
+        // Обновляем данные задачи из БД с полной загрузкой связей
+        $this->record = $this->record->fresh(['times', 'comments']);
+
+        // Перезаполняем форму свежими данными
+        $this->fillForm($this->record->toArray());
+
+        // Принудительно обновляем весь компонент страницы
+        $this->dispatch('$refresh');
+
+        // Дополнительно обновляем состояние формы
+        $this->form->fill($this->record->toArray());
+
+        // Логируем для отладки
+        Log::info('Timer data refreshed', [
+            'task_id' => $taskId,
+            'times_count' => $this->record->times()->count(),
+            'comments_count' => $this->record->comments()->count()
+        ]);
     }
 }

@@ -74,17 +74,11 @@ class TaskForm
             Section::make('Додатково')
                 ->schema([
                     ViewField::make('timer')
-                        ->view('components.task-timer')
-                        ->viewData([
-                            'task' => fn ($record) => $record,
-                            'user' => fn () => auth()->user(),
-                            'time_id' => fn ($record) => optional($record)
-                                ?->times()
-                                ->where('user_id', auth()->id())
-                                ->value('id'),
+                        ->view('components.livewire-timer-wrapper')
+                        ->viewData(fn ($record) => [
+                            'task' => $record,
                         ])
-                        ->visible(fn ($record) => $record !== null)
-                        ->columnSpanFull(),
+                        ->visible(fn ($record) => $record !== null),
 
                     Toggle::make('is_completed')
                         ->label('Завершено')
