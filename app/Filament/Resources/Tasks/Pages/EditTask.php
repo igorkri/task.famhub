@@ -218,6 +218,31 @@ class EditTask extends EditRecord
                 'is_completed' => $data['completed'] ?? $this->record->is_completed,
             ];
 
+            // Даты создания и обновления из Asana
+            if (isset($data['created_at']) && $data['created_at']) {
+                try {
+                    $updateData['created_at'] = Carbon::parse($data['created_at']);
+                } catch (\Exception $e) {
+                    \Log::warning('Failed to parse Asana created_at', [
+                        'task_id' => $this->record->id,
+                        'created_at' => $data['created_at'],
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+
+            if (isset($data['modified_at']) && $data['modified_at']) {
+                try {
+                    $updateData['updated_at'] = Carbon::parse($data['modified_at']);
+                } catch (\Exception $e) {
+                    \Log::warning('Failed to parse Asana modified_at', [
+                        'task_id' => $this->record->id,
+                        'modified_at' => $data['modified_at'],
+                        'error' => $e->getMessage(),
+                    ]);
+                }
+            }
+
             // Дедлайн
             if (isset($data['due_on']) && $data['due_on']) {
                 $updateData['deadline'] = $data['due_on'];

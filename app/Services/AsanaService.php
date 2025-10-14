@@ -135,7 +135,7 @@ class AsanaService
     public function getTaskDetails(string $taskId): array
     {
         $task = $this->client->tasks->findById($taskId, [
-            'opt_fields' => 'gid,name,notes,completed,due_on,start_on,assignee.gid,assignee.name,assignee.email,memberships.section,custom_fields',
+            'opt_fields' => 'gid,name,notes,completed,due_on,start_on,assignee.gid,assignee.name,assignee.email,memberships.section,custom_fields,created_at,modified_at',
         ]);
 
         // Конвертируем stdClass в массив правильным образом
@@ -146,6 +146,8 @@ class AsanaService
             'completed' => (bool) ($task->completed ?? false),
             'due_on' => $task->due_on ?? null,
             'start_on' => $task->start_on ?? null,
+            'created_at' => $task->created_at ?? null,
+            'modified_at' => $task->modified_at ?? null,
             'assignee' => null,
             'memberships' => [],
             'custom_fields' => [],
