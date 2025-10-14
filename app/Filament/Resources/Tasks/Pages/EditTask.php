@@ -30,13 +30,10 @@ class EditTask extends EditRecord
                 ->label('До списку')
                 ->formId('form')
                 ->icon('heroicon-m-arrow-left')
-                ->labeledFrom('md'),
-
-            $this->getSaveFormAction()
-                ->formId('form')
-                ->color('success')
-                ->icon('heroicon-m-check')
-                ->labeledFrom('md'),
+                ->labeledFrom('md')
+                ->extraAttributes([
+                    'x-data' => '{}', // Убираем зависимость от filamentFormButton
+                ]),
 
             DeleteAction::make()
                 ->icon('heroicon-m-trash')
@@ -79,7 +76,11 @@ class EditTask extends EditRecord
 
     protected function getFormActions(): array
     {
-        return [];
+        return [
+            $this->getSaveFormAction()
+                ->keyBindings(['mod+s']),
+            $this->getCancelFormAction(),
+        ];
     }
 
     public function syncCommentsFromAsana(): void
