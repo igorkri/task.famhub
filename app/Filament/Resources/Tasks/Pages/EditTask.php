@@ -61,26 +61,6 @@ class EditTask extends EditRecord
                             $this->syncFromAsana();
                         }),
 
-                    Action::make('syncCommentsFromAsana')
-                        ->label('Отримати коментарі')
-                        ->icon('heroicon-m-chat-bubble-bottom-center-text')
-                        ->color('info')
-                        ->action(function (): void {
-                            $this->save();
-
-                            $this->syncCommentsFromAsana();
-                        }),
-
-                    Action::make('syncCommentsToAsana')
-                        ->label('Відправити нові коментарі')
-                        ->icon('heroicon-m-arrow-up-tray')
-                        ->color('warning')
-                        ->action(function (): void {
-                            $this->save();
-
-                            $this->syncCommentsToAsana();
-                        }),
-
                     Action::make('syncToAsana')
                         ->label('Відправити в Asana')
                         ->icon('heroicon-m-paper-airplane')
@@ -329,6 +309,9 @@ class EditTask extends EditRecord
                 ->send();
             $this->refresh();
             $this->fillForm($this->record->fresh()->toArray());
+
+            // Синхронизируем комментарии после обновления задачи
+            $this->syncCommentsFromAsana();
         } catch (AsanaError $e) {
             Notification::make()
                 ->danger()
@@ -458,6 +441,9 @@ class EditTask extends EditRecord
 
             $this->refresh();
             $this->fillForm($this->record->fresh()->toArray());
+
+            // Синхронизируем комментарии після відправки задачі
+            $this->syncCommentsToAsana();
         } catch (AsanaError $e) {
             Notification::make()
                 ->danger()
