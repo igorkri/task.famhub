@@ -2,12 +2,13 @@
 
 namespace App\Filament\Resources\Projects\Tables;
 
+use App\Jobs\SyncProjectAsanaTasks;
+use App\Models\Project;
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
-use Filament\Forms\Components\ToggleButtons;
-use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Table;
@@ -47,8 +48,34 @@ class ProjectsTable
                 //
             ])
             ->recordActions([
-//                ViewAction::make(),
+                //                ViewAction::make(),
                 EditAction::make(),
+                Action::make('sync_asana')
+                    ->label('Sync Asana')
+                    ->icon('heroicon-o-arrow-path')
+                    ->requiresConfirmation()
+                    ->action(function (Project $record) {
+                        $project = $record;
+
+                        $asanaProjectId = $project->asana_id ?? null;
+                        if (! $asanaProjectId) {
+                            \Filament\Notifications\Notification::make()
+                                ->danger()
+                                ->title('Відсутній Asana project id')
+                                ->body('Для цього проєкту не налаштовано Asana ID.')
+                                ->send();
+
+                            return;
+                        }
+
+                        // Dispatch job to queue
+                        SyncProjectAsanaTasks::dispatch($project);
+                        \Filament\Notifications\Notification::make()
+                            ->info()
+                            ->title('Синхронізацію поставлено в чергу')
+                            ->body('Синхронізація проєкту поставлена в чергу та незабаром буде виконана.')
+                            ->send();
+                    }),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
