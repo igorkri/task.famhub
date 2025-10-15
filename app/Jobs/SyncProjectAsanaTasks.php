@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\Project;
+use App\Models\Section;
 use App\Models\Task;
 use App\Services\AsanaService;
 use Illuminate\Bus\Queueable;
@@ -32,17 +33,48 @@ class SyncProjectAsanaTasks implements ShouldQueue
 
         $tasks = $service->getProjectTasks($asanaProjectId);
 
-        foreach ($tasks as $t) {
-            Task::updateOrCreate(
-                ['gid' => $t['gid'] ?? null],
-                [
-                    'project_id' => $project->id,
-                    'title' => $t['name'] ?? '',
-                    'description' => $t['notes'] ?? '',
-                    'is_completed' => $t['completed'] ?? false,
-                    'deadline' => $t['due_on'] ?? null,
-                ]
-            );
+        foreach ($tasks as $asanaTaskData) {
+            $sectionGid = $asanaTaskData['memberships'][0]['section']['gid'] ?? null;
+
+            if (! $sectionGid) {
+                // Пропускаем задачи без секции
+                \Log::warning('Task without section in Asana', [
+                    'task_gid' => $asanaTaskData['gid'] ?? null,
+                    'task_name' => $asanaTaskData['name'] ?? null,
+                ]);
+
+                continue;
+            }
+
+            $section = Section::where('project_id', $project->id)
+                ->where('asana_gid', $sectionGid)
+                ->first();
+
+            if (! $section) {
+                // Пропускаем задачи с секциями, которых нет в нашей системе
+                \Log::warning('Section not found in local database', [
+                    'task_gid' => $asanaTaskData['gid'] ?? null,
+                    'task_name' => $asanaTaskData['name'] ?? null,
+                    'section_gid' => $sectionGid,
+                ]);
+
+                continue;
+            }
+
+            // Отключаем observers во время синхронизации из Asana, чтобы избежать циклических обновлений
+            Task::withoutEvents(function () use ($asanaTaskData, $project, $section) {
+                Task::updateOrCreate(
+                    ['gid' => $asanaTaskData['gid'] ?? null],
+                    [
+                        'project_id' => $project->id,
+                        'status' => $section->status,
+                        'title' => $asanaTaskData['name'] ?? '',
+                        'description' => $asanaTaskData['notes'] ?? '',
+                        'is_completed' => $asanaTaskData['completed'] ?? false,
+                        'deadline' => $asanaTaskData['due_on'] ?? null,
+                    ]
+                );
+            });
         }
     }
 }

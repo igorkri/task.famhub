@@ -7,19 +7,18 @@ use App\Models\Task;
 use App\Services\AsanaService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Queue\SerializesModels;
 
 class AsanaUpdateTaskJob implements ShouldQueue
 {
-    use Queueable;
-
-    protected Task $task;
+    use Queueable, SerializesModels;
 
     /**
      * Create a new job instance.
      */
-    public function __construct(Task $task)
+    public function __construct(public Task $task)
     {
-        $this->task = $task;
+        //
     }
 
     /**
