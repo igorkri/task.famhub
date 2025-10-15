@@ -92,13 +92,24 @@ class AsanaService
             // Обрабатываем memberships
             if (isset($task->memberships) && is_array($task->memberships)) {
                 foreach ($task->memberships as $membership) {
-                    $membershipData = [];
+                    $membershipData = [
+                        'section' => null,
+                        'project' => null,
+                    ];
+
                     if (isset($membership->section) && $membership->section) {
                         $membershipData['section'] = [
                             'gid' => $membership->section->gid ?? '',
                             'name' => $membership->section->name ?? '',
                         ];
                     }
+
+                    if (isset($membership->project) && $membership->project) {
+                        $membershipData['project'] = [
+                            'gid' => $membership->project->gid ?? '',
+                        ];
+                    }
+
                     $result['memberships'][] = $membershipData;
                 }
             }
@@ -135,7 +146,7 @@ class AsanaService
     public function getTaskDetails(string $taskId): array
     {
         $task = $this->client->tasks->findById($taskId, [
-            'opt_fields' => 'gid,name,notes,completed,due_on,start_on,assignee.gid,assignee.name,assignee.email,memberships.section,custom_fields,created_at,modified_at',
+            'opt_fields' => 'gid,name,notes,completed,due_on,start_on,assignee.gid,assignee.name,assignee.email,memberships.section.gid,memberships.project.gid,custom_fields,created_at,modified_at',
         ]);
 
         // Конвертируем stdClass в массив правильным образом
@@ -167,12 +178,19 @@ class AsanaService
             foreach ($task->memberships as $membership) {
                 $membershipData = [
                     'section' => null,
+                    'project' => null,
                 ];
 
                 if (isset($membership->section) && $membership->section) {
                     $membershipData['section'] = [
                         'gid' => $membership->section->gid ?? '',
                         'name' => $membership->section->name ?? '',
+                    ];
+                }
+
+                if (isset($membership->project) && $membership->project) {
+                    $membershipData['project'] = [
+                        'gid' => $membership->project->gid ?? '',
                     ];
                 }
 
