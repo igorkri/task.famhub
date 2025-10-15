@@ -125,11 +125,12 @@ class ProcessAsanaWebhookJob implements ShouldQueue
                 $existingTask = Task::where('gid', $gid)->first();
 
                 if ($existingTask) {
-                    // Оновлюємо існуючий таск (без зміни project_id)
-                    Task::withoutEvents(function () use ($gid, $taskDetails, $section, $userId, $status) {
+                    // Оновлюємо існуючий таск
+                    Task::withoutEvents(function () use ($gid, $taskDetails, $project, $section, $userId, $status, $existingTask) {
                         Task::where('gid', $gid)->update([
                             'title' => $taskDetails['name'] ?? '',
                             'description' => $taskDetails['notes'] ?? '',
+                            'project_id' => $project?->id ?? $existingTask->project_id, // Используем существующий project_id если новый не найден
                             'section_id' => $section?->id,
                             'user_id' => $userId,
                             'status' => $status,
@@ -142,6 +143,7 @@ class ProcessAsanaWebhookJob implements ShouldQueue
                         'gid' => $gid,
                         'action' => $action,
                         'title' => $taskDetails['name'] ?? '',
+                        'project_id' => $project?->id ?? $existingTask->project_id,
                     ]);
                 } else {
                     // Створюємо новий таск - project_id обов'язковий
