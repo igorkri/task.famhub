@@ -185,11 +185,8 @@ class TasksTable
                     ->icon('heroicon-o-arrow-path')
                     ->action(function () use ($table) {
                         // Попробуем прочитать фильтр project_id из table
-                        $projectId = $table->getFilter('project_id')->getState();
-
-                        if (is_array($projectId)) {
-                            $projectId = reset($projectId);
-                        }
+                        $state = $table->getFilter('project_id')->getState();
+                        $projectId = $state['values'][0] ?? null;
 
                         if (! $projectId) {
                             \Filament\Notifications\Notification::make()
@@ -203,7 +200,7 @@ class TasksTable
 
                         // Достаём проект і диспатчим job
                         $project = \App\Models\Project::find($projectId);
-                        if (! $project) {
+                        if (! $project instanceof \App\Models\Project) {
                             \Filament\Notifications\Notification::make()
                                 ->danger()
                                 ->title('Проект не знайдено')
