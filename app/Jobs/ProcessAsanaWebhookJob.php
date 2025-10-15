@@ -121,6 +121,16 @@ class ProcessAsanaWebhookJob implements ShouldQueue
                     $status = $section->status;
                 }
 
+                // Проверяем, что проект найден - project_id обязательное поле
+                if (!$project) {
+                    Log::error('Webhook sync error: project not found', [
+                        'task_gid' => $gid,
+                        'task_name' => $taskDetails['name'] ?? '',
+                        'memberships' => $taskDetails['memberships'] ?? [],
+                    ]);
+                    return;
+                }
+
                 // Оновлюємо або створюємо таск (без спрацювання Observer)
                 Task::withoutEvents(function () use ($gid, $taskDetails, $project, $section, $userId, $status) {
                     Task::updateOrCreate(
