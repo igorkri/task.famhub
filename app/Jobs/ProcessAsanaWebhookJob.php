@@ -2,7 +2,6 @@
 
 namespace App\Jobs;
 
-use App\Models\Comment;
 use App\Models\Project;
 use App\Models\Section;
 use App\Models\Task;
@@ -96,7 +95,7 @@ class ProcessAsanaWebhookJob implements ShouldQueue
                                 break;
                             } else {
                                 \Log::warning('Project not found in database', [
-                                    'asana_project_gid' => $membership['project']['gid']
+                                    'asana_project_gid' => $membership['project']['gid'],
                                 ]);
                             }
                         }
@@ -104,7 +103,7 @@ class ProcessAsanaWebhookJob implements ShouldQueue
                 } else {
                     \Log::warning('No memberships found in task details', [
                         'gid' => $gid,
-                        'task_details' => $taskDetails
+                        'task_details' => $taskDetails,
                     ]);
                 }
 
@@ -148,50 +147,37 @@ class ProcessAsanaWebhookJob implements ShouldQueue
                 $existingTask = Task::where('gid', $gid)->first();
 
                 if ($existingTask) {
-                    $currentProjectId = $existingTask->project_id;
-
-                    // Оновлюємо існуючий таск
-                    Task::withoutEvents(function () use ($gid, $taskDetails, $project, $section, $userId, $status, $existingTask, $currentProjectId) {
-                        $newProjectId = $project?->id ?? $currentProjectId;
-
-                        // Проверяем, что project_id не будет null
-                        if (!$newProjectId) {
-                            \Log::error('Preventing null project_id update', [
-                                'gid' => $gid,
-                                'current_project_id' => $currentProjectId,
-                                'new_project_id' => $project?->id,
-                                'memberships' => $taskDetails['memberships'] ?? [],
-                            ]);
-                            return; // Прерываем обновление если project_id будет null
-                        }
-
+                    // Оновлюємо існуючий таск (зберігаємо існуючі значення, якщо нових немає)
+                    Task::withoutEvents(function () use ($gid, $taskDetails, $project, $section, $userId, $existingTask) {
                         $updateData = [
-                            'title' => $taskDetails['name'] ?? '',
-                            'description' => $taskDetails['notes'] ?? '',
-                            'project_id' => $newProjectId,
-                            'section_id' => $section?->id,
-                            'user_id' => $userId,
-                            'status' => $status,
-                            'is_completed' => $taskDetails['completed'] ?? false,
-                            'deadline' => $taskDetails['due_on'] ?? null,
+                            'title' => $taskDetails['name'] ?? $existingTask->title,
+                            'description' => $taskDetails['notes'] ?? $existingTask->description,
+                            'is_completed' => $taskDetails['completed'] ?? $existingTask->is_completed,
+                            'deadline' => $taskDetails['due_on'] ?? $existingTask->deadline,
                         ];
 
-                        \Log::info('Updating task', [
+                        // Оновлюємо тільки якщо є нові значення
+                        if ($project) {
+                            $updateData['project_id'] = $project->id;
+                        }
+
+                        if ($section) {
+                            $updateData['section_id'] = $section->id;
+                            $updateData['status'] = $section->status ?? $existingTask->status;
+                        }
+
+                        if ($userId) {
+                            $updateData['user_id'] = $userId;
+                        }
+
+                        $existingTask->update($updateData);
+
+                        Log::info('Task updated from webhook', [
                             'gid' => $gid,
-                            'current_project_id' => $currentProjectId,
-                            'new_project_id' => $newProjectId,
-                            'update_data' => $updateData,
+                            'action' => $action,
+                            'updated_fields' => array_keys($updateData),
                         ]);
-
-                        Task::where('gid', $gid)->update($updateData);
                     });
-
-                    Log::info('Task updated from webhook', [
-                        'gid' => $gid,
-                        'action' => $action,
-                        'title' => $taskDetails['name'] ?? '',
-                        'project_id' => $project?->id ?? $existingTask->project_id,
-                    ]);
                 } else {
                     // Створюємо новий таск - project_id обов'язковий
                     if (! $project) {
@@ -204,18 +190,18 @@ class ProcessAsanaWebhookJob implements ShouldQueue
                         return;
                     }
 
-                    Task::withoutEvents(function () use ($gid, $taskDetails, $project, $section, $userId, $status) {
-//                        Task::create([
-//                            'gid' => $gid,
-//                            'title' => $taskDetails['name'] ?? '',
-//                            'description' => $taskDetails['notes'] ?? '',
-//                            'project_id' => $project->id,
-//                            'section_id' => $section?->id,
-//                            'user_id' => $userId,
-//                            'status' => $status,
-//                            'is_completed' => $taskDetails['completed'] ?? false,
-//                            'deadline' => $taskDetails['due_on'] ?? null,
-//                        ]);
+                    Task::withoutEvents(function () {
+                        //                        Task::create([
+                        //                            'gid' => $gid,
+                        //                            'title' => $taskDetails['name'] ?? '',
+                        //                            'description' => $taskDetails['notes'] ?? '',
+                        //                            'project_id' => $project->id,
+                        //                            'section_id' => $section?->id,
+                        //                            'user_id' => $userId,
+                        //                            'status' => $status,
+                        //                            'is_completed' => $taskDetails['completed'] ?? false,
+                        //                            'deadline' => $taskDetails['due_on'] ?? null,
+                        //                        ]);
                     });
 
                     Log::info('Task created from webhook', [
@@ -265,7 +251,7 @@ class ProcessAsanaWebhookJob implements ShouldQueue
                         $teamId = $team->id;
                     } else {
                         \Log::warning('Team not found in database', [
-                            'asana_team_gid' => $projectDetails['team']['gid']
+                            'asana_team_gid' => $projectDetails['team']['gid'],
                         ]);
                     }
                 }
@@ -353,4 +339,3 @@ class ProcessAsanaWebhookJob implements ShouldQueue
         }
     }
 }
-
