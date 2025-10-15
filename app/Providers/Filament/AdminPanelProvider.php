@@ -70,9 +70,21 @@ class AdminPanelProvider extends PanelProvider
                     ->map(fn (Project $project) => NavigationItem::make($project->name)
                         ->url(TaskResource::getUrl('index', [
                             'filters' => [
-                                'project_id' => ['value' => $project->id],
+                                'project_id' => [
+                                    'values' => [$project->id],
+                                ],
+                                'user_id' => [
+                                    'values' => [4]
+                                ],
+                                'status' => [
+                                    'values' => ['in_progress', 'planned', 'new', 'needs_clarification' ],
+                                ]
                             ],
                         ]))
+                        ->badge(fn () => \App\Models\Task::where('project_id', $project->id)
+                            ->where('user_id', 4)
+                            ->whereIn('status', ['in_progress', 'planned', 'new', 'needs_clarification'])
+                            ->count())
                     )
                     ->all();
 

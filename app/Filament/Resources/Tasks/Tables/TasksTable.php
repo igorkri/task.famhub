@@ -3,14 +3,11 @@
 namespace App\Filament\Resources\Tasks\Tables;
 
 use App\Jobs\SyncProjectAsanaTasks;
-use App\Jobs\SyncTaskFromAsana;
 use App\Models\Task;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\TextInput;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Filters\Filter;
@@ -35,7 +32,7 @@ class TasksTable
                     ->sortable(),
                 TextColumn::make('title')
                     ->label('Назва')
-                    ->limit(250)
+                    ->limit(50)
                     ->searchable(),
                 TextColumn::make('user_id')
                     ->label('Відповідальний')
@@ -45,7 +42,15 @@ class TasksTable
                     ->label('Завершено'),
                 TextColumn::make('status')
                     ->label('Статус')
-                    ->getStateUsing(fn ($record) => $record->status ? Task::$statuses[$record->status] : '-')
+                    ->getStateUsing(fn($record) => $record->status ? Task::$statuses[$record->status] : '-')
+                    ->badge()
+                    ->colors([
+                        'primary' => fn ($state): bool => in_array($state, [Task::$statuses['new']]),
+                        'warning' => fn ($state): bool => in_array($state, [Task::$statuses['in_progress']]),
+                        'success' => fn ($state): bool => in_array($state, [Task::$statuses['completed']]),
+                        'danger' => fn ($state): bool => in_array($state, [Task::$statuses['canceled']]),
+                        'info' => fn ($state): bool => in_array($state, [Task::$statuses['needs_clarification']]),
+                    ])
                     ->searchable(),
                 TextColumn::make('priority')
                     ->label('Пріоритет')
@@ -95,13 +100,16 @@ class TasksTable
             ])
             ->filters([
                 SelectFilter::make('project_id')
+                    ->multiple()
                     ->label('Проєкт')
                     ->relationship('project', 'name'),
                 SelectFilter::make('user_id')
                     ->label('Відповідальний')
+                    ->multiple()
                     ->relationship('user', 'name'),
                 SelectFilter::make('status')
                     ->label('Статус')
+                    ->multiple()
                     ->options(Task::$statuses),
                 SelectFilter::make('priority')
                     ->label('Пріоритет')
