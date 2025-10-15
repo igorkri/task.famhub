@@ -68,21 +68,44 @@ class ProcessAsanaWebhookJob implements ShouldQueue
         }
 
         if (in_array($action, ['added', 'changed'])) {
-            // Отримуємо деталі таску з Asana
             try {
                 $taskDetails = $service->getTaskDetails($gid);
+
+                \Log::info('Task details from Asana', [
+                    'gid' => $gid,
+                    'memberships' => $taskDetails['memberships'] ?? [],
+                ]);
 
                 // Знаходимо проект
                 $project = null;
                 if (! empty($taskDetails['memberships'])) {
                     foreach ($taskDetails['memberships'] as $membership) {
+                        \Log::info('Processing membership', [
+                            'membership' => $membership,
+                            'has_project' => isset($membership['project']),
+                            'project_data' => $membership['project'] ?? null,
+                        ]);
+
                         if (isset($membership['project']['gid'])) {
                             $project = Project::where('asana_id', $membership['project']['gid'])->first();
                             if ($project) {
+                                \Log::info('Found project', [
+                                    'project_id' => $project->id,
+                                    'asana_id' => $project->asana_id,
+                                ]);
                                 break;
+                            } else {
+                                \Log::warning('Project not found in database', [
+                                    'asana_project_gid' => $membership['project']['gid']
+                                ]);
                             }
                         }
                     }
+                } else {
+                    \Log::warning('No memberships found in task details', [
+                        'gid' => $gid,
+                        'task_details' => $taskDetails
+                    ]);
                 }
 
                 // Знаходимо секцію
@@ -125,18 +148,42 @@ class ProcessAsanaWebhookJob implements ShouldQueue
                 $existingTask = Task::where('gid', $gid)->first();
 
                 if ($existingTask) {
+                    $currentProjectId = $existingTask->project_id;
+
                     // Оновлюємо існуючий таск
-                    Task::withoutEvents(function () use ($gid, $taskDetails, $project, $section, $userId, $status, $existingTask) {
-                        Task::where('gid', $gid)->update([
+                    Task::withoutEvents(function () use ($gid, $taskDetails, $project, $section, $userId, $status, $existingTask, $currentProjectId) {
+                        $newProjectId = $project?->id ?? $currentProjectId;
+
+                        // Проверяем, что project_id не будет null
+                        if (!$newProjectId) {
+                            \Log::error('Preventing null project_id update', [
+                                'gid' => $gid,
+                                'current_project_id' => $currentProjectId,
+                                'new_project_id' => $project?->id,
+                                'memberships' => $taskDetails['memberships'] ?? [],
+                            ]);
+                            return; // Прерываем обновление если project_id будет null
+                        }
+
+                        $updateData = [
                             'title' => $taskDetails['name'] ?? '',
                             'description' => $taskDetails['notes'] ?? '',
-                            'project_id' => $project?->id ?? $existingTask->project_id, // Используем существующий project_id если новый не найден
+                            'project_id' => $newProjectId,
                             'section_id' => $section?->id,
                             'user_id' => $userId,
                             'status' => $status,
                             'is_completed' => $taskDetails['completed'] ?? false,
                             'deadline' => $taskDetails['due_on'] ?? null,
+                        ];
+
+                        \Log::info('Updating task', [
+                            'gid' => $gid,
+                            'current_project_id' => $currentProjectId,
+                            'new_project_id' => $newProjectId,
+                            'update_data' => $updateData,
                         ]);
+
+                        Task::where('gid', $gid)->update($updateData);
                     });
 
                     Log::info('Task updated from webhook', [
@@ -175,23 +222,26 @@ class ProcessAsanaWebhookJob implements ShouldQueue
                         'gid' => $gid,
                         'action' => $action,
                         'title' => $taskDetails['name'] ?? '',
+                        'project_id' => $project->id,
                     ]);
                 }
             } catch (\Exception $e) {
-                Log::error('Failed to sync task from webhook', [
+                Log::error('Error processing task event', [
                     'gid' => $gid,
-                    'error' => $e->getMessage(),
+                    'action' => $action,
+                    'exception' => $e->getMessage(),
                 ]);
             }
         }
     }
 
     /**
-     * Handle project events.
+     * Handle project events (created, changed, deleted).
      */
     protected function handleProjectEvent(string $action, string $gid, AsanaService $service): void
     {
         if ($action === 'deleted') {
+            // Видаляємо проект з бази
             Project::where('asana_id', $gid)->delete();
             Log::info('Project deleted from webhook', ['gid' => $gid]);
 
@@ -199,74 +249,73 @@ class ProcessAsanaWebhookJob implements ShouldQueue
         }
 
         if (in_array($action, ['added', 'changed'])) {
-            // Можна додати синхронізацію проекту
-            Log::info('Project event received', ['action' => $action, 'gid' => $gid]);
-        }
-    }
-
-    /**
-     * Handle story (comment) events.
-     */
-    protected function handleStoryEvent(string $action, string $gid, array $resource, AsanaService $service): void
-    {
-        // Story - це коментарі в Asana
-        if ($action === 'added') {
-            // Знаходимо батьківський таск
-            $parentGid = $resource['parent']['gid'] ?? null;
-            if (! $parentGid) {
-                return;
-            }
-
-            $task = Task::where('gid', $parentGid)->first();
-            if (! $task) {
-                Log::warning('Task not found for story', ['parent_gid' => $parentGid]);
-
-                return;
-            }
-
-            // Отримуємо деталі коментаря
             try {
-                $storyDetails = $service->getStoryDetails($gid);
+                $projectDetails = $service->getProjectDetails($gid);
 
-                // Перевіряємо, чи це текстовий коментар
-                if (($storyDetails['type'] ?? '') === 'comment' && ! empty($storyDetails['text'])) {
-                    // Знаходимо автора
-                    $authorGid = $storyDetails['created_by']['gid'] ?? null;
-                    $author = null;
-                    if ($authorGid) {
-                        $author = User::where('asana_gid', $authorGid)->first();
-                    }
-
-                    // Створюємо коментар (якщо його ще немає)
-                    Comment::firstOrCreate(
-                        ['asana_gid' => $gid],
-                        [
-                            'task_id' => $task->id,
-                            'user_id' => $author?->id,
-                            'content' => $storyDetails['text'],
-                        ]
-                    );
-
-                    Log::info('Comment synced from webhook', [
-                        'story_gid' => $gid,
-                        'task_gid' => $parentGid,
-                    ]);
-                }
-            } catch (\Exception $e) {
-                Log::error('Failed to sync story from webhook', [
+                \Log::info('Project details from Asana', [
                     'gid' => $gid,
-                    'error' => $e->getMessage(),
+                    'team' => $projectDetails['team'] ?? null,
+                ]);
+
+                // Знаходимо команду
+                $teamId = null;
+                if (! empty($projectDetails['team']['gid'])) {
+                    $team = Team::where('asana_gid', $projectDetails['team']['gid'])->first();
+                    if ($team) {
+                        $teamId = $team->id;
+                    } else {
+                        \Log::warning('Team not found in database', [
+                            'asana_team_gid' => $projectDetails['team']['gid']
+                        ]);
+                    }
+                }
+
+                // Оновлюємо або створюємо проект
+                Project::updateOrCreate(
+                    ['asana_id' => $gid],
+                    [
+                        'name' => $projectDetails['name'] ?? '',
+                        'description' => $projectDetails['notes'] ?? '',
+                        'team_id' => $teamId,
+                        'asana_data' => $projectDetails,
+                    ]
+                );
+
+                Log::info('Project synced from webhook', [
+                    'gid' => $gid,
+                    'action' => $action,
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Error processing project event', [
+                    'gid' => $gid,
+                    'action' => $action,
+                    'exception' => $e->getMessage(),
                 ]);
             }
         }
     }
 
     /**
-     * Handle section events.
+     * Handle story events (created, changed, deleted).
+     */
+    protected function handleStoryEvent(string $action, string $gid, array $resource, AsanaService $service): void
+    {
+        // Stories in Asana are a type of task, we might not need separate handling
+        Log::info('Story event received', [
+            'action' => $action,
+            'gid' => $gid,
+        ]);
+
+        $this->handleTaskEvent($action, $gid, $service);
+    }
+
+    /**
+     * Handle section events (created, changed, deleted).
      */
     protected function handleSectionEvent(string $action, string $gid, AsanaService $service): void
     {
         if ($action === 'deleted') {
+            // Видаляємо секцію з бази
             Section::where('asana_gid', $gid)->delete();
             Log::info('Section deleted from webhook', ['gid' => $gid]);
 
@@ -274,8 +323,34 @@ class ProcessAsanaWebhookJob implements ShouldQueue
         }
 
         if (in_array($action, ['added', 'changed'])) {
-            // Можна додати синхронізацію секції
-            Log::info('Section event received', ['action' => $action, 'gid' => $gid]);
+            try {
+                $sectionDetails = $service->getSectionDetails($gid);
+
+                \Log::info('Section details from Asana', [
+                    'gid' => $gid,
+                ]);
+
+                // Оновлюємо або створюємо секцію
+                Section::updateOrCreate(
+                    ['asana_gid' => $gid],
+                    [
+                        'name' => $sectionDetails['name'] ?? '',
+                        'asana_data' => $sectionDetails,
+                    ]
+                );
+
+                Log::info('Section synced from webhook', [
+                    'gid' => $gid,
+                    'action' => $action,
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Error processing section event', [
+                    'gid' => $gid,
+                    'action' => $action,
+                    'exception' => $e->getMessage(),
+                ]);
+            }
         }
     }
 }
+

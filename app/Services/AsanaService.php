@@ -107,6 +107,7 @@ class AsanaService
                     if (isset($membership->project) && $membership->project) {
                         $membershipData['project'] = [
                             'gid' => $membership->project->gid ?? '',
+                            'name' => $membership->project->name ?? '',
                         ];
                     }
 
@@ -146,7 +147,13 @@ class AsanaService
     public function getTaskDetails(string $taskId): array
     {
         $task = $this->client->tasks->findById($taskId, [
-            'opt_fields' => 'gid,name,notes,completed,due_on,start_on,assignee.gid,assignee.name,assignee.email,memberships.section.gid,memberships.project.gid,custom_fields,created_at,modified_at',
+            'opt_fields' => 'gid,name,notes,completed,due_on,start_on,assignee.gid,assignee.name,assignee.email,memberships.section.gid,memberships.project.gid,memberships.project.name,custom_fields,created_at,modified_at',
+        ]);
+
+        // Логируем raw ответ для отладки
+        \Log::info('Raw Asana API response for task', [
+            'task_gid' => $taskId,
+            'raw_response' => json_encode($task),
         ]);
 
         // Конвертируем stdClass в массив правильным образом
@@ -191,6 +198,7 @@ class AsanaService
                 if (isset($membership->project) && $membership->project) {
                     $membershipData['project'] = [
                         'gid' => $membership->project->gid ?? '',
+                        'name' => $membership->project->name ?? '',
                     ];
                 }
 
