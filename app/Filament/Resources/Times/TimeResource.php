@@ -47,7 +47,9 @@ class TimeResource extends Resource
 
     public static function table(Table $table): Table
     {
-        return TimesTable::configure($table);
+        return TimesTable::configure(
+            $table->modifyQueryUsing(fn ($query) => $query->selectRaw('*, (duration / 3600 * coefficient * ' . Time::PRICE . ') as calculated_amount'))
+        );
     }
 
     public static function getRelations(): array

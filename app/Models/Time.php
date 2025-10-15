@@ -25,6 +25,7 @@ use Illuminate\Database\Eloquent\Model;
 class Time extends Model
 {
      const COEFFICIENT_STANDARD = 1.2; // стандартний коефіцієнт
+    const PRICE = 400; // базова погодинна ставка в грн
 
     // заплановано, в процесі, завершено, скасовано, експорт акту, потребує уточнення
     const STATUS_NEW = 'new'; // новий
@@ -34,6 +35,8 @@ class Time extends Model
     const STATUS_NEEDS_CLARIFICATION = 'needs_clarification'; // потребує уточнення
     const STATUS_PLANNED = 'planned'; // заплановано
     const STATUS_EXPORT_AKT = 'export_akt'; // експорт акту
+
+    public $calculated_amount;
 
     protected $fillable = [
         'task_id',
@@ -58,6 +61,15 @@ class Time extends Model
         'status' => 'string',
         'report_status' => 'string',
     ];
+
+    protected $appends = [
+        'calculated_amount',
+    ];
+
+    public function getCalculatedAmountAttribute()
+    {
+        return (($this->duration / 3600) * $this->coefficient) * self::PRICE;
+    }
 
     public static array $statuses = [
         self::STATUS_NEW                    => 'Новий',

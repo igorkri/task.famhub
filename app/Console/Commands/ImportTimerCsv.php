@@ -107,6 +107,12 @@ class ImportTimerCsv extends Command
                 default => 'new',
             };
 
+            $statusReport = match ($row[8]) {
+                'ok' => 'submitted',
+                'not_ok' => 'not_submitted',
+                default => null,
+            };
+
             $sec = (int) $row[3] * 60;
 
             \App\Models\Time::updateOrCreate(
@@ -120,7 +126,7 @@ class ImportTimerCsv extends Command
                     'description' => $row[5], // comment
                     'coefficient' => (float) $row[4], // coefficient
                     'status' => $status,
-                    'report_status' => $row[8], // status_act
+                    'report_status' => $statusReport, // status_act
                     'is_archived' => (bool) $row[7], // archive
                     'updated_at' => $row[10], // updated_at
                     'created_at' => $row[9], // created_at
