@@ -158,17 +158,17 @@ class ProcessAsanaWebhookJob implements ShouldQueue
                     }
 
                     Task::withoutEvents(function () use ($gid, $taskDetails, $project, $section, $userId, $status) {
-                        Task::create([
-                            'gid' => $gid,
-                            'title' => $taskDetails['name'] ?? '',
-                            'description' => $taskDetails['notes'] ?? '',
-                            'project_id' => $project->id,
-                            'section_id' => $section?->id,
-                            'user_id' => $userId,
-                            'status' => $status,
-                            'is_completed' => $taskDetails['completed'] ?? false,
-                            'deadline' => $taskDetails['due_on'] ?? null,
-                        ]);
+//                        Task::create([
+//                            'gid' => $gid,
+//                            'title' => $taskDetails['name'] ?? '',
+//                            'description' => $taskDetails['notes'] ?? '',
+//                            'project_id' => $project->id,
+//                            'section_id' => $section?->id,
+//                            'user_id' => $userId,
+//                            'status' => $status,
+//                            'is_completed' => $taskDetails['completed'] ?? false,
+//                            'deadline' => $taskDetails['due_on'] ?? null,
+//                        ]);
                     });
 
                     Log::info('Task created from webhook', [
