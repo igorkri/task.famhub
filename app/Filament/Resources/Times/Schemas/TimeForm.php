@@ -2,14 +2,13 @@
 
 namespace App\Filament\Resources\Times\Schemas;
 
-use App\Models\Project;
 use App\Models\Task;
 use App\Models\Time;
 use App\Models\User;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\TimePicker;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
@@ -24,7 +23,7 @@ class TimeForm
                 Select::make('task_id')
                     ->label('Завдання')
                     ->required()
-                    ->options(Task::with('project')->get()->sortByDesc('title')->mapWithKeys(fn ($task) => [$task->id => $task->project->name . ' - ' . $task->title])->toArray())
+                    ->options(Task::with('project')->get()->sortByDesc('title')->mapWithKeys(fn ($task) => [$task->id => $task->project->name.' - '.$task->title])->toArray())
                     ->searchable()
                     ->placeholder('Виберіть завдання...'),
                 Select::make('user_id')->label('Виконавець')->required()
@@ -38,7 +37,7 @@ class TimeForm
                     ->required()
                     ->default(1.2)
                     ->numeric(),
-//                    ->options(Time::$coefficients),
+                //                    ->options(Time::$coefficients),
                 TimePicker::make('duration')
                     ->label('Тривалість (год:хв:сек)')
                     ->required()

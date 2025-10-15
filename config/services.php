@@ -37,5 +37,6 @@ return [
     'asana' => [
         'token' => env('ASANA_TOKEN'),
         'workspace_id' => env('ASANA_WORKSPACE_ID'),
+        'webhook_secret' => env('ASANA_WEBHOOK_SECRET'), // Optional: для додаткової безпеки
     ],
 ];

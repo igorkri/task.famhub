@@ -6,8 +6,8 @@ use App\Filament\Resources\Sections\SectionResource;
 use App\Filament\Resources\Tasks\TaskResource;
 use App\Filament\Resources\Times\TimeResource;
 use App\Models\Project;
-use BezhanSalleh\FilamentShield\Resources\Roles\RoleResource;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
+use BezhanSalleh\FilamentShield\Resources\Roles\RoleResource;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
@@ -74,11 +74,11 @@ class AdminPanelProvider extends PanelProvider
                                     'values' => [$project->id],
                                 ],
                                 'user_id' => [
-                                    'values' => [4]
+                                    'values' => [4],
                                 ],
                                 'status' => [
-                                    'values' => ['in_progress', 'planned', 'new', 'needs_clarification' ],
-                                ]
+                                    'values' => ['in_progress', 'planned', 'new', 'needs_clarification'],
+                                ],
                             ],
                         ]))
                         ->badge(fn () => \App\Models\Task::where('project_id', $project->id)

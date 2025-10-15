@@ -14,6 +14,7 @@ class ViewProject extends ViewRecord
     {
         return ProjectResource::getNavigationLabel();
     }
+
     protected function getHeaderActions(): array
     {
         return [

@@ -13,7 +13,7 @@ class EditProject extends EditRecord
 
     public function getTitle(): string
     {
-        return 'Редагування проєкту: ' . $this->record->name;
+        return 'Редагування проєкту: '.$this->record->name;
     }
 
     protected function getHeaderActions(): array

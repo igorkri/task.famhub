@@ -42,7 +42,7 @@ class TasksTable
                     ->label('Завершено'),
                 TextColumn::make('status')
                     ->label('Статус')
-                    ->getStateUsing(fn($record) => $record->status ? Task::$statuses[$record->status] : '-')
+                    ->getStateUsing(fn ($record) => $record->status ? Task::$statuses[$record->status] : '-')
                     ->badge()
                     ->colors([
                         'primary' => fn ($state): bool => in_array($state, [Task::$statuses['new']]),
@@ -117,67 +117,67 @@ class TasksTable
                 Filter::make('is_completed')
                     ->label('Завершено')
                     ->query(fn (Builder $query) => $query->where('is_completed', true)),
-//                Filter::make('created_at')
-//                    ->label('Створено від/до')
-//                    ->form([
-//                        DatePicker::make('created_from')->label('Від'),
-//                        DatePicker::make('created_to')->label('До'),
-//                    ])
-//                    ->query(fn (Builder $query, array $data) => ($data['created_from'] ? $query->whereDate('created_at', '>=', $data['created_from']) : $query)
-//                        ->when($data['created_to'], fn (Builder $q) => $q->whereDate('created_at', '<=', $data['created_to']))),
-//                Filter::make('deadline')
-//                    ->label('Дедлайн від/до')
-//                    ->form([
-//                        DatePicker::make('from')->label('Від'),
-//                        DatePicker::make('to')->label('До'),
-//                    ])
-//                    ->query(fn (Builder $query, array $data) => ($data['from'] ? $query->whereDate('deadline', '>=', $data['from']) : $query)
-//                        ->when($data['to'], fn (Builder $q) => $q->whereDate('deadline', '<=', $data['to']))),
-//                Filter::make('budget')
-//                    ->label('Бюджет від/до')
-//                    ->form([
-//                        TextInput::make('min')->label('Мін')->numeric(),
-//                        TextInput::make('max')->label('Макс')->numeric(),
-//                    ])
-//                    ->query(fn (Builder $query, array $data) => (filled($data['min']) ? $query->where('budget', '>=', $data['min']) : $query)
-//                        ->when(filled($data['max']), fn (Builder $q) => $q->where('budget', '<=', $data['max']))),
-//                Filter::make('progress')
-//                    ->label('Прогрес від/до')
-//                    ->form([
-//                        TextInput::make('min')->label('Мін')->numeric(),
-//                        TextInput::make('max')->label('Макс')->numeric(),
-//                    ])
-//                    ->query(fn (Builder $query, array $data) => (filled($data['min']) ? $query->where('progress', '>=', $data['min']) : $query)
-//                        ->when(filled($data['max']), fn (Builder $q) => $q->where('progress', '<=', $data['max']))),
+                //                Filter::make('created_at')
+                //                    ->label('Створено від/до')
+                //                    ->form([
+                //                        DatePicker::make('created_from')->label('Від'),
+                //                        DatePicker::make('created_to')->label('До'),
+                //                    ])
+                //                    ->query(fn (Builder $query, array $data) => ($data['created_from'] ? $query->whereDate('created_at', '>=', $data['created_from']) : $query)
+                //                        ->when($data['created_to'], fn (Builder $q) => $q->whereDate('created_at', '<=', $data['created_to']))),
+                //                Filter::make('deadline')
+                //                    ->label('Дедлайн від/до')
+                //                    ->form([
+                //                        DatePicker::make('from')->label('Від'),
+                //                        DatePicker::make('to')->label('До'),
+                //                    ])
+                //                    ->query(fn (Builder $query, array $data) => ($data['from'] ? $query->whereDate('deadline', '>=', $data['from']) : $query)
+                //                        ->when($data['to'], fn (Builder $q) => $q->whereDate('deadline', '<=', $data['to']))),
+                //                Filter::make('budget')
+                //                    ->label('Бюджет від/до')
+                //                    ->form([
+                //                        TextInput::make('min')->label('Мін')->numeric(),
+                //                        TextInput::make('max')->label('Макс')->numeric(),
+                //                    ])
+                //                    ->query(fn (Builder $query, array $data) => (filled($data['min']) ? $query->where('budget', '>=', $data['min']) : $query)
+                //                        ->when(filled($data['max']), fn (Builder $q) => $q->where('budget', '<=', $data['max']))),
+                //                Filter::make('progress')
+                //                    ->label('Прогрес від/до')
+                //                    ->form([
+                //                        TextInput::make('min')->label('Мін')->numeric(),
+                //                        TextInput::make('max')->label('Макс')->numeric(),
+                //                    ])
+                //                    ->query(fn (Builder $query, array $data) => (filled($data['min']) ? $query->where('progress', '>=', $data['min']) : $query)
+                //                        ->when(filled($data['max']), fn (Builder $q) => $q->where('progress', '<=', $data['max']))),
             ])
             ->recordActions([
                 EditAction::make(),
-//                Action::make('sync_asana')
-//                    ->label('Синхронізувати Asana')
-//                    ->icon('heroicon-o-arrow-path')
-//                    ->requiresConfirmation()
-//                    ->action(function (App\Models\Task $record) {
-//                        $task = $record;
-//
-//                        $gid = $task->gid ?? null;
-//                        if (! $gid) {
-//                            \Filament\Notifications\Notification::make()
-//                                ->danger()
-//                                ->title('Відсутній Asana task id')
-//                                ->body('Для цього завдання не налаштовано Asana GID.')
-//                                ->send();
-//
-//                            return;
-//                        }
-//
-//                        SyncTaskFromAsana::dispatch($task);
-//
-//                        \Filament\Notifications\Notification::make()
-//                            ->info()
-//                            ->title('Синхронізація поставлена в чергу')
-//                            ->body('Синхронізація завдання поставлена в чергу і буде виконана найближчим часом.')
-//                            ->send();
-//                    }),
+                //                Action::make('sync_asana')
+                //                    ->label('Синхронізувати Asana')
+                //                    ->icon('heroicon-o-arrow-path')
+                //                    ->requiresConfirmation()
+                //                    ->action(function (App\Models\Task $record) {
+                //                        $task = $record;
+                //
+                //                        $gid = $task->gid ?? null;
+                //                        if (! $gid) {
+                //                            \Filament\Notifications\Notification::make()
+                //                                ->danger()
+                //                                ->title('Відсутній Asana task id')
+                //                                ->body('Для цього завдання не налаштовано Asana GID.')
+                //                                ->send();
+                //
+                //                            return;
+                //                        }
+                //
+                //                        SyncTaskFromAsana::dispatch($task);
+                //
+                //                        \Filament\Notifications\Notification::make()
+                //                            ->info()
+                //                            ->title('Синхронізація поставлена в чергу')
+                //                            ->body('Синхронізація завдання поставлена в чергу і буде виконана найближчим часом.')
+                //                            ->send();
+                //                    }),
             ])
             ->toolbarActions([
                 Action::make('sync_project_asana')

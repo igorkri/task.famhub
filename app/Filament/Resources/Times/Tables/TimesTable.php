@@ -6,9 +6,8 @@ use App\Models\Time;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
-use Filament\Tables\Columns\IconColumn;
-use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\Summarizers\Sum;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Table;
 
@@ -18,9 +17,9 @@ class TimesTable
     {
         return $table
             ->columns([
-//                TextColumn::make('task_id')
-//                    ->numeric()
-//                    ->sortable(),
+                //                TextColumn::make('task_id')
+                //                    ->numeric()
+                //                    ->sortable(),
 
                 TextColumn::make('user.name')
                     ->label('Виконавець')
@@ -46,16 +45,13 @@ class TimesTable
                     ->numeric()
                     ->sortable(),
 
-
-                        TextColumn::make('calculated_amount')
-                            ->label('Сума, грн')
-                            ->formatStateUsing(fn ($state) => number_format($state, 2))
-                            ->numeric()
-                            ->sortable(query: fn ($query, $direction) => $query->orderByRaw('(duration / 3600 * coefficient * ' . \App\Models\Time::PRICE . ') ' . $direction))
-                            ->summarize(Sum::make()->label('Загальна сума'))
-                            ->toggleable(isToggledHiddenByDefault: true),
-
-
+                TextColumn::make('calculated_amount')
+                    ->label('Сума, грн')
+                    ->formatStateUsing(fn ($state) => number_format($state, 2))
+                    ->numeric()
+                    ->sortable(query: fn ($query, $direction) => $query->orderByRaw('(duration / 3600 * coefficient * '.\App\Models\Time::PRICE.') '.$direction))
+                    ->summarize(Sum::make()->label('Загальна сума'))
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('status')
                     ->label('Статус')
@@ -90,7 +86,7 @@ class TimesTable
                     ->options([
                         0 => 'Не в архіві',
                         1 => 'В архіві',
-                        ])->label('Фільтр за архівом'),
+                    ])->label('Фільтр за архівом'),
                 // report_status filter
                 \Filament\Tables\Filters\SelectFilter::make('report_status')
                     ->options(Time::$reportStatuses)

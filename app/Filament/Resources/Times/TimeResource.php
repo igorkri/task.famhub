@@ -12,7 +12,6 @@ use App\Models\Time;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
-use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 
 class TimeResource extends Resource
@@ -20,9 +19,13 @@ class TimeResource extends Resource
     protected static ?string $model = Time::class;
 
     protected static string|BackedEnum|null $navigationIcon = Navigation::NAVIGATION['TIME']['ICON'];
+
     protected static string|null|\UnitEnum $navigationGroup = Navigation::NAVIGATION['TIME']['GROUP'];
+
     protected static ?int $navigationSort = Navigation::NAVIGATION['TIME']['SORT'];
+
     protected static ?string $navigationLabel = Navigation::NAVIGATION['TIME']['LABEL'];
+
     public static function getModelLabel(): string
     {
         return Navigation::NAVIGATION['TIME']['LABEL'];
@@ -48,7 +51,7 @@ class TimeResource extends Resource
     public static function table(Table $table): Table
     {
         return TimesTable::configure(
-            $table->modifyQueryUsing(fn ($query) => $query->selectRaw('*, (duration / 3600 * coefficient * ' . Time::PRICE . ') as calculated_amount'))
+            $table->modifyQueryUsing(fn ($query) => $query->selectRaw('*, (duration / 3600 * coefficient * '.Time::PRICE.') as calculated_amount'))
         );
     }
 

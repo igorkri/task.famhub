@@ -15,6 +15,7 @@ class ListProjectUsers extends ListRecords
     {
         return Navigation::NAVIGATION['PROJECT_USER']['LABEL'];
     }
+
     protected function getHeaderActions(): array
     {
         return [

@@ -3,8 +3,6 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Storage;
-
 
 /**
  * php artisan app:import-timer-csv
@@ -47,8 +45,6 @@ use Illuminate\Support\Facades\Storage;
  * self::STATUS_PAID => 'Оплачено', // 4
  * //        self::STATUS_NEED_CLARIFICATION => 'Потребує уточнення', // 5
  * ];
- *
- *
  */
 class ImportTimerCsv extends Command
 {
@@ -72,7 +68,7 @@ class ImportTimerCsv extends Command
     public function handle(): void
     {
         $content = file_get_contents(base_path('storage/timer.csv'));
-        $stream = fopen('data://text/plain,' . $content, 'r');
+        $stream = fopen('data://text/plain,'.$content, 'r');
         $data = [];
         $header = fgetcsv($stream); // skip header
         while (($row = fgetcsv($stream)) !== false) {
@@ -81,23 +77,26 @@ class ImportTimerCsv extends Command
         fclose($stream);
 
         // очищаем таблицу times
-         \App\Models\Time::truncate();
-        $this->info('Importing ' . count($data) . ' rows...');
+        \App\Models\Time::truncate();
+        $this->info('Importing '.count($data).' rows...');
         foreach ($data as $row) {
             if (count($row) < 11) {
-                $this->warn("Invalid row with insufficient columns, skipping: " . json_encode($row));
+                $this->warn('Invalid row with insufficient columns, skipping: '.json_encode($row));
+
                 continue;
             }
 
             $taskGid = $row[1]; // task_gid
             $task = \App\Models\Task::where('gid', $taskGid)->first();
-            if (!$task) {
+            if (! $task) {
                 $this->warn("Task with gid {$taskGid} not found, skipping.");
+
                 continue;
             }
 
-            if (!$task->user_id) {
+            if (! $task->user_id) {
                 $this->warn("Task with gid {$taskGid} has no user_id, skipping.");
+
                 continue;
             }
 
@@ -124,9 +123,9 @@ class ImportTimerCsv extends Command
             }
 
             if ($task->gid == '1209415103347707') {
-            $this->info('Importing ' . $task->id . '...');
-            $this->info('coefficient ' . $coefficient);
-            $this->info('duration ' . $sec);
+                $this->info('Importing '.$task->id.'...');
+                $this->info('coefficient '.$coefficient);
+                $this->info('duration '.$sec);
             }
 
             \App\Models\Time::updateOrCreate(

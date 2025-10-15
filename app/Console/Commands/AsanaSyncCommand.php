@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
 use App\Jobs\AsanaSyncAllJob;
+use Illuminate\Console\Command;
 
 class AsanaSyncCommand extends Command
 {
@@ -31,7 +31,7 @@ class AsanaSyncCommand extends Command
             $this->info('Asana sync job dispatched to queue.');
         } else {
             // Run synchronously
-            $job = new AsanaSyncAllJob();
+            $job = new AsanaSyncAllJob;
             $job->handle();
             $this->info('Asana sync completed synchronously.');
         }

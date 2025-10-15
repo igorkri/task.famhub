@@ -12,7 +12,6 @@ use App\Models\ProjectUser;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
-use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 
 class ProjectUserResource extends Resource
@@ -20,7 +19,9 @@ class ProjectUserResource extends Resource
     protected static ?string $model = ProjectUser::class;
 
     protected static string|BackedEnum|null $navigationIcon = Navigation::NAVIGATION['PROJECT_USER']['ICON'];
+
     protected static string|null|\UnitEnum $navigationGroup = Navigation::NAVIGATION['PROJECT_USER']['GROUP'];
+
     protected static ?int $navigationSort = Navigation::NAVIGATION['PROJECT_USER']['SORT'];
 
     // назва в меню
@@ -41,7 +42,6 @@ class ProjectUserResource extends Resource
     {
         return Navigation::NAVIGATION['PROJECT_USER']['LABEL'];
     }
-
 
     public static function form(Schema $schema): Schema
     {

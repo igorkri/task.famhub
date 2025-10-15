@@ -352,4 +352,85 @@ class AsanaService
 
         return $result;
     }
+
+    /**
+     * Отримати деталі story (коментаря).
+     *
+     * @return array{gid: string, type: string, text: string, created_by: array}
+     */
+    public function getStoryDetails(string $storyId): array
+    {
+        $story = $this->client->stories->findById($storyId);
+
+        return [
+            'gid' => $story->gid ?? '',
+            'type' => $story->resource_subtype ?? '',
+            'text' => $story->text ?? '',
+            'created_by' => [
+                'gid' => $story->created_by->gid ?? '',
+                'name' => $story->created_by->name ?? '',
+                'email' => $story->created_by->email ?? '',
+            ],
+        ];
+    }
+
+    /**
+     * Створити webhook для ресурсу.
+     *
+     * @param  string  $resourceId  GID проекту, портфоліо або workspace
+     * @param  string  $target  URL для отримання webhooks
+     * @return array{gid: string, resource: array, target: string, active: bool}
+     */
+    public function createWebhook(string $resourceId, string $target): array
+    {
+        $webhook = $this->client->webhooks->create([
+            'resource' => $resourceId,
+            'target' => $target,
+        ]);
+
+        return [
+            'gid' => $webhook->gid ?? '',
+            'resource' => [
+                'gid' => $webhook->resource->gid ?? '',
+                'name' => $webhook->resource->name ?? '',
+            ],
+            'target' => $webhook->target ?? '',
+            'active' => $webhook->active ?? false,
+        ];
+    }
+
+    /**
+     * Отримати всі webhooks для workspace.
+     *
+     * @return array<array{gid: string, resource: array, target: string, active: bool}>
+     */
+    public function getWebhooks(string $workspaceId): array
+    {
+        $webhooks = $this->client->webhooks->getAll([
+            'workspace' => $workspaceId,
+        ]);
+
+        $result = [];
+        foreach ($webhooks as $webhook) {
+            $result[] = [
+                'gid' => $webhook->gid ?? '',
+                'resource' => [
+                    'gid' => $webhook->resource->gid ?? '',
+                    'name' => $webhook->resource->name ?? '',
+                ],
+                'target' => $webhook->target ?? '',
+                'active' => $webhook->active ?? false,
+            ];
+        }
+
+        return $result;
+    }
+
+    /**
+     * Видалити webhook.
+     */
+    public function deleteWebhook(string $webhookId): void
+    {
+        $this->client->webhooks->delete($webhookId);
+    }
 }

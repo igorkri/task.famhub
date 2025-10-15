@@ -400,57 +400,56 @@ class EditTask extends EditRecord
             }
         }
 
-        //TODO: Доробити логіку з кастомними полями. Створити табл як в Section щоб можна було зв'язяти з проектом
+        // TODO: Доробити логіку з кастомними полями. Створити табл як в Section щоб можна було зв'язяти з проектом
 
         // Кастомные поля - НЕ отправляем, так как они вызывают ошибки
         // API Asana очень чувствителен к кастомным полям и их можно обновлять только
         // если они существуют в проекте и мы передаём правильные значения
         // Для обновления кастомных полей лучше использовать отдельный метод
 
-
-//        $customFields = [];
-//
-//        // Приоритет - отправляем gid опции
-//        if ($this->record->priority) {
-//            $priorityMap = [
-//                'high' => '1202674799522489', // Високий
-//                'medium' => '1202674799522531', // Средній
-//                'low' => '1202674799522561', // Низький
-//            ];
-//            $priorityGid = $priorityMap[$this->record->priority] ?? null;
-//            if ($priorityGid) {
-//                $customFields['1202674799521449'] = $priorityGid;
-//            }
-//        }
-//
-//        // Тип задачи - отправляем gid опции
-//        if ($this->record->status) {
-//            $statusMap = [
-//                'new' => '1205860710071792', // Нова функція
-//                'in_progress' => '1205860710071793', // Покращення
-//                'needs_clarification' => '1205860710071791', // Помилка сайт
-//                'completed' => '1205860710071794', // Обслуговування
-//                'canceled' => '1205860710071794', // Обслуговування
-//            ];
-//            $typeGid = $statusMap[$this->record->status] ?? null;
-//            if ($typeGid) {
-//                $customFields['1205860710071790'] = $typeGid;
-//            }
-//        }
-//
-//        // Бюджет (часы план)
-//        if ($this->record->budget) {
-//            $customFields['1202687202895300'] = (float) $this->record->budget;
-//        }
-//
-//        // Витрачено (часы факт)
-//        if ($this->record->spent) {
-//            $customFields['1202687202895302'] = (float) $this->record->spent;
-//        }
-//
-//        if (! empty($customFields)) {
-//            $payload['custom_fields'] = $customFields;
-//        }
+        //        $customFields = [];
+        //
+        //        // Приоритет - отправляем gid опции
+        //        if ($this->record->priority) {
+        //            $priorityMap = [
+        //                'high' => '1202674799522489', // Високий
+        //                'medium' => '1202674799522531', // Средній
+        //                'low' => '1202674799522561', // Низький
+        //            ];
+        //            $priorityGid = $priorityMap[$this->record->priority] ?? null;
+        //            if ($priorityGid) {
+        //                $customFields['1202674799521449'] = $priorityGid;
+        //            }
+        //        }
+        //
+        //        // Тип задачи - отправляем gid опции
+        //        if ($this->record->status) {
+        //            $statusMap = [
+        //                'new' => '1205860710071792', // Нова функція
+        //                'in_progress' => '1205860710071793', // Покращення
+        //                'needs_clarification' => '1205860710071791', // Помилка сайт
+        //                'completed' => '1205860710071794', // Обслуговування
+        //                'canceled' => '1205860710071794', // Обслуговування
+        //            ];
+        //            $typeGid = $statusMap[$this->record->status] ?? null;
+        //            if ($typeGid) {
+        //                $customFields['1205860710071790'] = $typeGid;
+        //            }
+        //        }
+        //
+        //        // Бюджет (часы план)
+        //        if ($this->record->budget) {
+        //            $customFields['1202687202895300'] = (float) $this->record->budget;
+        //        }
+        //
+        //        // Витрачено (часы факт)
+        //        if ($this->record->spent) {
+        //            $customFields['1202687202895302'] = (float) $this->record->spent;
+        //        }
+        //
+        //        if (! empty($customFields)) {
+        //            $payload['custom_fields'] = $customFields;
+        //        }
 
         // Убираем пустые значения
         // $payload = array_filter($payload, function ($value) {

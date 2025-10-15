@@ -16,7 +16,7 @@ return new class extends Migration
             $table->foreignId('project_id')->constrained()->cascadeOnDelete();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
             $table->boolean('is_admin')->default(false);
-            $table->string('role')->default('viewer'); //опционально: owner, editor, viewer
+            $table->string('role')->default('viewer'); // опционально: owner, editor, viewer
             $table->timestamps();
         });
     }

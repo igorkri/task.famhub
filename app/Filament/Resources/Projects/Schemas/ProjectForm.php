@@ -42,7 +42,7 @@ class ProjectForm
                             Toggle::make('is_archived')->label('Архівований')->default(false)->inline(false),
                         ])
                         ->grow(false)
-                        ->columns(1)
+                        ->columns(1),
                 ])->from('md'),
             ])
             ->columns(1);

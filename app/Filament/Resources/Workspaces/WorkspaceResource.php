@@ -22,8 +22,10 @@ class WorkspaceResource extends Resource
 {
     protected static ?string $model = Workspace::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Navigation::NAVIGATION['WORKSPACE']['ICON']; //Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Navigation::NAVIGATION['WORKSPACE']['ICON']; // Heroicon::OutlinedRectangleStack;
+
     protected static string|null|\UnitEnum $navigationGroup = Navigation::NAVIGATION['WORKSPACE']['GROUP'];
+
     protected static ?int $navigationSort = Navigation::NAVIGATION['WORKSPACE']['SORT'];
 
     // назва в меню
@@ -46,15 +48,13 @@ class WorkspaceResource extends Resource
     }
     // опис
 
-
-
     protected static ?string $recordTitleAttribute = 'name';
 
     public static function form(Schema $schema): Schema
     {
         return $schema
             ->components([
-//                TextInput::make('gid'),
+                //                TextInput::make('gid'),
                 TextInput::make('name')
                     ->label('Назва')
                     ->required(),

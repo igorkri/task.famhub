@@ -12,7 +12,6 @@ use App\Models\Task;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
-use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 
 class TaskResource extends Resource
@@ -20,17 +19,23 @@ class TaskResource extends Resource
     protected static ?string $model = Task::class;
 
     protected static string|BackedEnum|null $navigationIcon = Navigation::NAVIGATION['TASK']['ICON'];
+
     protected static string|null|\UnitEnum $navigationGroup = Navigation::NAVIGATION['TASK']['GROUP'];
+
     protected static ?int $navigationSort = Navigation::NAVIGATION['TASK']['SORT'];
+
     protected static ?string $navigationLabel = Navigation::NAVIGATION['TASK']['LABEL'];
+
     public static function getModelLabel(): string
     {
         return Navigation::NAVIGATION['TASK']['LABEL'];
     }
+
     public static function getPluralLabel(): string
     {
         return Navigation::NAVIGATION['TASK']['LABEL'];
     }
+
     public static function getNavigationLabel(): string
     {
         return Navigation::NAVIGATION['TASK']['LABEL'];

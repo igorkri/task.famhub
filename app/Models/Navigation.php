@@ -4,11 +4,12 @@ namespace App\Models;
 
 class Navigation
 {
-
     const MANAGEMENT = 'КЕРУВАННЯ';
+
     const GROUPS = [
         'MANAGEMENT' => ['LABEL' => 'Керування', 'SORT' => 1, 'ICON' => 'heroicon-o-cog-6-tooth'],
     ];
+
     const NAVIGATION = [
         'WORKSPACE' => [
             'ICON' => 'heroicon-o-cog-6-tooth',
@@ -56,5 +57,4 @@ class Navigation
             'URL' => '/times',
         ],
     ];
-
 }

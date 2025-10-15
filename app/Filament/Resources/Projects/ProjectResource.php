@@ -21,8 +21,10 @@ class ProjectResource extends Resource
 {
     protected static ?string $model = Project::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Navigation::NAVIGATION['PROJECT']['ICON']; //Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Navigation::NAVIGATION['PROJECT']['ICON']; // Heroicon::OutlinedRectangleStack;
+
     protected static string|null|\UnitEnum $navigationGroup = Navigation::NAVIGATION['PROJECT']['GROUP'];
+
     protected static ?int $navigationSort = Navigation::NAVIGATION['PROJECT']['SORT'];
 
     // назва в меню
@@ -80,8 +82,6 @@ class ProjectResource extends Resource
 
     /**
      * Матод для отримання запиту Eloquent з урахуванням політик доступу.
-     *
-     * @return \Illuminate\Database\Eloquent\Builder
      */
     public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
     {
@@ -99,6 +99,7 @@ class ProjectResource extends Resource
                 return $query->whereIn('id', $user->accessibleProjectIds());
             }
         }
+
         return $query;
     }
 }

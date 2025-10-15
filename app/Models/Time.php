@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * Class Time
- * @package App\Models
  *
  * @property int $id
  * @property int $task_id
@@ -20,20 +19,26 @@ use Illuminate\Database\Eloquent\Model;
  * @property bool $is_archived
  * @property \Illuminate\Support\Carbon|null $created_at
  * @property \Illuminate\Support\Carbon|null $updated_at
- *
  */
 class Time extends Model
 {
-     const COEFFICIENT_STANDARD = 1.2; // стандартний коефіцієнт
+    const COEFFICIENT_STANDARD = 1.2; // стандартний коефіцієнт
+
     const PRICE = 400; // базова погодинна ставка в грн
 
     // заплановано, в процесі, завершено, скасовано, експорт акту, потребує уточнення
     const STATUS_NEW = 'new'; // новий
+
     const STATUS_IN_PROGRESS = 'in_progress'; // в процесі
+
     const STATUS_COMPLETED = 'completed'; // виконано
+
     const STATUS_CANCELED = 'canceled'; // відхилено
+
     const STATUS_NEEDS_CLARIFICATION = 'needs_clarification'; // потребує уточнення
+
     const STATUS_PLANNED = 'planned'; // заплановано
+
     const STATUS_EXPORT_AKT = 'export_akt'; // експорт акту
 
     public $calculated_amount;
@@ -72,13 +77,13 @@ class Time extends Model
     }
 
     public static array $statuses = [
-        self::STATUS_NEW                    => 'Новий',
-        self::STATUS_IN_PROGRESS            => 'В процесі',
-        self::STATUS_NEEDS_CLARIFICATION    => 'Потребує уточнення',
-        self::STATUS_COMPLETED              => 'Виконано',
-        self::STATUS_CANCELED               => 'Відхилено',
-        self::STATUS_PLANNED                => 'Заплановано',
-        self::STATUS_EXPORT_AKT             => 'Експортовано в акти',
+        self::STATUS_NEW => 'Новий',
+        self::STATUS_IN_PROGRESS => 'В процесі',
+        self::STATUS_NEEDS_CLARIFICATION => 'Потребує уточнення',
+        self::STATUS_COMPLETED => 'Виконано',
+        self::STATUS_CANCELED => 'Відхилено',
+        self::STATUS_PLANNED => 'Заплановано',
+        self::STATUS_EXPORT_AKT => 'Експортовано в акти',
     ];
 
     // Коефіцієнти для різних типів робіт
@@ -101,11 +106,10 @@ class Time extends Model
 
     public static array $reportStatuses = [
         'not_submitted' => 'Не подано',
-        'submitted'     => 'Подано',
-        'approved'      => 'Затверджено',
-        'rejected'      => 'Відхилено',
+        'submitted' => 'Подано',
+        'approved' => 'Затверджено',
+        'rejected' => 'Відхилено',
     ];
-
 
     // Define relationships if needed
     public function task()
@@ -118,18 +122,17 @@ class Time extends Model
         return $this->belongsTo(User::class);
     }
 
-
     /**
      * Set the duration attribute.
      * Accepts input in seconds (integer) or "HH:MM:SS" format.
      *
-     * @param $value
      * @return void
      */
     public function setDurationAttribute($value)
     {
         if (is_numeric($value)) {
             $this->attributes['duration'] = $value;
+
             return;
         }
         if (preg_match('/^(\d+):(\d{2}):(\d{2})$/', $value, $matches)) {
@@ -150,9 +153,9 @@ class Time extends Model
         $h = str_pad(floor($seconds / 3600), 2, '0', STR_PAD_LEFT);
         $m = str_pad(floor(($seconds % 3600) / 60), 2, '0', STR_PAD_LEFT);
         $s = str_pad($seconds % 60, 2, '0', STR_PAD_LEFT);
+
         return "{$h}:{$m}:{$s}";
     }
-
 
     // Additional methods or accessors can be added here
     public function getDurationInHoursAttribute()

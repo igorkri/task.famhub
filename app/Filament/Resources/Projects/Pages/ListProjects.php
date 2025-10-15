@@ -14,6 +14,7 @@ class ListProjects extends ListRecords
     {
         return ProjectResource::getNavigationLabel();
     }
+
     protected function getHeaderActions(): array
     {
         return [

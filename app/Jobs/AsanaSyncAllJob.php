@@ -23,8 +23,8 @@ class AsanaSyncAllJob implements ShouldQueue
     public function handle(): void
     {
         // Запускаем синхронизацию проектов, затем секций, затем задач синхронно
-        (new AsanaSyncProjectsJob())->handle();
-        (new AsanaSyncSectionsJob())->handle();
-        (new AsanaSyncTasksJob())->handle();
+        (new AsanaSyncProjectsJob)->handle();
+        (new AsanaSyncSectionsJob)->handle();
+        (new AsanaSyncTasksJob)->handle();
     }
 }
