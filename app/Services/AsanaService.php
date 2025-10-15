@@ -272,4 +272,84 @@ class AsanaService
 
         return (array) $response;
     }
+
+    /**
+     * Создать новую задачу в Asana.
+     *
+     * @param  array  $data  Данные задачи (name, notes, projects, due_on, completed, parent и т.д.)
+     * @return array{gid: string, name: string, notes: string, completed: bool, due_on: string|null, projects: array, memberships: array}
+     */
+    public function createTask(array $data): array
+    {
+        // Создаём задачу через Asana API
+        $response = $this->client->tasks->create($data);
+
+        // Преобразуем объект ответа в массив
+        $task = (array) $response;
+
+        // Формируем структурированный результат
+        $result = [
+            'gid' => $task['gid'] ?? '',
+            'name' => $task['name'] ?? '',
+            'notes' => $task['notes'] ?? '',
+            'completed' => (bool) ($task['completed'] ?? false),
+            'due_on' => $task['due_on'] ?? null,
+            'start_on' => $task['start_on'] ?? null,
+            'created_at' => $task['created_at'] ?? null,
+            'modified_at' => $task['modified_at'] ?? null,
+            'projects' => [],
+            'memberships' => [],
+            'parent' => null,
+        ];
+
+        // Обрабатываем проекты
+        if (isset($task['projects']) && is_array($task['projects'])) {
+            foreach ($task['projects'] as $project) {
+                if (is_object($project)) {
+                    $result['projects'][] = [
+                        'gid' => $project->gid ?? '',
+                        'name' => $project->name ?? '',
+                    ];
+                }
+            }
+        }
+
+        // Обрабатываем memberships (включая секции)
+        if (isset($task['memberships']) && is_array($task['memberships'])) {
+            foreach ($task['memberships'] as $membership) {
+                $membershipData = [
+                    'project' => null,
+                    'section' => null,
+                ];
+
+                if (is_object($membership)) {
+                    if (isset($membership->project)) {
+                        $membershipData['project'] = [
+                            'gid' => $membership->project->gid ?? '',
+                            'name' => $membership->project->name ?? '',
+                        ];
+                    }
+
+                    if (isset($membership->section)) {
+                        $membershipData['section'] = [
+                            'gid' => $membership->section->gid ?? '',
+                            'name' => $membership->section->name ?? '',
+                        ];
+                    }
+                }
+
+                $result['memberships'][] = $membershipData;
+            }
+        }
+
+        // Обрабатываем родительскую задачу
+        if (isset($task['parent']) && is_object($task['parent'])) {
+            $result['parent'] = [
+                'gid' => $task['parent']->gid ?? '',
+                'name' => $task['parent']->name ?? '',
+            ];
+        }
+
+        return $result;
+    }
 }

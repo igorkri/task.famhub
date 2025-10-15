@@ -109,4 +109,92 @@ class Task extends Model
     {
         return $this->hasMany(TaskComment::class);
     }
+
+    /**
+     * Синхронизировать задачу с Asana (создать, если не существует).
+     */
+    public function syncToAsana(): void
+    {
+        // Если задача уже существует в Asana, ничего не делаем
+        if ($this->gid) {
+            \Log::info('Task already exists in Asana', ['task_id' => $this->id, 'gid' => $this->gid]);
+
+            return;
+        }
+
+        // Проверяем, что задача привязана к проекту
+        if (! $this->project_id || ! $this->project) {
+            \Log::warning('Cannot sync task to Asana: no project', ['task_id' => $this->id]);
+
+            return;
+        }
+
+        // Проверяем, что у проекта есть asana_id
+        if (! $this->project->asana_id) {
+            \Log::warning('Cannot sync task to Asana: project has no asana_id', [
+                'task_id' => $this->id,
+                'project_id' => $this->project_id,
+            ]);
+
+            return;
+        }
+
+        $asanaService = app(\App\Services\AsanaService::class);
+
+        // Подготавливаем данные для создания задачи в Asana
+        $taskData = [
+            'name' => $this->title,
+            'notes' => $this->description ?? '',
+            'projects' => [$this->project->asana_id],
+            'completed' => $this->is_completed ?? false,
+        ];
+
+        // Добавляем deadline, если он есть
+        if ($this->deadline) {
+            $taskData['due_on'] = $this->deadline;
+        }
+
+        // Добавляем дату начала, если она есть
+        if ($this->start_date) {
+            $taskData['start_on'] = $this->start_date;
+        }
+
+        // Добавляем исполнителя, если он есть
+        if ($this->user && $this->user->asana_gid) {
+            $taskData['assignee'] = $this->user->asana_gid;
+        }
+
+        try {
+            // Создаём задачу в Asana
+            $asanaTask = $asanaService->createTask($taskData);
+
+            // Сохраняем gid в нашу базу данных без триггера observer'ов
+            $this->withoutEvents(function () use ($asanaTask) {
+                $this->gid = $asanaTask['gid'] ?? null;
+                $this->save();
+            });
+
+            \Log::info('Task created in Asana', [
+                'task_id' => $this->id,
+                'gid' => $this->gid,
+                'asana_task' => $asanaTask,
+            ]);
+
+            // Если у задачи есть статус и секция, перемещаем задачу в нужную секцию
+            if ($this->status && $this->section && $this->section->asana_gid) {
+                $asanaService->moveTaskToSection($this->gid, $this->section->asana_gid);
+                \Log::info('Task moved to section in Asana', [
+                    'task_id' => $this->id,
+                    'section_gid' => $this->section->asana_gid,
+                ]);
+            }
+        } catch (\Exception $e) {
+            \Log::error('Failed to create task in Asana', [
+                'task_id' => $this->id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            throw $e;
+        }
+    }
 }

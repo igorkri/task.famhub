@@ -363,7 +363,8 @@ class EditTask extends EditRecord
                 ->body('Задача не має GID з Asana')
                 ->send();
 
-            return;
+            // створюємо задачу в Asana і отримуємо gid
+            $this->createTaskInAsana();
         }
 
         $service = app(AsanaService::class);
@@ -616,7 +617,92 @@ class EditTask extends EditRecord
         Log::info('Timer data refreshed', [
             'task_id' => $taskId,
             'times_count' => $this->record->times()->count(),
-            'comments_count' => $this->record->comments()->count()
+            'comments_count' => $this->record->comments()->count(),
         ]);
+    }
+
+    private function createTaskInAsana()
+    {
+        $service = app(AsanaService::class);
+        $payload = [
+            'name' => $this->record->title,
+            'notes' => $this->record->description ?? '',
+        ];
+
+        // Проект (если задача в проекте)
+        if ($this->record->project && $this->record->project->asana_id) {
+            $payload['projects'] = [$this->record->project->asana_id];
+        }
+
+        // Родительская задача
+        if ($this->record->parent && $this->record->parent->gid) {
+            $payload['parent'] = $this->record->parent->gid;
+        }
+
+        // Исполнитель
+        if ($this->record->user && $this->record->user->asana_gid) {
+            $payload['assignee'] = $this->record->user->asana_gid;
+        }
+
+        // Дедлайн
+        if ($this->record->deadline) {
+            $payload['due_on'] = $this->record->deadline;
+        }
+
+        // Дата начала
+        if ($this->record->start_date) {
+            $payload['start_on'] = $this->record->start_date;
+        }
+
+        // Статус завершения
+        $payload['completed'] = (bool) ($this->record->is_completed ?? false);
+
+        try {
+            $result = $service->createTask($payload);
+
+            if (isset($result['gid'])) {
+                // Сохраняем GID в локальную запись задачи без триггера observer'ов
+                $this->record->withoutEvents(function () use ($result) {
+                    $this->record->update(['gid' => $result['gid']]);
+                });
+
+                // Если у задачи есть секция, перемещаем её в нужную секцию
+                if ($this->record->section && $this->record->section->asana_gid) {
+                    try {
+                        $service->moveTaskToSection($result['gid'], $this->record->section->asana_gid);
+                        \Log::info('Task moved to section in Asana', [
+                            'task_id' => $this->record->id,
+                            'gid' => $result['gid'],
+                            'section_gid' => $this->record->section->asana_gid,
+                        ]);
+                    } catch (\Exception $e) {
+                        \Log::warning('Failed to move task to section in Asana', [
+                            'task_id' => $this->record->id,
+                            'error' => $e->getMessage(),
+                        ]);
+                    }
+                }
+
+                Notification::make()
+                    ->success()
+                    ->title('Задача створена в Asana')
+                    ->body('GID: '.$result['gid'])
+                    ->send();
+
+                $this->refresh();
+                $this->fillForm($this->record->fresh()->toArray());
+            } else {
+                Notification::make()
+                    ->danger()
+                    ->title('Не вдалося отримати GID нової задачі з Asana')
+                    ->send();
+            }
+        } catch (AsanaError $e) {
+            Notification::make()
+                ->danger()
+                ->title('Помилка створення задачі в Asana')
+                ->body($e->getMessage())
+                ->send();
+        }
     }
 }
