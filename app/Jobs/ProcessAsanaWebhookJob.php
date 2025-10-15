@@ -121,38 +121,60 @@ class ProcessAsanaWebhookJob implements ShouldQueue
                     $status = $section->status;
                 }
 
-                // Проверяем, что проект найден - project_id обязательное поле
-                if (!$project) {
-                    Log::error('Webhook sync error: project not found', [
-                        'task_gid' => $gid,
-                        'task_name' => $taskDetails['name'] ?? '',
-                        'memberships' => $taskDetails['memberships'] ?? [],
-                    ]);
-                    return;
-                }
+                // Перевіряємо, чи таск вже існує
+                $existingTask = Task::where('gid', $gid)->first();
 
-                // Оновлюємо або створюємо таск (без спрацювання Observer)
-                Task::withoutEvents(function () use ($gid, $taskDetails, $project, $section, $userId, $status) {
-                    Task::updateOrCreate(
-                        ['gid' => $gid],
-                        [
+                if ($existingTask) {
+                    // Оновлюємо існуючий таск (без зміни project_id)
+                    Task::withoutEvents(function () use ($gid, $taskDetails, $section, $userId, $status) {
+                        Task::where('gid', $gid)->update([
                             'title' => $taskDetails['name'] ?? '',
                             'description' => $taskDetails['notes'] ?? '',
-                            'project_id' => $project?->id,
                             'section_id' => $section?->id,
                             'user_id' => $userId,
                             'status' => $status,
                             'is_completed' => $taskDetails['completed'] ?? false,
                             'deadline' => $taskDetails['due_on'] ?? null,
-                        ]
-                    );
-                });
+                        ]);
+                    });
 
-                Log::info('Task synced from webhook', [
-                    'gid' => $gid,
-                    'action' => $action,
-                    'title' => $taskDetails['name'] ?? '',
-                ]);
+                    Log::info('Task updated from webhook', [
+                        'gid' => $gid,
+                        'action' => $action,
+                        'title' => $taskDetails['name'] ?? '',
+                    ]);
+                } else {
+                    // Створюємо новий таск - project_id обов'язковий
+                    if (! $project) {
+                        Log::error('Webhook sync error: project not found for new task', [
+                            'task_gid' => $gid,
+                            'task_name' => $taskDetails['name'] ?? '',
+                            'memberships' => $taskDetails['memberships'] ?? [],
+                        ]);
+
+                        return;
+                    }
+
+                    Task::withoutEvents(function () use ($gid, $taskDetails, $project, $section, $userId, $status) {
+                        Task::create([
+                            'gid' => $gid,
+                            'title' => $taskDetails['name'] ?? '',
+                            'description' => $taskDetails['notes'] ?? '',
+                            'project_id' => $project->id,
+                            'section_id' => $section?->id,
+                            'user_id' => $userId,
+                            'status' => $status,
+                            'is_completed' => $taskDetails['completed'] ?? false,
+                            'deadline' => $taskDetails['due_on'] ?? null,
+                        ]);
+                    });
+
+                    Log::info('Task created from webhook', [
+                        'gid' => $gid,
+                        'action' => $action,
+                        'title' => $taskDetails['name'] ?? '',
+                    ]);
+                }
             } catch (\Exception $e) {
                 Log::error('Failed to sync task from webhook', [
                     'gid' => $gid,
