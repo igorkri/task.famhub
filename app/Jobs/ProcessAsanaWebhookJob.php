@@ -148,6 +148,15 @@ class ProcessAsanaWebhookJob implements ShouldQueue
 
                 if ($existingTask) {
                     // Оновлюємо існуючий таск (зберігаємо існуючі значення, якщо нових немає)
+                    \Log::info('Before update - checking variables', [
+                        'gid' => $gid,
+                        'project_is_null' => is_null($project),
+                        'project_id' => $project?->id ?? 'NULL',
+                        'existing_project_id' => $existingTask->project_id,
+                        'section_is_null' => is_null($section),
+                        'userId_is_null' => is_null($userId),
+                    ]);
+
                     Task::withoutEvents(function () use ($gid, $taskDetails, $project, $section, $userId, $existingTask) {
                         $updateData = [
                             'title' => $taskDetails['name'] ?? $existingTask->title,
@@ -170,11 +179,15 @@ class ProcessAsanaWebhookJob implements ShouldQueue
                             $updateData['user_id'] = $userId;
                         }
 
+                        \Log::info('Update data prepared', [
+                            'gid' => $gid,
+                            'updateData' => $updateData,
+                        ]);
+
                         $existingTask->update($updateData);
 
                         Log::info('Task updated from webhook', [
                             'gid' => $gid,
-                            'action' => $action,
                             'updated_fields' => array_keys($updateData),
                         ]);
                     });
