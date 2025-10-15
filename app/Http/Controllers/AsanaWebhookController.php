@@ -16,9 +16,8 @@ class AsanaWebhookController extends Controller
     {
         // Asana надсилає заголовок X-Hook-Secret при створенні webhook для верифікації
         if ($request->header('X-Hook-Secret')) {
-            return response()->json([
-                'X-Hook-Secret' => $request->header('X-Hook-Secret'),
-            ], 200);
+            // Возвращаем X-Hook-Secret как HTTP-заголовок, как требует Asana
+            return response('', 200)->header('X-Hook-Secret', $request->header('X-Hook-Secret'));
         }
 
         // Верифікація підпису webhook (опціонально, але рекомендовано)
