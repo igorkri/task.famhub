@@ -80,6 +80,9 @@ class ImportTimerCsv extends Command
         }
         fclose($stream);
 
+        // очищаем таблицу times
+         \App\Models\Time::truncate();
+        $this->info('Importing ' . count($data) . ' rows...');
         foreach ($data as $row) {
             if (count($row) < 11) {
                 $this->warn("Invalid row with insufficient columns, skipping: " . json_encode($row));
@@ -115,16 +118,28 @@ class ImportTimerCsv extends Command
 
             $sec = (int) $row[3] * 60;
 
+            $coefficient = (float) $row[4];
+            if ($coefficient <= 0) {
+                $coefficient = 1.0;
+            }
+
+            if ($task->gid == '1209415103347707') {
+            $this->info('Importing ' . $task->id . '...');
+            $this->info('coefficient ' . $coefficient);
+            $this->info('duration ' . $sec);
+            }
+
             \App\Models\Time::updateOrCreate(
                 [
                     'task_id' => $task->id,
                     'duration' => $sec,
+                    'created_at' => $row[9], // created_at
                 ],
                 [
                     'user_id' => $task->user_id,
                     'title' => $task->title,
                     'description' => $row[5], // comment
-                    'coefficient' => (float) $row[4], // coefficient
+                    'coefficient' => $coefficient, // coefficient
                     'status' => $status,
                     'report_status' => $statusReport, // status_act
                     'is_archived' => (bool) $row[7], // archive

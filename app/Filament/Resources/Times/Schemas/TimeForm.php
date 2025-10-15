@@ -33,10 +33,12 @@ class TimeForm
                 Textarea::make('description')
                     ->label('Опис')
                     ->columnSpanFull(),
-                Select::make('coefficient')
+                TextInput::make('coefficient')
                     ->label('Коефіцієнт')
                     ->required()
-                    ->options(Time::$coefficients),
+                    ->default(1.2)
+                    ->numeric(),
+//                    ->options(Time::$coefficients),
                 TimePicker::make('duration')
                     ->label('Тривалість (год:хв:сек)')
                     ->required()

@@ -52,7 +52,7 @@ class TimesTable
                             ->formatStateUsing(fn ($state) => number_format($state, 2))
                             ->numeric()
                             ->sortable(query: fn ($query, $direction) => $query->orderByRaw('(duration / 3600 * coefficient * ' . \App\Models\Time::PRICE . ') ' . $direction))
-//                            ->summarize(Sum::make()->label('Загальна сума'))
+                            ->summarize(Sum::make()->label('Загальна сума'))
                             ->toggleable(isToggledHiddenByDefault: true),
 
 

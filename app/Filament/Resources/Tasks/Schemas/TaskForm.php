@@ -178,10 +178,11 @@ class TaskForm
                             ->required(),
                         // task_id автоматически ставится
 
-                        Select::make('coefficient')
+                        TextInput::make('coefficient')
                             ->label('Коефіцієнт')
                             ->default(Time::COEFFICIENT_STANDARD)
-                            ->options(collect(Time::$coefficients)->mapWithKeys(fn ($v, $k) => [(string) $k => $v])->toArray())
+//                            ->options(collect(Time::$coefficients)->mapWithKeys(fn ($v, $k) => [(string) $k => $v])->toArray())
+                            ->numeric()
                             ->required(),
                         Select::make('status')
                             ->label('Статус')
