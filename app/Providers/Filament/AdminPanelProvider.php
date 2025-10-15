@@ -4,7 +4,9 @@ namespace App\Providers\Filament;
 
 use App\Filament\Resources\Sections\SectionResource;
 use App\Filament\Resources\Tasks\TaskResource;
+use App\Filament\Resources\Times\TimeResource;
 use App\Models\Project;
+use BezhanSalleh\FilamentShield\Resources\Roles\RoleResource;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
@@ -85,6 +87,8 @@ class AdminPanelProvider extends PanelProvider
                         ...\App\Filament\Resources\Projects\ProjectResource::getNavigationItems(),
                         ...TaskResource::getNavigationItems(),
                         ...SectionResource::getNavigationItems(),
+                        ...TimeResource::getNavigationItems(),
+                        ...RoleResource::getNavigationItems(),
                     ]);
             })
             ->authMiddleware([

@@ -26,13 +26,14 @@ class Time extends Model
 {
      const COEFFICIENT_STANDARD = 1.2; // стандартний коефіцієнт
 
-    // заплановано, в процесі, завершено, скасовано
+    // заплановано, в процесі, завершено, скасовано, експорт акту, потребує уточнення
     const STATUS_NEW = 'new'; // новий
     const STATUS_IN_PROGRESS = 'in_progress'; // в процесі
     const STATUS_COMPLETED = 'completed'; // виконано
     const STATUS_CANCELED = 'canceled'; // відхилено
     const STATUS_NEEDS_CLARIFICATION = 'needs_clarification'; // потребує уточнення
     const STATUS_PLANNED = 'planned'; // заплановано
+    const STATUS_EXPORT_AKT = 'export_akt'; // експорт акту
 
     protected $fillable = [
         'task_id',
@@ -65,6 +66,7 @@ class Time extends Model
         self::STATUS_COMPLETED              => 'Виконано',
         self::STATUS_CANCELED               => 'Відхилено',
         self::STATUS_PLANNED                => 'Заплановано',
+        self::STATUS_EXPORT_AKT             => 'Експортовано в акти',
     ];
 
     // Коефіцієнти для різних типів робіт
@@ -75,7 +77,7 @@ class Time extends Model
         '1.6' => '1.6',
         '1.5' => '1.5',
         '1.3' => '1.3',
-        '1.2' => '1.2 (стандартний)',
+        '1.2' => '1.2 (14.03.2025)',
         '1.1' => '1.1',
         '1.0' => '1.0',
         '0.8' => '0.8',
