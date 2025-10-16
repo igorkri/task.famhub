@@ -2,31 +2,32 @@
 
 namespace App\Providers\Filament;
 
-use App\Filament\Resources\Sections\SectionResource;
-use App\Filament\Resources\Tasks\TaskResource;
-use App\Filament\Resources\Times\TimeResource;
-use App\Models\Project;
-use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
-use BezhanSalleh\FilamentShield\Resources\Roles\RoleResource;
-use Filament\Http\Middleware\Authenticate;
-use Filament\Http\Middleware\AuthenticateSession;
-use Filament\Http\Middleware\DisableBladeIconComponents;
-use Filament\Http\Middleware\DispatchServingFilamentEvent;
-use Filament\Navigation\NavigationBuilder;
-use Filament\Navigation\NavigationGroup;
-use Filament\Navigation\NavigationItem;
-use Filament\Pages\Dashboard;
 use Filament\Panel;
+use App\Models\Project;
 use Filament\PanelProvider;
+use Filament\Pages\Dashboard;
 use Filament\Support\Colors\Color;
 use Filament\Widgets\AccountWidget;
+use Filament\Navigation\NavigationItem;
+use Filament\Navigation\NavigationGroup;
 use Filament\Widgets\FilamentInfoWidget;
-use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
-use Illuminate\Cookie\Middleware\EncryptCookies;
-use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
-use Illuminate\Routing\Middleware\SubstituteBindings;
+use Filament\Http\Middleware\Authenticate;
+use Filament\Navigation\NavigationBuilder;
+use App\Filament\Resources\Tasks\TaskResource;
+use App\Filament\Resources\Times\TimeResource;
+use App\Filament\Resources\Users\UserResource;
 use Illuminate\Session\Middleware\StartSession;
+use Illuminate\Cookie\Middleware\EncryptCookies;
+use Filament\Http\Middleware\AuthenticateSession;
+use App\Filament\Resources\Sections\SectionResource;
+use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
+use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use Filament\Http\Middleware\DisableBladeIconComponents;
+use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
+use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
+use BezhanSalleh\FilamentShield\Resources\Roles\RoleResource;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -68,6 +69,8 @@ class AdminPanelProvider extends PanelProvider
                 FilamentShieldPlugin::make(),
             ])
             ->navigation(function (NavigationBuilder $builder): NavigationBuilder {
+                $currentUserId = auth()->id();
+                
                 $projectItems = Project::where('is_active', true)
                     ->get()
                     ->map(fn (Project $project) => NavigationItem::make($project->name)
@@ -77,7 +80,7 @@ class AdminPanelProvider extends PanelProvider
                                     'values' => [$project->id],
                                 ],
                                 'user_id' => [
-                                    'values' => [4],
+                                    'values' => [$currentUserId],
                                 ],
                                 'status' => [
                                     'values' => ['in_progress', 'planned', 'new', 'needs_clarification'],
@@ -85,7 +88,7 @@ class AdminPanelProvider extends PanelProvider
                             ],
                         ]))
                         ->badge(fn () => \App\Models\Task::where('project_id', $project->id)
-                            ->where('user_id', 4)
+                            ->where('user_id', $currentUserId)
                             ->whereIn('status', ['in_progress', 'planned', 'new', 'needs_clarification'])
                             ->count())
                     )
@@ -104,6 +107,7 @@ class AdminPanelProvider extends PanelProvider
                         ...SectionResource::getNavigationItems(),
                         ...TimeResource::getNavigationItems(),
                         ...RoleResource::getNavigationItems(),
+                        ...UserResource::getNavigationItems(),
                     ]);
             })
             ->authMiddleware([
