@@ -85,6 +85,25 @@ class TaskForm
                         ->default(false)
                         ->inline(false),
 
+                    TextInput::make('asana_link')
+                        ->label('Посилання на Asana')
+                        ->url()
+                        ->prefix('🔗')
+                        ->formatStateUsing(fn ($record) => $record?->gid
+                            ? "https://app.asana.com/0/0/{$record->gid}/f"
+                            : null)
+                        ->disabled()
+                        ->dehydrated(false)
+                        ->visible(fn ($record) => $record?->gid !== null)
+                        ->hint(fn ($record) => $record?->gid
+                            ? new \Illuminate\Support\HtmlString(
+                                '<a href="https://app.asana.com/0/0/'.$record->gid.'/f" target="_blank" class="text-primary-600 hover:underline flex items-center gap-1">
+                                    Відкрити в Asana
+                                </a>'
+                            )
+                            : null
+                        ),
+
                     Section::make('Робочі параметри') // группа, которую можно свернуть
                         ->schema([
                             Select::make('status')
