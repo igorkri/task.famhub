@@ -136,10 +136,37 @@ class TaskForm
                                 ->numeric(),
 
                             TextInput::make('spent')
-                                ->label('Витрачено (години)')
+                                ->label('Витрачено (хвилини)')
                                 ->numeric()
                                 ->required()
-                                ->default(0),
+                                ->default(0)
+                                ->suffixAction(
+                                    Action::make('calculate_spent')
+                                        ->icon('heroicon-o-calculator')
+                                        ->tooltip('Порахувати з таймера')
+                                        ->action(function ($set, $get, $record) {
+                                            if (! $record) {
+                                                return;
+                                            }
+
+                                            $totalSeconds = \App\Models\Time::where('task_id', $record->id)
+                                                ->sum('duration');
+
+                                            $totalMinutes = round($totalSeconds / 60);
+
+                                            $set('spent', $totalMinutes);
+
+                                            $hours = floor($totalMinutes / 60);
+                                            $minutes = $totalMinutes % 60;
+
+                                            \Filament\Notifications\Notification::make()
+                                                ->title('Підраховано')
+                                                ->body("Загальний час: {$totalMinutes} хвилин ({$hours} год {$minutes} хв)")
+                                                ->success()
+                                                ->send();
+                                        })
+                                        ->visible(fn ($record) => $record !== null)
+                                ),
 
                             DateTimePicker::make('start_date')
                                 ->label('Початок'),
