@@ -203,26 +203,25 @@ class ProcessAsanaWebhookJob implements ShouldQueue
                         return;
                     }
 
-                    Task::withoutEvents(function () {
-                        //                        Task::create([
-                        //                            'gid' => $gid,
-                        //                            'title' => $taskDetails['name'] ?? '',
-                        //                            'description' => $taskDetails['notes'] ?? '',
-                        //                            'project_id' => $project->id,
-                        //                            'section_id' => $section?->id,
-                        //                            'user_id' => $userId,
-                        //                            'status' => $status,
-                        //                            'is_completed' => $taskDetails['completed'] ?? false,
-                        //                            'deadline' => $taskDetails['due_on'] ?? null,
-                        //                        ]);
-                    });
+                    Task::withoutEvents(function () use ($gid, $taskDetails, $project, $section, $userId, $status) {
+                        Task::create([
+                            'gid' => $gid,
+                            'title' => $taskDetails['name'] ?? '',
+                            'description' => $taskDetails['notes'] ?? '',
+                            'project_id' => $project->id,
+                            'section_id' => $section?->id,
+                            'user_id' => $userId,
+                            'status' => $status,
+                            'is_completed' => $taskDetails['completed'] ?? false,
+                            'deadline' => $taskDetails['due_on'] ?? null,
+                        ]);
 
-                    Log::info('Task created from webhook', [
-                        'gid' => $gid,
-                        'action' => $action,
-                        'title' => $taskDetails['name'] ?? '',
-                        'project_id' => $project->id,
-                    ]);
+                        Log::info('Task created from webhook', [
+                            'gid' => $gid,
+                            'title' => $taskDetails['name'] ?? '',
+                            'project_id' => $project->id,
+                        ]);
+                    });
                 }
             } catch (\Exception $e) {
                 Log::error('Error processing task event', [
