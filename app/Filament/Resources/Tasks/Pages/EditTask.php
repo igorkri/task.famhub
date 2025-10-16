@@ -48,6 +48,52 @@ class EditTask extends EditRecord
         ];
     }
 
+    public function getBreadcrumbs(): array
+    {
+        $breadcrumbs = parent::getBreadcrumbs();
+
+        $record = $this->getRecord();
+
+        // Додаємо посилання, якщо таск має проєкт
+        if ($record && $record->project) {
+            $projectId = $record->project->id;
+            $userId = $record->user_id;
+            $asanaProjectGid = $record->project->asana_id ?? null;
+
+            $additionalBreadcrumbs = [];
+
+            // 1. Посилання на список тасків з фільтром по проєкту
+            $filterParams = http_build_query([
+                'filters' => [
+                    'project_id' => ['values' => [$projectId]],
+                    'user_id' => ['values' => [$userId]],
+                    'status' => [
+                        'values' => ['in_progress', 'new', 'needs_clarification'],
+                    ],
+                    'is_completed' => ['isActive' => false],
+                ],
+            ]);
+
+            $tasksListUrl = route('filament.admin.resources.tasks.index').'?'.$filterParams;
+            $additionalBreadcrumbs[$tasksListUrl] = '📋 Таски проєкту';
+
+            // 2. Посилання на проєкт в Asana (якщо є)
+            if ($record->gid && $asanaProjectGid) {
+                $asanaProjectUrl = "https://app.asana.com/0/{$asanaProjectGid}/list";
+                $additionalBreadcrumbs[$asanaProjectUrl] = '🔗 '.($record->project->name ?? 'Проєкт').' в Asana';
+            }
+
+            // Вставляємо додаткові breadcrumbs після головного
+            $breadcrumbs = array_merge(
+                array_slice($breadcrumbs, 0, 1),
+                $additionalBreadcrumbs,
+                array_slice($breadcrumbs, 1)
+            );
+        }
+
+        return $breadcrumbs;
+    }
+
     public function content(Schema $schema): Schema
     {
         return $schema->components([
