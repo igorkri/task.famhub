@@ -249,20 +249,20 @@ class ProcessAsanaWebhookJob implements ShouldQueue
                             'user_id' => $userId,
                             'status' => $status,
                             'is_completed' => $taskDetails['completed'] ?? false,
+                            'deadline' => $taskDetails['due_on'] ?? null,
+                        ]);
+
+                        // Синхронізуємо кастомні поля
+                        if (! empty($taskDetails['custom_fields'])) {
+                            foreach ($taskDetails['custom_fields'] as $customField) {
                                 // Знаходимо відповідне ProjectCustomField
                                 $projectCustomField = \App\Models\ProjectCustomField::where('project_id', $newTask->project_id)
                                     ->where('asana_gid', $customField['gid'])
                                     ->first();
 
-                            'deadline' => $taskDetails['due_on'] ?? null,
-                        ]);
-                                    'project_custom_field_id' => $projectCustomField?->id,
-
-                        // Синхронізуємо кастомні поля
-                        if (! empty($taskDetails['custom_fields'])) {
-                            foreach ($taskDetails['custom_fields'] as $customField) {
                                 \App\Models\TaskCustomField::create([
                                     'task_id' => $newTask->id,
+                                    'project_custom_field_id' => $projectCustomField?->id,
                                     'asana_gid' => $customField['gid'],
                                     'name' => $customField['name'],
                                     'type' => $customField['type'],
