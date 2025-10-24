@@ -344,10 +344,18 @@ class EditTask extends EditRecord
                         ->first();
 
                     // Оновлюємо або створюємо TaskCustomField
-                    // Конвертуємо хвилини з Asana в години для зручності
+                    // Конвертуємо хвилини з Asana в години для полів часу
                     $numberValue = $customField['number_value'] ?? null;
                     if ($numberValue !== null && ($customField['type'] ?? 'text') === 'number') {
-                        $numberValue = round($numberValue / 60, 2); // Конвертуємо хвилини в години
+                        $fieldName = $customField['name'] ?? '';
+                        $isTimeField = stripos($fieldName, 'час') !== false ||
+                                       stripos($fieldName, 'факт') !== false ||
+                                       stripos($fieldName, 'spent') !== false ||
+                                       stripos($fieldName, 'time') !== false;
+
+                        if ($isTimeField) {
+                            $numberValue = round($numberValue / 60, 2); // Конвертуємо хвилини в години
+                        }
                     }
 
                     \App\Models\TaskCustomField::updateOrCreate(
@@ -459,11 +467,24 @@ class EditTask extends EditRecord
             // Визначаємо значення в залежності від типу поля
             $value = match ($customField->type) {
                 'text' => $customField->text_value,
-                'number' => $customField->number_value ? (float) $customField->number_value * 60 : null, // Конвертуємо години в хвилини
+                'number' => $customField->number_value !== null ? (float) $customField->number_value : null,
                 'date' => $customField->date_value?->format('Y-m-d'),
-                'enum' => $customField->enum_value_gid, // Для enum відправляємо GID варіанту
+                'enum' => $customField->enum_value_gid ? (string) $customField->enum_value_gid : null, // Для enum відправляємо GID як string
                 default => null,
             };
+
+            // Для числових полів часу конвертуємо години в хвилини
+            if ($customField->type === 'number' && $value !== null) {
+                $fieldName = $customField->name ?? '';
+                $isTimeField = stripos($fieldName, 'час') !== false ||
+                               stripos($fieldName, 'факт') !== false ||
+                               stripos($fieldName, 'spent') !== false ||
+                               stripos($fieldName, 'time') !== false;
+
+                if ($isTimeField) {
+                    $value = (int) round($value * 60); // Конвертуємо години в хвилини і приводимо до integer
+                }
+            }
 
             // Додаємо тільки якщо є значення
             if ($value !== null && $value !== '') {
@@ -507,13 +528,25 @@ class EditTask extends EditRecord
             // Синхронізуємо коментарі після відправки задачі
             $this->syncCommentsToAsana();
         } catch (AsanaError $e) {
-            Log::error('Asana sync error', [
+            $errorDetails = [
                 'task_id' => $this->record->id,
                 'task_gid' => $this->record->gid,
                 'error' => $e->getMessage(),
-                'error_details' => method_exists($e, 'getResponse') ? $e->getResponse() : null,
                 'payload' => $payload,
-            ]);
+            ];
+
+            // Спробуємо отримати детальну інформацію про помилку
+            if (method_exists($e, 'getResponse')) {
+                $response = $e->getResponse();
+                $errorDetails['response'] = $response;
+            }
+
+            // Якщо є тіло відповіді з деталями помилки
+            if (method_exists($e, 'getResponseBody')) {
+                $errorDetails['response_body'] = $e->getResponseBody();
+            }
+
+            Log::error('Asana sync error', $errorDetails);
 
             Notification::make()
                 ->danger()
