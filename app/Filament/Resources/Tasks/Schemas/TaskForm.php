@@ -111,7 +111,7 @@ class TaskForm
                             : null
                         ),
 
-                    Section::make('Робочі параметри') // группа, которую можно свернуть
+                    Section::make('Робочі параметри')
                         ->schema([
                             Select::make('status')
                                 ->label('Статус')
@@ -132,48 +132,9 @@ class TaskForm
                             Select::make('user_id')
                                 ->label('Виконавець')
                                 ->relationship('user', 'name'),
-                        ])
-                        ->collapsible() // делаем секцию сворачиваемой
-                        ->collapsed(false),  // по умолчанию открыта
 
-                    Section::make('Час і бюджет')
-                        ->schema([
-                            TextInput::make('budget')
-                                ->label('Бюджет (години)')
-                                ->numeric(),
-
-                            TextInput::make('spent')
-                                ->label('Витрачено (хвилини)')
-                                ->numeric()
-                                ->required()
-                                ->default(0)
-                                ->suffixAction(
-                                    Action::make('calculate_spent')
-                                        ->icon('heroicon-o-calculator')
-                                        ->tooltip('Порахувати з таймера')
-                                        ->action(function ($set, $get, $record) {
-                                            if (! $record) {
-                                                return;
-                                            }
-
-                                            $totalSeconds = \App\Models\Time::where('task_id', $record->id)
-                                                ->sum('duration');
-
-                                            $totalMinutes = round($totalSeconds / 60);
-
-                                            $set('spent', $totalMinutes);
-
-                                            $hours = floor($totalMinutes / 60);
-                                            $minutes = $totalMinutes % 60;
-
-                                            \Filament\Notifications\Notification::make()
-                                                ->title('Підраховано')
-                                                ->body("Загальний час: {$totalMinutes} хвилин ({$hours} год {$minutes} хв)")
-                                                ->success()
-                                                ->send();
-                                        })
-                                        ->visible(fn ($record) => $record !== null)
-                                ),
+                            DatePicker::make('deadline')
+                                ->label('Дедлайн'),
 
                             DateTimePicker::make('start_date')
                                 ->label('Початок'),
@@ -181,20 +142,16 @@ class TaskForm
                             DateTimePicker::make('end_date')
                                 ->label('Завершення'),
 
-                            DatePicker::make('deadline')
-                                ->label('Дедлайн'),
-
                             TextInput::make('progress')
                                 ->label('Прогрес (%)')
                                 ->numeric()
-                                ->required()
                                 ->default(0),
                         ])
                         ->collapsible()
-                        ->collapsed(), // можно свернуть по умолчанию
+                        ->collapsed(false),
                 ])
                 ->grow(false)
-                ->maxWidth('300px'), // или задаем жесткую ширину
+                ->maxWidth('300px'),
         ])->from('md');
     }
 
@@ -321,6 +278,62 @@ class TaskForm
     {
         return Section::make('Кастомні поля з Asana')
             ->description('Редагуйте поля тут - вони синхронізуються з Asana при збереженні')
+            ->headerActions([
+                Action::make('auto_calculate_time')
+                    ->label('🔄 Автопрорахунок часу')
+                    ->icon('heroicon-o-calculator')
+                    ->color('success')
+                    ->action(function ($livewire, $get) {
+                        $record = $livewire->record;
+                        if (! $record) {
+                            \Filament\Notifications\Notification::make()
+                                ->warning()
+                                ->title('Немає запису')
+                                ->body('Спочатку збережіть таск')
+                                ->send();
+
+                            return;
+                        }
+
+                        // Підраховуємо загальний час з таймера
+                        $totalSeconds = \App\Models\Time::where('task_id', $record->id)->sum('duration');
+                        $totalHours = round($totalSeconds / 3600, 2);
+
+                        // Знаходимо кастомне поле "Час, факт." та оновлюємо
+                        $customFields = $record->customFields;
+                        $updated = false;
+
+                        foreach ($customFields as $field) {
+                            // Шукаємо поле з назвою що містить "факт" або "spent"
+                            if (stripos($field->name, 'факт') !== false || stripos($field->name, 'spent') !== false) {
+                                $field->update(['number_value' => $totalHours]);
+                                $updated = true;
+                                break;
+                            }
+                        }
+
+                        if ($updated) {
+                            $hours = floor($totalHours);
+                            $minutes = round(($totalHours - $hours) * 60);
+
+                            \Filament\Notifications\Notification::make()
+                                ->success()
+                                ->title('Час прораховано!')
+                                ->body("Оновлено поле 'Час, факт.': {$totalHours} год ({$hours} год {$minutes} хв)")
+                                ->send();
+
+                            // Оновлюємо форму (перезавантажуємо сторінку для відображення змін)
+                            redirect()->to($livewire->getResource()::getUrl('edit', ['record' => $record]));
+                        } else {
+                            \Filament\Notifications\Notification::make()
+                                ->warning()
+                                ->title('Поле не знайдено')
+                                ->body('Не знайдено кастомне поле "Час, факт." для цього проєкту')
+                                ->send();
+                        }
+                    })
+                    ->visible(fn ($livewire) => $livewire->record !== null),
+            ])
             ->schema([
                 Repeater::make('customFields')
                     ->relationship('customFields')
@@ -333,7 +346,7 @@ class TaskForm
                         TextInput::make('name')
                             ->label('Назва поля')
                             ->disabled()
-                            ->dehydrated(false)
+                            ->dehydrated(true)
                             ->columnSpan(1),
 
                         // Текстове поле
@@ -343,11 +356,46 @@ class TaskForm
                             ->visible(fn ($get) => $get('type') === 'text')
                             ->columnSpan(3),
 
-                        // Числове поле
+                        // Числове поле з кнопкою автопрорахунку для часу
                         TextInput::make('number_value')
                             ->label('Значення')
                             ->numeric()
+                            ->step(0.01)
                             ->visible(fn ($get) => $get('type') === 'number')
+                            ->suffixAction(
+                                Action::make('calculate_from_timer')
+                                    ->icon('heroicon-o-calculator')
+                                    ->tooltip('Порахувати з таймера')
+                                    ->action(function ($set, $get, $livewire, $record) {
+                                        if (! $livewire->record) {
+                                            return;
+                                        }
+
+                                        // Якщо це поле "Час, факт."
+                                        $fieldName = $get('name');
+                                        if (stripos($fieldName, 'факт') !== false || stripos($fieldName, 'spent') !== false) {
+                                            $totalSeconds = \App\Models\Time::where('task_id', $livewire->record->id)->sum('duration');
+                                            $totalHours = round($totalSeconds / 3600, 2);
+
+                                            $set('number_value', $totalHours);
+
+                                            $hours = floor($totalHours);
+                                            $minutes = round(($totalHours - $hours) * 60);
+
+                                            \Filament\Notifications\Notification::make()
+                                                ->success()
+                                                ->title('Прораховано з таймера')
+                                                ->body("{$totalHours} год ({$hours} год {$minutes} хв)")
+                                                ->send();
+                                        }
+                                    })
+                                    ->visible(function ($get, $livewire) {
+                                        $fieldName = $get('name') ?? '';
+
+                                        return $livewire->record !== null &&
+                                               (stripos($fieldName, 'факт') !== false || stripos($fieldName, 'spent') !== false);
+                                    })
+                            )
                             ->columnSpan(3),
 
                         // Дата
@@ -388,8 +436,10 @@ class TaskForm
                     ->deletable(false)
                     ->reorderable(false)
                     ->collapsible()
-                    ->itemLabel(function ($state) {
-                        $name = $state['name'] ?? 'Поле';
+                    ->itemLabel(function ($state, $get) {
+                        // Отримуємо name через projectCustomField, оскільки поле disabled і не зберігається в $state
+                        $name = $state['name'] ?? $get('name') ?? 'Поле';
+
                         $value = match ($state['type'] ?? 'text') {
                             'text' => $state['text_value'] ?? '—',
                             'number' => $state['number_value'] ?? '—',
@@ -405,7 +455,8 @@ class TaskForm
                     ->label('')
                     ->content(new \Illuminate\Support\HtmlString(
                         '<div class="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                            💾 <strong>Збереження:</strong> При збереженні таску, кастомні поля автоматично синхронізуються з Asana
+                            💾 <strong>Збереження:</strong> Кастомні поля автоматично синхронізуються з Asana при натисканні "Відправити в Asana"<br>
+                            🔄 <strong>Підказка:</strong> Використовуйте кнопку "🔄 Автопрорахунок часу" вгорі для автоматичного підрахунку часу з таймера
                         </div>'
                     ))
                     ->columnSpanFull(),

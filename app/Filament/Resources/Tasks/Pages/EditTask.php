@@ -344,6 +344,12 @@ class EditTask extends EditRecord
                         ->first();
 
                     // Оновлюємо або створюємо TaskCustomField
+                    // Конвертуємо хвилини з Asana в години для зручності
+                    $numberValue = $customField['number_value'] ?? null;
+                    if ($numberValue !== null && ($customField['type'] ?? 'text') === 'number') {
+                        $numberValue = round($numberValue / 60, 2); // Конвертуємо хвилини в години
+                    }
+
                     \App\Models\TaskCustomField::updateOrCreate(
                         [
                             'task_id' => $this->record->id,
@@ -354,7 +360,7 @@ class EditTask extends EditRecord
                             'name' => $customField['name'] ?? '',
                             'type' => $customField['type'] ?? 'text',
                             'text_value' => $customField['text_value'] ?? null,
-                            'number_value' => $customField['number_value'] ?? null,
+                            'number_value' => $numberValue,
                             'date_value' => $customField['date_value'] ?? null,
                             'enum_value_gid' => $customField['enum_value']['gid'] ?? null,
                             'enum_value_name' => $customField['enum_value']['name'] ?? null,
@@ -386,8 +392,8 @@ class EditTask extends EditRecord
                 ->success()
                 ->title('Синхронізація з Asana успішна')
                 ->send();
+
             $this->refresh();
-            $this->fillForm($this->record->fresh()->toArray());
 
             // Синхронізуємо коментарі після оновлення задачі
             $this->syncCommentsFromAsana();
@@ -453,7 +459,7 @@ class EditTask extends EditRecord
             // Визначаємо значення в залежності від типу поля
             $value = match ($customField->type) {
                 'text' => $customField->text_value,
-                'number' => $customField->number_value ? (float) $customField->number_value : null,
+                'number' => $customField->number_value ? (float) $customField->number_value * 60 : null, // Конвертуємо години в хвилини
                 'date' => $customField->date_value?->format('Y-m-d'),
                 'enum' => $customField->enum_value_gid, // Для enum відправляємо GID варіанту
                 default => null,
@@ -497,7 +503,6 @@ class EditTask extends EditRecord
                 ->send();
 
             $this->refresh();
-            $this->fillForm($this->record->fresh()->toArray());
 
             // Синхронізуємо коментарі після відправки задачі
             $this->syncCommentsToAsana();
@@ -633,10 +638,7 @@ class EditTask extends EditRecord
         $taskId = $taskId ?? $this->record->id;
 
         // Обновляем данные задачи из БД с полной загрузкой связей
-        $this->record = $this->record->fresh(['times', 'comments']);
-
-        // Перезаполняем форму свежими данными
-        $this->fillForm($this->record->toArray());
+        $this->record = $this->record->fresh(['times', 'comments', 'customFields']);
 
         // Принудительно обновляем весь компонент страницы
         $this->dispatch('$refresh');
@@ -721,7 +723,6 @@ class EditTask extends EditRecord
                     ->send();
 
                 $this->refresh();
-                $this->fillForm($this->record->fresh()->toArray());
             } else {
                 Notification::make()
                     ->danger()
