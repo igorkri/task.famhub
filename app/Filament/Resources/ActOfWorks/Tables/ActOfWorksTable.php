@@ -22,7 +22,8 @@ class ActOfWorksTable
                     ->label('Номер')
                     ->searchable()
                     ->sortable()
-                    ->weight('bold'),
+                    ->weight('bold')
+                    ->toggleable(),
 
                 TextColumn::make('type')
                     ->label('Тип')
@@ -34,6 +35,7 @@ class ActOfWorksTable
                         ActOfWork::TYPE_NEW_PROJECT => 'warning',
                         default => 'gray',
                     })
+                    ->toggleable(isToggledHiddenByDefault: true)
                     ->sortable(),
 
                 TextColumn::make('status')
@@ -48,7 +50,7 @@ class ActOfWorksTable
                         ActOfWork::STATUS_CANCELLED => 'danger',
                         default => 'gray',
                     })
-                    ->sortable(),
+                    ->sortable()->toggleable(),
 
                 TextColumn::make('user.name')
                     ->label('Користувач')
@@ -67,18 +69,18 @@ class ActOfWorksTable
                     })
                     ->sortable()
                     ->toggleable()
-                    ->searchable(),
+                    ->searchable()->toggleable(),
 
                 TextColumn::make('date')
                     ->label('Дата складання')
                     ->date('d.m.Y')
-                    ->sortable(),
+                    ->sortable()->toggleable(),
 
                 TextColumn::make('total_amount')
                     ->label('Загальна сума')
                     ->money('UAH')
                     ->sortable()
-                    ->alignEnd(),
+                    ->alignEnd()->toggleable(),
 
                 TextColumn::make('paid_amount')
                     ->label('Оплачено')
@@ -87,7 +89,7 @@ class ActOfWorksTable
                     ->alignEnd()
                     ->color(fn (ActOfWork $record): string =>
                         $record->paid_amount >= $record->total_amount ? 'success' : 'warning'
-                    ),
+                    )->toggleable(),
 
                 IconColumn::make('file_excel')
                     ->label('Excel')
@@ -109,7 +111,7 @@ class ActOfWorksTable
                         ActOfWork::TELEGRAM_STATUS_PENDING => 'warning',
                         default => 'gray',
                     })
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('created_at')
                     ->label('Створено')
@@ -168,6 +170,6 @@ class ActOfWorksTable
             ])
             ->defaultSort('date', 'desc')
             ->striped()
-            ->paginated([10, 25, 50, 100]);
+            ->paginated([10, 25, 50, 100, 250, 500]);
     }
 }
