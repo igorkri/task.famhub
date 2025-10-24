@@ -344,20 +344,7 @@ class EditTask extends EditRecord
                         ->first();
 
                     // Оновлюємо або створюємо TaskCustomField
-                    // Конвертуємо хвилини з Asana в години для полів часу
-                    $numberValue = $customField['number_value'] ?? null;
-                    if ($numberValue !== null && ($customField['type'] ?? 'text') === 'number') {
-                        $fieldName = $customField['name'] ?? '';
-                        $isTimeField = stripos($fieldName, 'час') !== false ||
-                                       stripos($fieldName, 'факт') !== false ||
-                                       stripos($fieldName, 'spent') !== false ||
-                                       stripos($fieldName, 'time') !== false;
-
-                        if ($isTimeField) {
-                            $numberValue = round($numberValue / 60, 2); // Конвертуємо хвилини в години
-                        }
-                    }
-
+                    // Зберігаємо числові значення як є (в хвилинах для полів часу)
                     \App\Models\TaskCustomField::updateOrCreate(
                         [
                             'task_id' => $this->record->id,
@@ -368,7 +355,7 @@ class EditTask extends EditRecord
                             'name' => $customField['name'] ?? '',
                             'type' => $customField['type'] ?? 'text',
                             'text_value' => $customField['text_value'] ?? null,
-                            'number_value' => $numberValue,
+                            'number_value' => $customField['number_value'] ?? null,
                             'date_value' => $customField['date_value'] ?? null,
                             'enum_value_gid' => $customField['enum_value']['gid'] ?? null,
                             'enum_value_name' => $customField['enum_value']['name'] ?? null,
@@ -467,24 +454,11 @@ class EditTask extends EditRecord
             // Визначаємо значення в залежності від типу поля
             $value = match ($customField->type) {
                 'text' => $customField->text_value,
-                'number' => $customField->number_value !== null ? (float) $customField->number_value : null,
+                'number' => $customField->number_value !== null ? (int) round($customField->number_value) : null, // Округлюємо до цілого числа
                 'date' => $customField->date_value?->format('Y-m-d'),
                 'enum' => $customField->enum_value_gid ? (string) $customField->enum_value_gid : null, // Для enum відправляємо GID як string
                 default => null,
             };
-
-            // Для числових полів часу конвертуємо години в хвилини
-            if ($customField->type === 'number' && $value !== null) {
-                $fieldName = $customField->name ?? '';
-                $isTimeField = stripos($fieldName, 'час') !== false ||
-                               stripos($fieldName, 'факт') !== false ||
-                               stripos($fieldName, 'spent') !== false ||
-                               stripos($fieldName, 'time') !== false;
-
-                if ($isTimeField) {
-                    $value = (int) round($value * 60); // Конвертуємо години в хвилини і приводимо до integer
-                }
-            }
 
             // Додаємо тільки якщо є значення
             if ($value !== null && $value !== '') {

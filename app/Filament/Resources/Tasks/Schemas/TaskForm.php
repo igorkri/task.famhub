@@ -375,17 +375,17 @@ class TaskForm
                                         $fieldName = $get('name');
                                         if (stripos($fieldName, 'факт') !== false || stripos($fieldName, 'spent') !== false) {
                                             $totalSeconds = \App\Models\Time::where('task_id', $livewire->record->id)->sum('duration');
-                                            $totalHours = round($totalSeconds / 3600, 2);
+                                            $totalMinutes = round($totalSeconds / 60);
 
-                                            $set('number_value', $totalHours);
+                                            $set('number_value', $totalMinutes);
 
-                                            $hours = floor($totalHours);
-                                            $minutes = round(($totalHours - $hours) * 60);
+                                            $hours = floor($totalMinutes / 60);
+                                            $minutes = $totalMinutes % 60;
 
                                             \Filament\Notifications\Notification::make()
                                                 ->success()
                                                 ->title('Прораховано з таймера')
-                                                ->body("{$totalHours} год ({$hours} год {$minutes} хв)")
+                                                ->body("{$totalMinutes} хв ({$hours} год {$minutes} хв)")
                                                 ->send();
                                         }
                                     })
