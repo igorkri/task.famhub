@@ -546,6 +546,17 @@ class EditTask extends EditRecord
                     'section_gid' => $targetSection->asana_gid,
                     'result' => $result,
                 ]);
+
+                // Після переміщення явно встановлюємо значення completed з is_completed
+                // щоб перезаписати автоматичне значення від Asana
+                $service->updateTask($this->record->gid, [
+                    'completed' => (bool) $this->record->is_completed,
+                ]);
+
+                Log::info('Task completed status synchronized after section move', [
+                    'task_id' => $this->record->id,
+                    'is_completed' => $this->record->is_completed,
+                ]);
             } catch (AsanaError $e) {
                 Log::error('Failed to move Asana task to section', [
                     'task_id' => $this->record->id,
