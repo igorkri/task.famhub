@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task FamHub - Документація</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 0;
+            min-height: 100vh;
+            background: white;
+        }
+
+        .sidebar {
+            background: #1e293b;
+            color: white;
+            padding: 20px;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .sidebar h1 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: #60a5fa;
+        }
+
+        .sidebar p {
+            font-size: 0.85rem;
+            color: #94a3b8;
+            margin-bottom: 30px;
+        }
+
+        .nav-section {
+            margin-bottom: 25px;
+        }
+
+        .nav-section h2 {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #94a3b8;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .nav-section ul {
+            list-style: none;
+        }
+
+        .nav-section li {
+            margin-bottom: 5px;
+        }
+
+        .nav-section a {
+            color: #cbd5e1;
+            text-decoration: none;
+            display: block;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .nav-section a:hover {
+            background: #334155;
+            color: #60a5fa;
+            transform: translateX(5px);
+        }
+
+        .nav-section a.active {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .content {
+            padding: 40px 60px;
+            background: white;
+        }
+
+        .header {
+            border-bottom: 3px solid #3b82f6;
+            padding-bottom: 20px;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            color: #1e293b;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #64748b;
+            font-size: 1.1rem;
+        }
+
+        .card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 25px;
+            margin-bottom: 20px;
+            transition: all 0.2s;
+        }
+
+        .card:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .card h3 {
+            color: #1e293b;
+            margin-bottom: 15px;
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .card li {
+            margin-bottom: 10px;
+            padding-left: 25px;
+            position: relative;
+        }
+
+        .card li::before {
+            content: "→";
+            position: absolute;
+            left: 0;
+            color: #3b82f6;
+            font-weight: bold;
+        }
+
+        .card a {
+            color: #3b82f6;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .card a:hover {
+            text-decoration: underline;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            background: #dbeafe;
+            color: #1e40af;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+
+        .badge.green {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .badge.yellow {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .search-box {
+            margin-bottom: 30px;
+        }
+
+        .search-box input {
+            width: 100%;
+            padding: 12px 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+
+        .search-box input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .icon {
+            font-size: 1.5rem;
+        }
+
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                position: relative;
+                height: auto;
+            }
+
+            .content {
+                padding: 30px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <aside class="sidebar">
+            <h1>📚 Task FamHub</h1>
+            <p>Документація проєкту</p>
+
+            <nav>
+                <div class="nav-section">
+                    <h2>🚀 Початок роботи</h2>
+                    <ul>
+                        <li><a href="QUICKSTART.md">Швидкий старт</a></li>
+                        <li><a href="FINAL-SETUP-SUMMARY.md">Підсумкове налаштування</a></li>
+                        <li><a href="README.md">Загальна інформація</a></li>
+                    </ul>
+                </div>
+
+                <div class="nav-section">
+                    <h2>🔐 Безпека</h2>
+                    <ul>
+                        <li><a href="password-reset-setup.md">Скидання пароля (EN)</a></li>
+                        <li><a href="password-reset-setup-uk.md">Скидання пароля (UK)</a></li>
+                        <li><a href="FILAMENT-PASSWORD-RESET-DEBUG.md">Відладка паролів</a></li>
+                        <li><a href="user-model-configuration.md">Модель User</a></li>
+                    </ul>
+                </div>
+
+                <div class="nav-section">
+                    <h2>📧 Email</h2>
+                    <ul>
+                        <li><a href="EMAIL-FIXED-FINAL.md">Фінальне рішення</a></li>
+                        <li><a href="email-troubleshooting.md">Усунення проблем</a></li>
+                    </ul>
+                </div>
+
+                <div class="nav-section">
+                    <h2>🔗 Asana</h2>
+                    <ul>
+                        <li><a href="asana-integration-guide.md">Інтеграція</a></li>
+                        <li><a href="asana-webhooks-quickstart.md">Webhooks</a></li>
+                        <li><a href="asana-usage-examples.md">Приклади</a></li>
+                        <li><a href="asana-api-reference.md">API довідник</a></li>
+                    </ul>
+                </div>
+
+                <div class="nav-section">
+                    <h2>🎨 Filament</h2>
+                    <ul>
+                        <li><a href="resource-creation-guide.md">Створення ресурсів</a></li>
+                        <li><a href="form-table-customization.md">Кастомізація</a></li>
+                        <li><a href="multilingual-resources-guide.md">Багатомовність</a></li>
+                    </ul>
+                </div>
+
+                <div class="nav-section">
+                    <h2>🛠️ Розробка</h2>
+                    <ul>
+                        <li><a href="laravel-boost-guide.md">Laravel Boost</a></li>
+                        <li><a href="timer-usage-guide.md">Таймер</a></li>
+                        <li><a href="TODO.md">TODO</a></li>
+                    </ul>
+                </div>
+            </nav>
+        </aside>
+
+        <main class="content">
+            <div class="header">
+                <h1>📚 Документація Task FamHub</h1>
+                <p>Комплексна система управління завданнями на базі Laravel 12 і Filament 4</p>
+            </div>
+
+            <div class="search-box">
+                <input type="text" id="searchInput" placeholder="🔍 Пошук по документації...">
+            </div>
+
+            <div id="content">
+                <div class="card">
+                    <h3><span class="icon">🚀</span> Швидкий старт</h3>
+                    <ul>
+                        <li><a href="QUICKSTART.md">QUICKSTART.md</a> - Швидкий початок роботи з проєктом</li>
+                        <li><a href="FINAL-SETUP-SUMMARY.md">FINAL-SETUP-SUMMARY.md</a> - Підсумкова інформація з налаштування</li>
+                        <li><a href="README.md">README.md</a> - Загальна інформація про проєкт</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h3><span class="icon">🔐</span> Аутентифікація та безпека</h3>
+                    <ul>
+                        <li><a href="password-reset-setup.md">password-reset-setup.md</a> - Налаштування скидання пароля (EN)</li>
+                        <li><a href="password-reset-setup-uk.md">password-reset-setup-uk.md</a> - Налаштування скидання пароля (UK)</li>
+                        <li><a href="FILAMENT-PASSWORD-RESET-DEBUG.md">FILAMENT-PASSWORD-RESET-DEBUG.md</a> - Відладка скидання пароля</li>
+                        <li><a href="user-model-configuration.md">user-model-configuration.md</a> - Конфігурація моделі користувача</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h3><span class="icon">📧</span> Email та повідомлення</h3>
+                    <ul>
+                        <li><a href="EMAIL-FIXED-FINAL.md">EMAIL-FIXED-FINAL.md</a> - Фінальне рішення проблем з email</li>
+                        <li><a href="email-fixed.md">email-fixed.md</a> - Виправлення email</li>
+                        <li><a href="email-troubleshooting.md">email-troubleshooting.md</a> - Усунення проблем з email</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h3><span class="icon">🔗</span> Інтеграція з Asana <span class="badge">Основне</span></h3>
+                    <ul>
+                        <li><a href="asana-integration-guide.md">asana-integration-guide.md</a> - Головний посібник з інтеграції</li>
+                        <li><a href="asana-usage-examples.md">asana-usage-examples.md</a> - Приклади використання Asana API</li>
+                        <li><a href="asana-api-reference.md">asana-api-reference.md</a> - Довідник по Asana API</li>
+                        <li><a href="asana-artisan-commands.md">asana-artisan-commands.md</a> - Artisan команди для Asana</li>
+                        <li><a href="asana-auto-sync.md">asana-auto-sync.md</a> - Автоматична синхронізація</li>
+                        <li><a href="asana-custom-fields-guide.md">asana-custom-fields-guide.md</a> - Кастомні поля</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h3><span class="icon">🪝</span> Asana Webhooks</h3>
+                    <ul>
+                        <li><a href="asana-webhooks-quickstart.md">asana-webhooks-quickstart.md</a> - Швидкий старт</li>
+                        <li><a href="asana-webhooks-guide.md">asana-webhooks-guide.md</a> - Повний посібник</li>
+                        <li><a href="asana-webhooks-create-all-command.md">asana-webhooks-create-all-command.md</a> - Команда створення</li>
+                        <li><a href="asana-webhooks-ngrok.md">asana-webhooks-ngrok.md</a> - Налаштування з ngrok</li>
+                        <li><a href="asana-webhooks-production.md">asana-webhooks-production.md</a> - Production оточення</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h3><span class="icon">⏱️</span> Таймер та функціонал</h3>
+                    <ul>
+                        <li><a href="timer-usage-guide.md">timer-usage-guide.md</a> - Посібник з використання таймера</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h3><span class="icon">🎨</span> Filament та UI</h3>
+                    <ul>
+                        <li><a href="resource-creation-guide.md">resource-creation-guide.md</a> - Створення ресурсів</li>
+                        <li><a href="multilingual-resources-guide.md">multilingual-resources-guide.md</a> - Багатомовні ресурси</li>
+                        <li><a href="form-columns.md">form-columns.md</a> - Налаштування колонок форм</li>
+                        <li><a href="form-table-customization.md">form-table-customization.md</a> - Кастомізація форм і таблиць</li>
+                        <li><a href="breadcrumbs.md">breadcrumbs.md</a> - Хлібні крихти</li>
+                        <li><a href="colors.md">colors.md</a> - Колірна схема</li>
+                        <li><a href="sorting.md">sorting.md</a> - Сортування даних</li>
+                        <li><a href="slug.md">slug.md</a> - Робота зі slug</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h3><span class="icon">🌍</span> Інтернаціоналізація</h3>
+                    <ul>
+                        <li><a href="translations.md">translations.md</a> - Переклади та локалізація</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h3><span class="icon">🗄️</span> База даних</h3>
+                    <ul>
+                        <li><a href="connect-db2.md">connect-db2.md</a> - Підключення до бази даних</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h3><span class="icon">🛠️</span> Розробка</h3>
+                    <ul>
+                        <li><a href="laravel-boost-guide.md">laravel-boost-guide.md</a> - Посібник по Laravel Boost</li>
+                        <li><a href="console.md">console.md</a> - Консольні команди</li>
+                        <li><a href="TODO.md">TODO.md</a> - Список завдань та плани розвитку</li>
+                    </ul>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Поиск по документации
+        const searchInput = document.getElementById('searchInput');
+        const cards = document.querySelectorAll('.card');
+
+        searchInput.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+
+            cards.forEach(card => {
+                const text = card.textContent.toLowerCase();
+                if (text.includes(searchTerm)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+
+        // Активная ссылка в навигации
+        const navLinks = document.querySelectorAll('.sidebar a');
+        navLinks.forEach(link => {
+            link.addEventListener('click', function() {
+                navLinks.forEach(l => l.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+    </script>
+</body>
+</html>
+
