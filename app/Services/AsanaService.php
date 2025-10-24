@@ -453,6 +453,55 @@ class AsanaService
     }
 
     /**
+     * Отримати кастомні поля проєкту з Asana.
+     *
+     * @return array<array{gid: string, name: string, type: string, description: string|null, enum_options: array, is_required: bool, precision: int|null}>
+     */
+    public function getProjectCustomFields(string $projectId): array
+    {
+        $project = $this->client->projects->findById($projectId, [
+            'opt_fields' => 'custom_field_settings.custom_field.gid,custom_field_settings.custom_field.name,custom_field_settings.custom_field.type,custom_field_settings.custom_field.description,custom_field_settings.custom_field.enum_options,custom_field_settings.custom_field.precision,custom_field_settings.is_important',
+        ]);
+
+        $customFields = [];
+
+        if (isset($project->custom_field_settings) && is_array($project->custom_field_settings)) {
+            foreach ($project->custom_field_settings as $setting) {
+                if (! isset($setting->custom_field)) {
+                    continue;
+                }
+
+                $field = $setting->custom_field;
+                $enumOptions = [];
+
+                // Обробка enum_options
+                if (isset($field->enum_options) && is_array($field->enum_options)) {
+                    foreach ($field->enum_options as $option) {
+                        $enumOptions[] = [
+                            'gid' => $option->gid ?? '',
+                            'name' => $option->name ?? '',
+                            'enabled' => $option->enabled ?? true,
+                            'color' => $option->color ?? null,
+                        ];
+                    }
+                }
+
+                $customFields[] = [
+                    'gid' => $field->gid ?? '',
+                    'name' => $field->name ?? '',
+                    'type' => $field->type ?? 'text',
+                    'description' => $field->description ?? null,
+                    'enum_options' => $enumOptions,
+                    'is_required' => $setting->is_important ?? false,
+                    'precision' => $field->precision ?? null,
+                ];
+            }
+        }
+
+        return $customFields;
+    }
+
+    /**
      * Видалити webhook.
      */
     public function deleteWebhook(string $webhookId): void

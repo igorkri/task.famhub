@@ -198,12 +198,18 @@ class ProcessAsanaWebhookJob implements ShouldQueue
                         // Синхронізуємо кастомні поля
                         if (! empty($taskDetails['custom_fields'])) {
                             foreach ($taskDetails['custom_fields'] as $customField) {
+                                // Знаходимо відповідне ProjectCustomField
+                                $projectCustomField = \App\Models\ProjectCustomField::where('project_id', $existingTask->project_id)
+                                    ->where('asana_gid', $customField['gid'])
+                                    ->first();
+
                                 \App\Models\TaskCustomField::updateOrCreate(
                                     [
                                         'task_id' => $existingTask->id,
                                         'asana_gid' => $customField['gid'],
                                     ],
                                     [
+                                        'project_custom_field_id' => $projectCustomField?->id,
                                         'name' => $customField['name'],
                                         'type' => $customField['type'],
                                         'text_value' => $customField['text_value'] ?? null,
@@ -243,8 +249,14 @@ class ProcessAsanaWebhookJob implements ShouldQueue
                             'user_id' => $userId,
                             'status' => $status,
                             'is_completed' => $taskDetails['completed'] ?? false,
+                                // Знаходимо відповідне ProjectCustomField
+                                $projectCustomField = \App\Models\ProjectCustomField::where('project_id', $newTask->project_id)
+                                    ->where('asana_gid', $customField['gid'])
+                                    ->first();
+
                             'deadline' => $taskDetails['due_on'] ?? null,
                         ]);
+                                    'project_custom_field_id' => $projectCustomField?->id,
 
                         // Синхронізуємо кастомні поля
                         if (! empty($taskDetails['custom_fields'])) {

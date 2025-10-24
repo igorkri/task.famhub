@@ -84,12 +84,18 @@ class SyncTaskCustomFields extends Command
                         continue;
                     }
 
+                    // Знаходимо відповідне ProjectCustomField
+                    $projectCustomField = \App\Models\ProjectCustomField::where('project_id', $task->project_id)
+                        ->where('asana_gid', $customField['gid'])
+                        ->first();
+
                     TaskCustomField::updateOrCreate(
                         [
                             'task_id' => $task->id,
                             'asana_gid' => $customField['gid'],
                         ],
                         [
+                            'project_custom_field_id' => $projectCustomField?->id,
                             'name' => $customField['name'],
                             'type' => $customField['type'],
                             'text_value' => $customField['text_value'] ?? null,

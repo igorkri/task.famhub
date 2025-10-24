@@ -9,6 +9,7 @@ class TaskCustomField extends Model
 {
     protected $fillable = [
         'task_id',
+        'project_custom_field_id',
         'asana_gid',
         'name',
         'type',
@@ -32,6 +33,14 @@ class TaskCustomField extends Model
     public function task(): BelongsTo
     {
         return $this->belongsTo(Task::class);
+    }
+
+    /**
+     * Відношення до налаштування кастомного поля проєкту.
+     */
+    public function projectCustomField(): BelongsTo
+    {
+        return $this->belongsTo(ProjectCustomField::class);
     }
 
     /**

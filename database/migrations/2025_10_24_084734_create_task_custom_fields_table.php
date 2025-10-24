@@ -14,8 +14,9 @@ return new class extends Migration
         Schema::create('task_custom_fields', function (Blueprint $table) {
             $table->id();
             $table->foreignId('task_id')->constrained()->cascadeOnDelete();
-            $table->string('asana_gid')->comment('Asana custom field GID');
-            $table->string('name')->comment('Назва поля');
+            $table->foreignId('project_custom_field_id')->nullable()->constrained()->cascadeOnDelete();
+            $table->string('asana_gid')->comment('Asana custom field GID (для backward compatibility)');
+            $table->string('name')->comment('Назва поля (кешована з project_custom_field)');
             $table->string('type')->comment('Тип поля: text, number, enum, date, multi_enum');
 
             // Значення залежно від типу
