@@ -70,7 +70,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->navigation(function (NavigationBuilder $builder): NavigationBuilder {
                 $currentUserId = auth()->id();
-                
+
                 $projectItems = Project::where('is_active', true)
                     ->get()
                     ->map(fn (Project $project) => NavigationItem::make($project->name)
@@ -108,6 +108,7 @@ class AdminPanelProvider extends PanelProvider
                         ...TimeResource::getNavigationItems(),
                         ...RoleResource::getNavigationItems(),
                         ...UserResource::getNavigationItems(),
+                        ...\App\Filament\Pages\ManageCustomFields::getNavigationItems(),
                     ]);
             })
             ->authMiddleware([

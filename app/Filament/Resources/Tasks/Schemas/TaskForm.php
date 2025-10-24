@@ -320,71 +320,92 @@ class TaskForm
     private static function customFieldsSection()
     {
         return Section::make('Кастомні поля з Asana')
-            ->description('Ці поля синхронізовані з Asana і відображаються тільки для перегляду')
+            ->description('Редагуйте поля тут - вони синхронізуються з Asana при збереженні')
             ->schema([
                 Repeater::make('customFields')
                     ->relationship('customFields')
                     ->label('Поля')
                     ->schema([
+                        \Filament\Forms\Components\Hidden::make('asana_gid'),
+                        \Filament\Forms\Components\Hidden::make('project_custom_field_id'),
+                        \Filament\Forms\Components\Hidden::make('type'),
+
                         TextInput::make('name')
                             ->label('Назва поля')
                             ->disabled()
+                            ->dehydrated(false)
                             ->columnSpan(1),
 
-                        TextInput::make('type')
-                            ->label('Тип')
-                            ->disabled()
-                            ->formatStateUsing(fn ($state) => match ($state) {
-                                'text' => '📝 Текст',
-                                'number' => '🔢 Число',
-                                'enum' => '📋 Список',
-                                'date' => '📅 Дата',
-                                'multi_enum' => '☑️ Множинний вибір',
-                                default => $state,
-                            })
-                            ->columnSpan(1),
-
-                        TextInput::make('value')
+                        // Текстове поле
+                        Textarea::make('text_value')
                             ->label('Значення')
-                            ->disabled()
-                            ->formatStateUsing(function ($record) {
-                                if (! $record) {
-                                    return null;
+                            ->rows(2)
+                            ->visible(fn ($get) => $get('type') === 'text')
+                            ->columnSpan(3),
+
+                        // Числове поле
+                        TextInput::make('number_value')
+                            ->label('Значення')
+                            ->numeric()
+                            ->visible(fn ($get) => $get('type') === 'number')
+                            ->columnSpan(3),
+
+                        // Дата
+                        DatePicker::make('date_value')
+                            ->label('Значення')
+                            ->visible(fn ($get) => $get('type') === 'date')
+                            ->columnSpan(3),
+
+                        // Enum (список)
+                        Select::make('enum_value_gid')
+                            ->label('Значення')
+                            ->options(function ($get, $record) {
+                                if (! $record || ! $record->projectCustomField) {
+                                    return [];
                                 }
 
-                                return match ($record->type) {
-                                    'text' => $record->text_value,
-                                    'number' => $record->number_value,
-                                    'date' => $record->date_value?->format('d.m.Y'),
-                                    'enum' => $record->enum_value_name,
-                                    'multi_enum' => is_array($record->multi_enum_values)
-                                        ? implode(', ', array_column($record->multi_enum_values, 'name'))
-                                        : null,
-                                    default => null,
-                                };
+                                $options = $record->projectCustomField->enum_options ?? [];
+
+                                return collect($options)->pluck('name', 'gid')->toArray();
                             })
-                            ->columnSpan(2),
+                            ->visible(fn ($get) => $get('type') === 'enum')
+                            ->afterStateUpdated(function ($state, $set, $record) {
+                                if ($state && $record && $record->projectCustomField) {
+                                    $option = collect($record->projectCustomField->enum_options ?? [])
+                                        ->firstWhere('gid', $state);
+                                    if ($option) {
+                                        $set('enum_value_name', $option['name']);
+                                    }
+                                }
+                            })
+                            ->live()
+                            ->columnSpan(3),
+
+                        \Filament\Forms\Components\Hidden::make('enum_value_name'),
                     ])
                     ->columns(4)
                     ->addable(false)
                     ->deletable(false)
                     ->reorderable(false)
                     ->collapsible()
-                    ->itemLabel(fn ($state) => ($state['name'] ?? 'Поле').': '.
-                        (match ($state['type'] ?? 'text') {
+                    ->itemLabel(function ($state) {
+                        $name = $state['name'] ?? 'Поле';
+                        $value = match ($state['type'] ?? 'text') {
                             'text' => $state['text_value'] ?? '—',
                             'number' => $state['number_value'] ?? '—',
+                            'date' => $state['date_value'] ?? '—',
                             'enum' => $state['enum_value_name'] ?? '—',
                             default => '—',
-                        })
-                    ),
+                        };
+
+                        return "{$name}: {$value}";
+                    }),
 
                 \Filament\Forms\Components\Placeholder::make('sync_hint')
                     ->label('')
                     ->content(new \Illuminate\Support\HtmlString(
                         '<div class="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                            💡 <strong>Підказка:</strong> Щоб оновити кастомні поля, скористайтесь командою:
-                            <code class="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">php artisan asana:sync-custom-fields --task='.request()->route('record').'</code>
+                            💾 <strong>Збереження:</strong> При збереженні таску, кастомні поля автоматично синхронізуються з Asana
                         </div>'
                     ))
                     ->columnSpanFull(),

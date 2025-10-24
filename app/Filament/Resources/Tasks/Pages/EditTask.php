@@ -271,7 +271,7 @@ class EditTask extends EditRecord
                 'is_completed' => $data['completed'] ?? $this->record->is_completed,
             ];
 
-            // Даты создания и обновления из Asana
+            // Дати створення і оновлення з Asana
             if (isset($data['created_at']) && $data['created_at']) {
                 try {
                     $updateData['created_at'] = Carbon::parse($data['created_at']);
@@ -317,7 +317,7 @@ class EditTask extends EditRecord
                 }
             }
 
-            // Статус на основе секции
+            // Статус на основе секції
             if (isset($data['memberships']) && is_array($data['memberships'])) {
                 foreach ($data['memberships'] as $membership) {
                     if (isset($membership['section']) && $membership['section']) {
@@ -330,56 +330,56 @@ class EditTask extends EditRecord
                 }
             }
 
-            // Кастомные поля
+            // Універсальна синхронізація ВСІХ кастомних полів з Asana
             if (isset($data['custom_fields']) && is_array($data['custom_fields'])) {
                 foreach ($data['custom_fields'] as $customField) {
-                    $fieldGid = $customField['gid'] ?? null;
-                    $value = $customField['enum_value'] ?? $customField['number_value'] ?? $customField['text_value'] ?? null;
+                    $asanaGid = $customField['gid'] ?? null;
+                    if (! $asanaGid) {
+                        continue;
+                    }
 
-                    if ($fieldGid === '1202674799521449' && $value) { // Приоритет
-                        $priorityMap = [
-                            'Високий' => 'high',
-                            'Средній' => 'medium',
-                            'Низький' => 'low',
-                            'Призупинена' => 'low', // или добавить новый статус
-                        ];
-                        $valueName = is_array($value) ? ($value['name'] ?? '') : '';
+                    // Знаходимо відповідне ProjectCustomField
+                    $projectCustomField = \App\Models\ProjectCustomField::where('project_id', $this->record->project_id)
+                        ->where('asana_gid', $asanaGid)
+                        ->first();
+
+                    // Оновлюємо або створюємо TaskCustomField
+                    \App\Models\TaskCustomField::updateOrCreate(
+                        [
+                            'task_id' => $this->record->id,
+                            'asana_gid' => $asanaGid,
+                        ],
+                        [
+                            'project_custom_field_id' => $projectCustomField?->id,
+                            'name' => $customField['name'] ?? '',
+                            'type' => $customField['type'] ?? 'text',
+                            'text_value' => $customField['text_value'] ?? null,
+                            'number_value' => $customField['number_value'] ?? null,
+                            'date_value' => $customField['date_value'] ?? null,
+                            'enum_value_gid' => $customField['enum_value']['gid'] ?? null,
+                            'enum_value_name' => $customField['enum_value']['name'] ?? null,
+                        ]
+                    );
+
+                    // Backward compatibility
+                    $fieldGid = $customField['gid'] ?? null;
+
+                    if ($fieldGid === '1202674799521449' && isset($customField['enum_value'])) {
+                        $priorityMap = ['Високий' => 'high', 'Средній' => 'medium', 'Низький' => 'low', 'Призупинена' => 'low'];
+                        $valueName = $customField['enum_value']['name'] ?? '';
                         $updateData['priority'] = $priorityMap[$valueName] ?? 'low';
                     }
 
-                    if ($fieldGid === '1205860710071790' && $value) { // Тип задачі
-                        // Можно маппить на status или добавить новое поле
-                        // Пока пропустим или добавим в status
-                        $typeMap = [
-                            'Помилка сайт' => 'needs_clarification',
-                            'Помилка в 1С' => 'needs_clarification',
-                            'Нова функція' => 'new',
-                            'Покращення' => 'in_progress',
-                            'Обслуговування' => 'in_progress',
-                            'Новий проект (розробка)' => 'new',
-                        ];
-                        $valueName = is_array($value) ? ($value['name'] ?? '') : '';
-                        if (! isset($updateData['status'])) {
-                            $updateData['status'] = $typeMap[$valueName] ?? 'new';
-                        }
-                    }
-
-                    if ($fieldGid === '1202687202895300' && isset($customField['number_value'])) { // Бюджет (часы план)
+                    if ($fieldGid === '1202687202895300' && isset($customField['number_value'])) {
                         $updateData['budget'] = (float) $customField['number_value'];
                     }
 
-                    if ($fieldGid === '1202687202895302' && isset($customField['number_value'])) { // Витрачено (часы факт)
+                    if ($fieldGid === '1202687202895302' && isset($customField['number_value'])) {
                         $updateData['spent'] = (float) $customField['number_value'];
                     }
                 }
             }
 
-            // dd([
-            //                 'membership' => $membership,
-            //                 'section' => $section,
-            //                 'status' => $section ? $section->status : null,
-            //                 'updateData' => $updateData,
-            //             ]);
             $this->record->update($updateData);
 
             Notification::make()
@@ -389,7 +389,7 @@ class EditTask extends EditRecord
             $this->refresh();
             $this->fillForm($this->record->fresh()->toArray());
 
-            // Синхронизируем комментарии после обновления задачи
+            // Синхронізуємо коментарі після оновлення задачі
             $this->syncCommentsFromAsana();
         } catch (AsanaError $e) {
             Notification::make()
@@ -446,56 +446,33 @@ class EditTask extends EditRecord
             }
         }
 
-        // TODO: Доробити логіку з кастомними полями. Створити табл як в Section щоб можна було зв'язяти з проектом
+        // Синхронізуємо кастомні поля з TaskCustomField
+        $customFields = [];
 
-        // Кастомные поля - НЕ отправляем, так как они вызывают ошибки
-        // API Asana очень чувствителен к кастомным полям и их можно обновлять только
-        // если они существуют в проекте и мы передаём правильные значения
-        // Для обновления кастомных полей лучше использовать отдельный метод
+        foreach ($this->record->customFields as $customField) {
+            // Визначаємо значення в залежності від типу поля
+            $value = match ($customField->type) {
+                'text' => $customField->text_value,
+                'number' => $customField->number_value ? (float) $customField->number_value : null,
+                'date' => $customField->date_value?->format('Y-m-d'),
+                'enum' => $customField->enum_value_gid, // Для enum відправляємо GID варіанту
+                default => null,
+            };
 
-        //        $customFields = [];
-        //
-        //        // Приоритет - отправляем gid опции
-        //        if ($this->record->priority) {
-        //            $priorityMap = [
-        //                'high' => '1202674799522489', // Високий
-        //                'medium' => '1202674799522531', // Средній
-        //                'low' => '1202674799522561', // Низький
-        //            ];
-        //            $priorityGid = $priorityMap[$this->record->priority] ?? null;
-        //            if ($priorityGid) {
-        //                $customFields['1202674799521449'] = $priorityGid;
-        //            }
-        //        }
-        //
-        //        // Тип задачи - отправляем gid опции
-        //        if ($this->record->status) {
-        //            $statusMap = [
-        //                'new' => '1205860710071792', // Нова функція
-        //                'in_progress' => '1205860710071793', // Покращення
-        //                'needs_clarification' => '1205860710071791', // Помилка сайт
-        //                'completed' => '1205860710071794', // Обслуговування
-        //                'canceled' => '1205860710071794', // Обслуговування
-        //            ];
-        //            $typeGid = $statusMap[$this->record->status] ?? null;
-        //            if ($typeGid) {
-        //                $customFields['1205860710071790'] = $typeGid;
-        //            }
-        //        }
-        //
-        //        // Бюджет (часы план)
-        //        if ($this->record->budget) {
-        //            $customFields['1202687202895300'] = (float) $this->record->budget;
-        //        }
-        //
-        //        // Витрачено (часы факт)
-        //        if ($this->record->spent) {
-        //            $customFields['1202687202895302'] = (float) $this->record->spent;
-        //        }
-        //
-        //        if (! empty($customFields)) {
-        //            $payload['custom_fields'] = $customFields;
-        //        }
+            // Додаємо тільки якщо є значення
+            if ($value !== null && $value !== '') {
+                $customFields[$customField->asana_gid] = $value;
+            }
+        }
+
+        if (! empty($customFields)) {
+            $payload['custom_fields'] = $customFields;
+
+            Log::info('Syncing custom fields to Asana', [
+                'task_id' => $this->record->id,
+                'custom_fields' => $customFields,
+            ]);
+        }
 
         // Убираем пустые значения
         // $payload = array_filter($payload, function ($value) {
@@ -522,7 +499,7 @@ class EditTask extends EditRecord
             $this->refresh();
             $this->fillForm($this->record->fresh()->toArray());
 
-            // Синхронизируем комментарии після відправки задачі
+            // Синхронізуємо коментарі після відправки задачі
             $this->syncCommentsToAsana();
         } catch (AsanaError $e) {
             Log::error('Asana sync error', [
@@ -683,17 +660,17 @@ class EditTask extends EditRecord
             'notes' => $this->record->description ?? '',
         ];
 
-        // Проект (если задача в проекте)
+        // Проект (якщо задача в проекті)
         if ($this->record->project && $this->record->project->asana_id) {
             $payload['projects'] = [$this->record->project->asana_id];
         }
 
-        // Родительская задача
+        // Батьківська задача
         if ($this->record->parent && $this->record->parent->gid) {
             $payload['parent'] = $this->record->parent->gid;
         }
 
-        // Исполнитель
+        // Виконавець
         if ($this->record->user && $this->record->user->asana_gid) {
             $payload['assignee'] = $this->record->user->asana_gid;
         }
@@ -703,12 +680,12 @@ class EditTask extends EditRecord
             $payload['due_on'] = $this->record->deadline;
         }
 
-        // Дата начала
+        // Дата початку
         if ($this->record->start_date) {
             $payload['start_on'] = $this->record->start_date;
         }
 
-        // Статус завершения
+        // Статус завершення
         $payload['completed'] = (bool) ($this->record->is_completed ?? false);
 
         try {
@@ -720,17 +697,17 @@ class EditTask extends EditRecord
                     $this->record->update(['gid' => $result['gid']]);
                 });
 
-                // Если у задачи есть секция, перемещаем её в нужную секцию
+                // Якщо у задачі є секція, переміщуємо її в потрібну секцію
                 if ($this->record->section && $this->record->section->asana_gid) {
                     try {
                         $service->moveTaskToSection($result['gid'], $this->record->section->asana_gid);
-                        \Log::info('Task moved to section in Asana', [
+                        Log::info('Task moved to section in Asana', [
                             'task_id' => $this->record->id,
                             'gid' => $result['gid'],
                             'section_gid' => $this->record->section->asana_gid,
                         ]);
                     } catch (\Exception $e) {
-                        \Log::warning('Failed to move task to section in Asana', [
+                        Log::warning('Failed to move task to section in Asana', [
                             'task_id' => $this->record->id,
                             'error' => $e->getMessage(),
                         ]);
