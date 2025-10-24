@@ -14,7 +14,6 @@ use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
 use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\HtmlString;
 
 class ManageCustomFields extends Page implements HasTable
 {
