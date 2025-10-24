@@ -457,6 +457,6 @@ class AsanaService
      */
     public function deleteWebhook(string $webhookId): void
     {
-        $this->client->webhooks->delete($webhookId);
+        $this->client->webhooks->deleteById($webhookId);
     }
 }

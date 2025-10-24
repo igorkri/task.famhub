@@ -165,10 +165,19 @@ class ProcessAsanaWebhookJob implements ShouldQueue
                             'deadline' => $taskDetails['due_on'] ?? $existingTask->deadline,
                         ];
 
-                        // Оновлюємо тільки якщо є нові значення
+                        // Оновлюємо project_id тільки якщо знайшли проєкт
                         if ($project) {
                             $updateData['project_id'] = $project->id;
+                        } elseif (! $existingTask->project_id) {
+                            // Якщо у таску немає project_id взагалі, логуємо помилку
+                            Log::warning('Task has no project in Asana and no project_id in database', [
+                                'gid' => $gid,
+                                'task_name' => $taskDetails['name'] ?? '',
+                            ]);
+
+                            return; // Не оновлюємо таск без проєкту
                         }
+                        // Інакше зберігаємо існуючий project_id
 
                         if ($section) {
                             $updateData['section_id'] = $section->id;
