@@ -195,9 +195,30 @@ class ProcessAsanaWebhookJob implements ShouldQueue
 
                         $existingTask->update($updateData);
 
+                        // Синхронізуємо кастомні поля
+                        if (! empty($taskDetails['custom_fields'])) {
+                            foreach ($taskDetails['custom_fields'] as $customField) {
+                                \App\Models\TaskCustomField::updateOrCreate(
+                                    [
+                                        'task_id' => $existingTask->id,
+                                        'asana_gid' => $customField['gid'],
+                                    ],
+                                    [
+                                        'name' => $customField['name'],
+                                        'type' => $customField['type'],
+                                        'text_value' => $customField['text_value'] ?? null,
+                                        'number_value' => $customField['number_value'] ?? null,
+                                        'enum_value_gid' => $customField['enum_value']['gid'] ?? null,
+                                        'enum_value_name' => $customField['enum_value']['name'] ?? null,
+                                    ]
+                                );
+                            }
+                        }
+
                         Log::info('Task updated from webhook', [
                             'gid' => $gid,
                             'updated_fields' => array_keys($updateData),
+                            'custom_fields_count' => count($taskDetails['custom_fields'] ?? []),
                         ]);
                     });
                 } else {
@@ -213,7 +234,7 @@ class ProcessAsanaWebhookJob implements ShouldQueue
                     }
 
                     Task::withoutEvents(function () use ($gid, $taskDetails, $project, $section, $userId, $status) {
-                        Task::create([
+                        $newTask = Task::create([
                             'gid' => $gid,
                             'title' => $taskDetails['name'] ?? '',
                             'description' => $taskDetails['notes'] ?? '',
@@ -225,10 +246,27 @@ class ProcessAsanaWebhookJob implements ShouldQueue
                             'deadline' => $taskDetails['due_on'] ?? null,
                         ]);
 
+                        // Синхронізуємо кастомні поля
+                        if (! empty($taskDetails['custom_fields'])) {
+                            foreach ($taskDetails['custom_fields'] as $customField) {
+                                \App\Models\TaskCustomField::create([
+                                    'task_id' => $newTask->id,
+                                    'asana_gid' => $customField['gid'],
+                                    'name' => $customField['name'],
+                                    'type' => $customField['type'],
+                                    'text_value' => $customField['text_value'] ?? null,
+                                    'number_value' => $customField['number_value'] ?? null,
+                                    'enum_value_gid' => $customField['enum_value']['gid'] ?? null,
+                                    'enum_value_name' => $customField['enum_value']['name'] ?? null,
+                                ]);
+                            }
+                        }
+
                         Log::info('Task created from webhook', [
                             'gid' => $gid,
                             'title' => $taskDetails['name'] ?? '',
                             'project_id' => $project->id,
+                            'custom_fields_count' => count($taskDetails['custom_fields'] ?? []),
                         ]);
                     });
                 }

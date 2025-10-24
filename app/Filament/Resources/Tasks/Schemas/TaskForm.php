@@ -47,6 +47,13 @@ class TaskForm
                                 self::commentsSection(),
                             ])
                             ->visible(fn ($record) => $record !== null), // показываем только для существующих записей
+                        Tabs\Tab::make('Кастомні поля')
+                            ->icon('heroicon-o-adjustments-horizontal')
+                            ->badge(fn ($record) => optional($record)?->customFields()->count() ?? 0)
+                            ->schema([
+                                self::customFieldsSection(),
+                            ])
+                            ->visible(fn ($record) => $record !== null && $record->customFields()->count() > 0),
                     ])
                     ->persistTabInQueryString()
                     ->columnSpanFull(),
@@ -306,6 +313,81 @@ class TaskForm
                     ->reorderable(false)
                     ->deleteAction(fn (Action $action) => $action->requiresConfirmation())
                     ->cloneAction(fn (Action $action) => $action->label('Клонувати')),
+            ])
+            ->columnSpanFull();
+    }
+
+    private static function customFieldsSection()
+    {
+        return Section::make('Кастомні поля з Asana')
+            ->description('Ці поля синхронізовані з Asana і відображаються тільки для перегляду')
+            ->schema([
+                Repeater::make('customFields')
+                    ->relationship('customFields')
+                    ->label('Поля')
+                    ->schema([
+                        TextInput::make('name')
+                            ->label('Назва поля')
+                            ->disabled()
+                            ->columnSpan(1),
+
+                        TextInput::make('type')
+                            ->label('Тип')
+                            ->disabled()
+                            ->formatStateUsing(fn ($state) => match ($state) {
+                                'text' => '📝 Текст',
+                                'number' => '🔢 Число',
+                                'enum' => '📋 Список',
+                                'date' => '📅 Дата',
+                                'multi_enum' => '☑️ Множинний вибір',
+                                default => $state,
+                            })
+                            ->columnSpan(1),
+
+                        TextInput::make('value')
+                            ->label('Значення')
+                            ->disabled()
+                            ->formatStateUsing(function ($record) {
+                                if (! $record) {
+                                    return null;
+                                }
+
+                                return match ($record->type) {
+                                    'text' => $record->text_value,
+                                    'number' => $record->number_value,
+                                    'date' => $record->date_value?->format('d.m.Y'),
+                                    'enum' => $record->enum_value_name,
+                                    'multi_enum' => is_array($record->multi_enum_values)
+                                        ? implode(', ', array_column($record->multi_enum_values, 'name'))
+                                        : null,
+                                    default => null,
+                                };
+                            })
+                            ->columnSpan(2),
+                    ])
+                    ->columns(4)
+                    ->addable(false)
+                    ->deletable(false)
+                    ->reorderable(false)
+                    ->collapsible()
+                    ->itemLabel(fn ($state) => ($state['name'] ?? 'Поле').': '.
+                        (match ($state['type'] ?? 'text') {
+                            'text' => $state['text_value'] ?? '—',
+                            'number' => $state['number_value'] ?? '—',
+                            'enum' => $state['enum_value_name'] ?? '—',
+                            default => '—',
+                        })
+                    ),
+
+                \Filament\Forms\Components\Placeholder::make('sync_hint')
+                    ->label('')
+                    ->content(new \Illuminate\Support\HtmlString(
+                        '<div class="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                            💡 <strong>Підказка:</strong> Щоб оновити кастомні поля, скористайтесь командою:
+                            <code class="bg-gray-100 dark:bg-gray-800 px-2 py-1 rounded">php artisan asana:sync-custom-fields --task='.request()->route('record').'</code>
+                        </div>'
+                    ))
+                    ->columnSpanFull(),
             ])
             ->columnSpanFull();
     }

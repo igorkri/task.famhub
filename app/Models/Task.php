@@ -110,6 +110,11 @@ class Task extends Model
         return $this->hasMany(TaskComment::class);
     }
 
+    public function customFields(): HasMany
+    {
+        return $this->hasMany(TaskCustomField::class);
+    }
+
     /**
      * Синхронизировать задачу с Asana (создать, если не существует).
      */
