@@ -4,7 +4,6 @@ namespace App\Filament\Resources\ActOfWorks\Pages;
 
 use App\Filament\Resources\ActOfWorks\ActOfWorkResource;
 use Filament\Actions\DeleteAction;
-use Filament\Actions\ViewAction;
 use Filament\Resources\Pages\EditRecord;
 
 class EditActOfWork extends EditRecord
@@ -14,7 +13,6 @@ class EditActOfWork extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            ViewAction::make(),
             DeleteAction::make(),
         ];
     }
