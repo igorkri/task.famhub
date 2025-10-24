@@ -8,7 +8,6 @@ use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\Select;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
-use Filament\Tables\Actions\Action as TableAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
@@ -86,7 +85,7 @@ class UserRoleManagement extends Page implements HasTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->actions([
-                TableAction::make('manageRoles')
+                Action::make('manageRoles')
                     ->label('Ролі')
                     ->icon('heroicon-o-shield-check')
                     ->color('primary')
@@ -114,7 +113,7 @@ class UserRoleManagement extends Page implements HasTable
                             ->send();
                     }),
 
-                TableAction::make('makeSuperAdmin')
+                Action::make('makeSuperAdmin')
                     ->label('Зробити супер адміном')
                     ->icon('heroicon-o-star')
                     ->color('danger')
@@ -132,7 +131,7 @@ class UserRoleManagement extends Page implements HasTable
                             ->send();
                     }),
 
-                TableAction::make('removeSuperAdmin')
+                Action::make('removeSuperAdmin')
                     ->label('Зняти супер адміна')
                     ->icon('heroicon-o-x-circle')
                     ->color('warning')

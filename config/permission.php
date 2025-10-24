@@ -104,6 +104,16 @@ return [
     'register_permission_check_method' => true,
 
     /*
+     * When set to true the package will cache the permissions.
+     * This will dramatically improve performance.
+     */
+    'cache' => [
+        'expiration_time' => \DateInterval::createFromDateString('24 hours'),
+        'key' => 'spatie.permission.cache',
+        'store' => 'default',
+    ],
+
+    /*
      * When set to true, Laravel\Octane\Events\OperationTerminated event listener will be registered
      * this will refresh permissions on every TickTerminated, TaskTerminated and RequestTerminated
      * NOTE: This should not be needed in most cases, but an Octane/Vapor combination benefited from it.

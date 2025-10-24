@@ -23,9 +23,8 @@ class ProjectsTable
                 TextColumn::make('name')
                     ->label('Назва')
                     ->searchable(),
-                TextColumn::make('workspace_id')
+                TextColumn::make('workspace.name')
                     ->label('Робоче пространство')
-                    ->getStateUsing(fn ($record) => $record->workspace->name)
                     ->sortable(),
                 ToggleColumn::make('is_active')
                     ->label('Активний проект'),

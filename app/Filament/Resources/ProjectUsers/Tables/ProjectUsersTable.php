@@ -15,12 +15,14 @@ class ProjectUsersTable
     {
         return $table
             ->columns([
-                TextColumn::make('project_id')
-                    ->numeric()
-                    ->sortable(),
-                TextColumn::make('user_id')
-                    ->numeric()
-                    ->sortable(),
+                TextColumn::make('project.name')
+                    ->label('Проект')
+                    ->sortable()
+                    ->searchable(),
+                TextColumn::make('user.name')
+                    ->label('Користувач')
+                    ->sortable()
+                    ->searchable(),
                 IconColumn::make('is_admin')
                     ->boolean(),
                 TextColumn::make('role')

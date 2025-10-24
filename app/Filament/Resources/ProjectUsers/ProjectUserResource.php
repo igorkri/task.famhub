@@ -68,4 +68,9 @@ class ProjectUserResource extends Resource
             'edit' => EditProjectUser::route('/{record}/edit'),
         ];
     }
+
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        return parent::getEloquentQuery()->with(['project', 'user']);
+    }
 }
