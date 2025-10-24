@@ -9,10 +9,17 @@ use App\Services\AsanaService;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Concerns\InteractsWithTable;
+use Filament\Tables\Contracts\HasTable;
+use Filament\Tables\Table;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\HtmlString;
 
-class ManageCustomFields extends Page
+class ManageCustomFields extends Page implements HasTable
 {
+    use InteractsWithTable;
+
     protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-adjustments-horizontal';
 
     protected string $view = 'filament.pages.manage-custom-fields';
@@ -27,14 +34,12 @@ class ManageCustomFields extends Page
 
     public array $stats = [];
 
-    public array $projectsData = [];
-
     public function mount(): void
     {
-        $this->loadData();
+        $this->loadStats();
     }
 
-    protected function loadData(): void
+    protected function loadStats(): void
     {
         // Статистика
         $this->stats = [
@@ -42,31 +47,145 @@ class ManageCustomFields extends Page
             'project_fields' => ProjectCustomField::count(),
             'task_fields' => TaskCustomField::count(),
         ];
+    }
 
-        // Дані проєктів
-        $projects = Project::whereNotNull('asana_id')
-            ->with('customFields')
-            ->get();
+    public function table(Table $table): Table
+    {
+        return $table
+            ->query(
+                ProjectCustomField::query()
+                    ->with(['project'])
+                    ->join('projects', 'project_custom_fields.project_id', '=', 'projects.id')
+                    ->select('project_custom_fields.*')
+            )
+            ->defaultSort('projects.name')
+            ->columns([
+                TextColumn::make('project.name')
+                    ->label('Проєкт')
+                    ->sortable()
+                    ->searchable()
+                    ->icon('heroicon-o-folder')
+                    ->weight('bold')
+                    ->color('primary'),
 
-        $this->projectsData = $projects->map(function ($project) {
-            $customFields = $project->customFields;
-            $taskFieldsCount = TaskCustomField::whereHas('task', function ($q) use ($project) {
-                $q->where('project_id', $project->id);
-            })->count();
+                TextColumn::make('name')
+                    ->label('Назва поля')
+                    ->searchable()
+                    ->sortable()
+                    ->weight('medium'),
 
-            return [
-                'id' => $project->id,
-                'name' => $project->name,
-                'fields_count' => $customFields->count(),
-                'fields' => $customFields->map(fn ($f) => [
-                    'name' => $f->name,
-                    'type' => $f->type,
-                    'enum_options' => $f->enum_options,
-                ])->toArray(),
-                'task_values_count' => $taskFieldsCount,
-                'has_fields' => $customFields->count() > 0,
-            ];
-        })->toArray();
+                TextColumn::make('type')
+                    ->label('Тип')
+                    ->sortable()
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'enum', 'multi_enum' => 'info',
+                        'number' => 'warning',
+                        'text' => 'gray',
+                        'date' => 'success',
+                        default => 'gray',
+                    })
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                        'enum' => 'Список',
+                        'multi_enum' => 'Мультисписок',
+                        'number' => 'Число',
+                        'text' => 'Текст',
+                        'date' => 'Дата',
+                        default => $state,
+                    })
+                    ->icon(fn (string $state): string => match ($state) {
+                        'enum', 'multi_enum' => 'heroicon-o-list-bullet',
+                        'number' => 'heroicon-o-hashtag',
+                        'text' => 'heroicon-o-document-text',
+                        'date' => 'heroicon-o-calendar',
+                        default => 'heroicon-o-cog',
+                    }),
+
+                TextColumn::make('enum_options')
+                    ->label('Варіанти')
+                    ->html()
+                    ->formatStateUsing(function ($state, ProjectCustomField $record): string {
+                        if (! in_array($record->type, ['enum', 'multi_enum'])) {
+                            return '<span class="text-gray-400 text-xs">—</span>';
+                        }
+
+                        if (empty($state) || ! is_array($state)) {
+                            return '<span class="text-gray-400 text-xs italic">Немає варіантів</span>';
+                        }
+
+                        // Беремо тільки перші 5 варіантів
+                        $totalCount = count($state);
+                        $displayOptions = array_slice($state, 0, 5);
+                        $remaining = max(0, $totalCount - 5);
+
+                        $badges = [];
+                        foreach ($displayOptions as $option) {
+                            // Витягуємо ТІЛЬКИ поле name
+                            if (is_array($option) && isset($option['name'])) {
+                                $name = $option['name'];
+                            } else {
+                                continue;
+                            }
+
+                            $badges[] = '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 border border-primary-200 dark:border-primary-800">'.e($name).'</span>';
+                        }
+
+                        if ($remaining > 0) {
+                            $badges[] = '<span class="inline-flex items-center px-2 py-0.5 rounded text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 font-medium">+'.$remaining.'</span>';
+                        }
+
+                        return '<div class="flex flex-wrap gap-1">'.implode('', $badges).'</div>';
+                    })
+                    ->toggleable(),
+
+                TextColumn::make('taskCustomFields_count')
+                    ->counts('taskCustomFields')
+                    ->label('Використань')
+                    ->sortable()
+                    ->alignCenter()
+                    ->color('success')
+                    ->formatStateUsing(fn ($state) => $state ?: '0'),
+
+                TextColumn::make('is_required')
+                    ->label("Обов'язкове")
+                    ->sortable()
+                    ->alignCenter()
+                    ->formatStateUsing(fn ($state) => $state ? '✓' : '—')
+                    ->color(fn ($state) => $state ? 'success' : 'gray')
+                    ->toggleable(),
+
+                TextColumn::make('description')
+                    ->label('Опис')
+                    ->limit(50)
+                    ->tooltip(fn ($state) => $state)
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                TextColumn::make('asana_gid')
+                    ->label('Asana GID')
+                    ->copyable()
+                    ->copyMessage('GID скопійовано')
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                TextColumn::make('created_at')
+                    ->label('Створено')
+                    ->dateTime('d.m.Y H:i')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+            ])
+            ->filters([
+                //
+            ])
+            ->actions([
+                //
+            ])
+            ->bulkActions([
+                //
+            ])
+            ->emptyStateHeading('Кастомні поля не знайдено')
+            ->emptyStateDescription('Натисніть "Синхронізувати поля проєктів" для завантаження полів з Asana')
+            ->emptyStateIcon('heroicon-o-adjustments-horizontal')
+            ->paginated([10, 25, 50, 100]);
     }
 
     protected function getHeaderActions(): array
@@ -113,7 +232,7 @@ class ManageCustomFields extends Page
                             }
                         }
 
-                        $this->loadData();
+                        $this->loadStats();
 
                         if (empty($errors)) {
                             Notification::make()
@@ -160,7 +279,7 @@ class ManageCustomFields extends Page
                         // Запускаємо команду асинхронно
                         Artisan::call('asana:sync-custom-fields');
 
-                        $this->loadData();
+                        $this->loadStats();
 
                         Notification::make()
                             ->success()
@@ -191,7 +310,7 @@ class ManageCustomFields extends Page
                     TaskCustomField::truncate();
                     ProjectCustomField::truncate();
 
-                    $this->loadData();
+                    $this->loadStats();
 
                     Notification::make()
                         ->success()
@@ -204,7 +323,7 @@ class ManageCustomFields extends Page
                 ->label('Оновити')
                 ->icon('heroicon-o-arrow-path')
                 ->action(function () {
-                    $this->loadData();
+                    $this->loadStats();
 
                     Notification::make()
                         ->success()
@@ -214,4 +333,3 @@ class ManageCustomFields extends Page
         ];
     }
 }
-
