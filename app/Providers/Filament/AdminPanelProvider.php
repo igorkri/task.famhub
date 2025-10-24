@@ -2,32 +2,33 @@
 
 namespace App\Providers\Filament;
 
-use Filament\Panel;
-use App\Models\Project;
-use Filament\PanelProvider;
-use Filament\Pages\Dashboard;
-use Filament\Support\Colors\Color;
-use Filament\Widgets\AccountWidget;
-use Filament\Navigation\NavigationItem;
-use Filament\Navigation\NavigationGroup;
-use Filament\Widgets\FilamentInfoWidget;
-use Filament\Http\Middleware\Authenticate;
-use Filament\Navigation\NavigationBuilder;
+use App\Filament\Resources\ActOfWorks\ActOfWorkResource;
+use App\Filament\Resources\Sections\SectionResource;
 use App\Filament\Resources\Tasks\TaskResource;
 use App\Filament\Resources\Times\TimeResource;
 use App\Filament\Resources\Users\UserResource;
-use Illuminate\Session\Middleware\StartSession;
-use Illuminate\Cookie\Middleware\EncryptCookies;
-use Filament\Http\Middleware\AuthenticateSession;
-use App\Filament\Resources\Sections\SectionResource;
+use App\Models\Project;
 use BezhanSalleh\FilamentShield\FilamentShieldPlugin;
-use Illuminate\Routing\Middleware\SubstituteBindings;
-use Illuminate\View\Middleware\ShareErrorsFromSession;
+use BezhanSalleh\FilamentShield\Resources\Roles\RoleResource;
+use Filament\Http\Middleware\Authenticate;
+use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
-use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
+use Filament\Navigation\NavigationBuilder;
+use Filament\Navigation\NavigationGroup;
+use Filament\Navigation\NavigationItem;
+use Filament\Pages\Dashboard;
+use Filament\Panel;
+use Filament\PanelProvider;
+use Filament\Support\Colors\Color;
+use Filament\Widgets\AccountWidget;
+use Filament\Widgets\FilamentInfoWidget;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
-use BezhanSalleh\FilamentShield\Resources\Roles\RoleResource;
+use Illuminate\Cookie\Middleware\EncryptCookies;
+use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
+use Illuminate\Routing\Middleware\SubstituteBindings;
+use Illuminate\Session\Middleware\StartSession;
+use Illuminate\View\Middleware\ShareErrorsFromSession;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -109,6 +110,7 @@ class AdminPanelProvider extends PanelProvider
                         ...RoleResource::getNavigationItems(),
                         ...UserResource::getNavigationItems(),
                         ...\App\Filament\Pages\ManageCustomFields::getNavigationItems(),
+                        ...ActOfWorkResource::getNavigationItems(),
                     ]);
             })
             ->authMiddleware([
