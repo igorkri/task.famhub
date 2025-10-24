@@ -119,33 +119,35 @@ class TaskForm
                                 ->required()
                                 ->default(Task::STATUS_NEW),
 
-                            Select::make('priority')
-                                ->label('Пріоритет')
-                                ->options(Task::$priorities)
-                                ->nullable(),
+//                            Select::make('priority')
+//                                ->label('Пріоритет')
+//                                ->options(Task::$priorities)
+//                                ->nullable(),
 
                             Select::make('project_id')
                                 ->label('Проект')
                                 ->relationship('project', 'name')
+                                ->visible(fn ($record) => optional($record)?->project_id == null)
                                 ->required(),
 
                             Select::make('user_id')
                                 ->label('Виконавець')
+                                ->visible(fn( $record) => optional($record)?->user_id == null)
                                 ->relationship('user', 'name'),
 
-                            DatePicker::make('deadline')
-                                ->label('Дедлайн'),
-
-                            DateTimePicker::make('start_date')
-                                ->label('Початок'),
-
-                            DateTimePicker::make('end_date')
-                                ->label('Завершення'),
-
-                            TextInput::make('progress')
-                                ->label('Прогрес (%)')
-                                ->numeric()
-                                ->default(0),
+//                            DatePicker::make('deadline')
+//                                ->label('Дедлайн'),
+//
+//                            DateTimePicker::make('start_date')
+//                                ->label('Початок'),
+//
+//                            DateTimePicker::make('end_date')
+//                                ->label('Завершення'),
+//
+//                            TextInput::make('progress')
+//                                ->label('Прогрес (%)')
+//                                ->numeric()
+//                                ->default(0),
                         ])
                         ->collapsible()
                         ->collapsed(false),
