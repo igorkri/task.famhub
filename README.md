@@ -7,6 +7,44 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
+## Task FamHub
+
+Task management system with Asana integration and external API data fetching capabilities.
+
+## API Console Commands
+
+This project includes console commands for fetching data from external APIs:
+
+### Quick Start
+
+```bash
+# Fetch timer data
+php artisan app:fetch-timer-data-from-api --save
+
+# Fetch act of work list
+php artisan app:fetch-act-of-work-list-from-api --save
+
+# Fetch act of work details
+php artisan app:fetch-act-of-work-detail-from-api --act-id=23 --save
+
+# Fetch all data at once
+./fetch-all-api-data.sh
+```
+
+### Available Commands
+
+1. **Timer Data** - `app:fetch-timer-data-from-api`
+2. **Act of Work List** - `app:fetch-act-of-work-list-from-api`
+3. **Act of Work Details** - `app:fetch-act-of-work-detail-from-api`
+
+### Documentation
+
+- [API Commands Overview](docs/api-console-commands-overview.md)
+- [Timer API Command](docs/timer-api-command.md)
+- [Act of Work API Commands](docs/act-of-work-api-commands.md)
+
+---
+
 ## About Laravel
 
 Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:

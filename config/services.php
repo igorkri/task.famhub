@@ -44,4 +44,10 @@ return [
         'url' => env('TIMER_API_URL', 'https://asana.masterok-market.com.ua/admin/api/timer/list'),
         'token' => env('TIMER_API_TOKEN'),
     ],
+
+    'act_of_work_api' => [
+        'list_url' => env('ACT_OF_WORK_LIST_API_URL', 'https://asana.masterok-market.com.ua/admin/api/act-of-work/list'),
+        'detail_url' => env('ACT_OF_WORK_DETAIL_API_URL', 'https://asana.masterok-market.com.ua/admin/api/act-of-work-detail/by-act'),
+        'token' => env('ACT_OF_WORK_API_TOKEN'),
+    ],
 ];
