@@ -208,6 +208,7 @@ class FetchTimerDataFromApi extends Command
                         'report_status' => $reportStatus ?? 'not_submitted',
                         'is_archived' => (bool) ($record['archive'] ?? false),
                         'updated_at' => $record['updated_at'] ?? now(),
+                        'created_at' => $record['created_at'] ?? now(),
                     ]
                 );
 
