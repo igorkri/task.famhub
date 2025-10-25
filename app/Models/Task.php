@@ -115,6 +115,11 @@ class Task extends Model
         return $this->hasMany(TaskCustomField::class);
     }
 
+    public function histories(): HasMany
+    {
+        return $this->hasMany(TaskHistory::class)->orderBy('event_at', 'desc');
+    }
+
     /**
      * Синхронизировать задачу с Asana (создать, если не существует).
      */

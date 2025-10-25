@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Models\Project;
 use App\Models\Section;
 use App\Models\Task;
+use App\Models\TaskHistory;
 use App\Models\User;
 use App\Services\AsanaService;
 use Illuminate\Bus\Queueable;
@@ -59,6 +60,24 @@ class ProcessAsanaWebhookJob implements ShouldQueue
     protected function handleTaskEvent(string $action, string $gid, AsanaService $service): void
     {
         if ($action === 'deleted') {
+            // Знаходимо таск для логування
+            $task = Task::where('gid', $gid)->first();
+            if ($task) {
+                // Логуємо видалення
+                TaskHistory::logEvent(
+                    task: $task,
+                    eventType: TaskHistory::EVENT_DELETED,
+                    source: TaskHistory::SOURCE_ASANA_WEBHOOK,
+                    description: 'Таск видалено через Asana',
+                    user: null,
+                    metadata: [
+                        'action' => 'deleted',
+                        'resource_gid' => $gid,
+                        'asana_event' => $this->event,
+                    ]
+                );
+            }
+
             // Видаляємо таск з бази
             Task::where('gid', $gid)->delete();
             Log::info('Task deleted from webhook', ['gid' => $gid]);
@@ -147,6 +166,18 @@ class ProcessAsanaWebhookJob implements ShouldQueue
                 $existingTask = Task::where('gid', $gid)->first();
 
                 if ($existingTask) {
+                    // Зберігаємо старі значення для історії
+                    $oldValues = [
+                        'title' => $existingTask->title,
+                        'description' => $existingTask->description,
+                        'is_completed' => $existingTask->is_completed,
+                        'deadline' => $existingTask->deadline,
+                        'project_id' => $existingTask->project_id,
+                        'section_id' => $existingTask->section_id,
+                        'user_id' => $existingTask->user_id,
+                        'status' => $existingTask->status,
+                    ];
+
                     // Оновлюємо існуючий таск (зберігаємо існуючі значення, якщо нових немає)
                     \Log::info('Before update - checking variables', [
                         'gid' => $gid,
@@ -157,7 +188,7 @@ class ProcessAsanaWebhookJob implements ShouldQueue
                         'userId_is_null' => is_null($userId),
                     ]);
 
-                    Task::withoutEvents(function () use ($gid, $taskDetails, $project, $section, $userId, $existingTask) {
+                    Task::withoutEvents(function () use ($gid, $taskDetails, $project, $section, $userId, $existingTask, $oldValues) {
                         $updateData = [
                             'title' => $taskDetails['name'] ?? $existingTask->title,
                             'description' => $taskDetails['notes'] ?? $existingTask->description,
@@ -195,6 +226,32 @@ class ProcessAsanaWebhookJob implements ShouldQueue
 
                         $existingTask->update($updateData);
 
+                        // Логуємо зміни в історію
+                        $changes = [];
+                        foreach ($updateData as $field => $newValue) {
+                            if ($oldValues[$field] != $newValue) {
+                                $changes[$field] = [
+                                    'old' => $oldValues[$field],
+                                    'new' => $newValue,
+                                ];
+                            }
+                        }
+
+                        if (! empty($changes)) {
+                            TaskHistory::logBatchChanges(
+                                task: $existingTask,
+                                changes: $changes,
+                                eventType: TaskHistory::EVENT_UPDATED,
+                                source: TaskHistory::SOURCE_ASANA_WEBHOOK,
+                                user: null,
+                                metadata: [
+                                    'action' => 'changed',
+                                    'resource_gid' => $gid,
+                                    'asana_event' => $this->event,
+                                ]
+                            );
+                        }
+
                         // Синхронізуємо кастомні поля
                         if (! empty($taskDetails['custom_fields'])) {
                             $this->syncTaskCustomFields($existingTask, $taskDetails['custom_fields']);
@@ -230,6 +287,20 @@ class ProcessAsanaWebhookJob implements ShouldQueue
                             'is_completed' => $taskDetails['completed'] ?? false,
                             'deadline' => $taskDetails['due_on'] ?? null,
                         ]);
+
+                        // Логуємо створення в історію
+                        TaskHistory::logEvent(
+                            task: $newTask,
+                            eventType: TaskHistory::EVENT_CREATED,
+                            source: TaskHistory::SOURCE_ASANA_WEBHOOK,
+                            description: 'Таск створено через Asana webhook',
+                            user: null,
+                            metadata: [
+                                'action' => 'added',
+                                'resource_gid' => $gid,
+                                'asana_event' => $this->event,
+                            ]
+                        );
 
                         // Синхронізуємо кастомні поля
                         if (! empty($taskDetails['custom_fields'])) {
