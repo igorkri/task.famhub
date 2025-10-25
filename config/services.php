@@ -39,4 +39,9 @@ return [
         'workspace_id' => env('ASANA_WORKSPACE_ID'),
         'webhook_secret' => env('ASANA_WEBHOOK_SECRET'), // Optional: для додаткової безпеки
     ],
+
+    'timer_api' => [
+        'url' => env('TIMER_API_URL', 'https://asana.masterok-market.com.ua/admin/api/timer/list'),
+        'token' => env('TIMER_API_TOKEN'),
+    ],
 ];
