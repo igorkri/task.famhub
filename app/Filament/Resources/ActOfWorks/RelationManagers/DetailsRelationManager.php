@@ -130,17 +130,17 @@ class DetailsRelationManager extends RelationManager
                 // Tables\Actions\CreateAction::make(), // Отключено, т.к. детали импортируются автоматически
             ])
             ->recordActions([
-                ViewAction::make(),
-                // Tables\Actions\EditAction::make(), // Отключено
+                // ViewAction::make(),
+                // EditAction::make(), // Отключено
                 // Tables\Actions\DeleteAction::make(), // Отключено
             ])
             ->toolbarActions([
                 // Tables\Actions\BulkActionGroup::make([
-                //     Tables\Actions\DeleteBulkAction::make(),
+                    // Tables\Actions\DeleteBulkAction::make(),
                 // ]),
             ])
             ->defaultSort('time_id', 'asc')
-            ->paginated([10, 25, 50]);
+            ->paginated([10, 25, 50, 150, 300, 500, 1000]);
     }
 }
 

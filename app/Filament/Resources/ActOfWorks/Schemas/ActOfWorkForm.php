@@ -19,11 +19,8 @@ class ActOfWorkForm
     {
         return $schema
             ->components([
-                Tabs::make('Tabs')
-                    ->tabs([
-                        Tabs\Tab::make('Основна інформація')
-                            ->icon('heroicon-o-information-circle')
-                            ->schema([
+               
+                        
                 Section::make('Основна інформація')
                     ->columns(2)
                     ->schema([
@@ -100,7 +97,7 @@ class ActOfWorkForm
                     ]),
 
                                 Section::make('Додаткові дані')
-                                    ->columns(2)
+                                    ->columns(1)
                                     ->schema([
                                         FileUpload::make('file_excel')
                                             ->label('Файл Excel')
@@ -115,22 +112,8 @@ class ActOfWorkForm
                                             ->required()
                                             ->default(ActOfWork::TELEGRAM_STATUS_PENDING),
 
-                                        TextInput::make('sort')
-                                            ->label('Сортування')
-                                            ->required()
-                                            ->numeric()
-                                            ->default(0),
+                            
                                     ]),
-                            ]),
-
-                        Tabs\Tab::make('Деталі')
-                            ->icon('heroicon-o-clipboard-document-list')
-                            ->schema([
-                                // The ActOfWorkDetailsTable can be included here as a relation manager or custom component
-                            ])
-                            ->hidden(fn ($record) => $record === null),
-                    ])
-                    ->columnSpanFull(),
             ]);
     }
 }
