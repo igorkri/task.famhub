@@ -127,7 +127,6 @@ class ActOfWorkForm
                             ->icon('heroicon-o-clipboard-document-list')
                             ->schema([
                                 // The ActOfWorkDetailsTable can be included here as a relation manager or custom component
-
                             ])
                             ->hidden(fn ($record) => $record === null),
                     ])
