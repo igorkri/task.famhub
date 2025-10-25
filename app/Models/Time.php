@@ -175,4 +175,27 @@ class Time extends Model
     {
         return $this->duration; // Duration in seconds
     }
+
+    /**
+     * Получаем стоимость с учетом коэффициента
+     *
+     * @return float
+     */
+    public function getCalcPrice(): float
+    {
+        // Учитываем коэффициент в стоимости
+        return round(($this->getTimeHour() * self::PRICE) * $this->coefficient, 2);
+    }
+
+    public function getTotalPrice()
+    {        // Если статус акта не ок, то цена 0
+        return $this->getCalcPrice();
+    }
+
+    public function getTimeHour($round = true): float
+    {
+        $hours = $this->duration / 3600;
+        return $round ? round($hours, 2) : $hours;
+    }  
+    
 }
