@@ -2,6 +2,8 @@
 
 namespace App\Console\Commands;
 
+use App\Models\ActOfWork;
+use App\Models\ActOfWorkDetail;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
 
@@ -29,6 +31,8 @@ class FetchActOfWorkDetailFromApi extends Command
                             {--act-id= : Act of work ID to fetch details for}
                             {--url= : Custom API URL to fetch data from}
                             {--save : Save data to JSON file}
+                            {--import : Import data into database}
+                            {--truncate : Truncate act_of_work_details table before import (use with --import)}
                             {--format=json : Output format (json|table)}';
 
     /**
@@ -36,7 +40,7 @@ class FetchActOfWorkDetailFromApi extends Command
      *
      * @var string
      */
-    protected $description = 'Fetch act of work detail from external API by act ID';
+    protected $description = 'Fetch act of work detail from external API by act ID and optionally import to database';
 
     /**
      * Execute the console command.
@@ -79,6 +83,11 @@ class FetchActOfWorkDetailFromApi extends Command
                 $this->info('Data fetched successfully.');
             }
 
+            // Import to database if requested
+            if ($this->option('import')) {
+                $this->importToDatabase($data, $actId);
+            }
+
             // Display data based on format option
             if ($this->option('format') === 'table' && is_array($data) && count($data) > 0) {
                 $this->displayAsTable($data);
@@ -98,6 +107,101 @@ class FetchActOfWorkDetailFromApi extends Command
 
             return self::FAILURE;
         }
+    }
+
+    /**
+     * Import data to database
+     */
+    protected function importToDatabase(array $data, string $actId): void
+    {
+        $this->info('Starting import to database...');
+
+        // Truncate table if requested
+        if ($this->option('truncate')) {
+            $shouldTruncate = $this->option('no-interaction')
+                ? true
+                : $this->confirm('This will DELETE ALL records from act_of_work_details table. Are you sure?', false);
+
+            if ($shouldTruncate) {
+                ActOfWorkDetail::truncate();
+                $this->warn('ActOfWorkDetails table truncated.');
+            } else {
+                $this->info('Import cancelled.');
+
+                return;
+            }
+        }
+
+        // Find parent act of work
+        $actOfWork = ActOfWork::where('number', $actId)
+            ->orWhere('id', $actId)
+            ->first();
+
+        if (! $actOfWork) {
+            $this->error("Act of work not found with ID/number: {$actId}");
+            $this->warn('Please import act of works first using: php artisan app:fetch-act-of-work-list-from-api --import');
+
+            return;
+        }
+
+        $imported = 0;
+        $skipped = 0;
+        $errors = 0;
+
+        $progressBar = $this->output->createProgressBar(count($data));
+        $progressBar->start();
+
+        foreach ($data as $record) {
+            try {
+                // Validate required fields
+                if (! isset($record['task_gid']) && ! isset($record['project_gid'])) {
+                    $skipped++;
+                    $progressBar->advance();
+
+                    continue;
+                }
+
+                // Create or update act of work detail record
+                ActOfWorkDetail::updateOrCreate(
+                    [
+                        'act_of_work_id' => $actOfWork->id,
+                        'task_gid' => $record['task_gid'] ?? null,
+                        'project_gid' => $record['project_gid'] ?? null,
+                    ],
+                    [
+                        'time_id' => $record['time_id'] ?? null,
+                        'project' => $record['project'] ?? null,
+                        'task' => $record['task'] ?? null,
+                        'description' => $record['description'] ?? null,
+                        'amount' => $record['amount'] ?? 0,
+                        'hours' => $record['hours'] ?? 0,
+                        'created_at' => $record['created_at'] ?? now(),
+                        'updated_at' => $record['updated_at'] ?? now(),
+                    ]
+                );
+
+                $imported++;
+            } catch (\Exception $e) {
+                $errors++;
+                $this->newLine();
+                $this->error("Error importing record: {$e->getMessage()}");
+            }
+
+            $progressBar->advance();
+        }
+
+        $progressBar->finish();
+        $this->newLine(2);
+
+        $this->info('Import completed:');
+        $this->table(
+            ['Status', 'Count'],
+            [
+                ['Imported', $imported],
+                ['Skipped', $skipped],
+                ['Errors', $errors],
+            ]
+        );
     }
 
     /**

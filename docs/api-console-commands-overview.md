@@ -7,42 +7,58 @@
 ### 1. Команда получения данных таймера
 
 ```bash
-php artisan app:fetch-timer-data-from-api
+php artisan app:fetch-timer-data-from-api --import
 ```
 
 **Endpoint:** `https://asana.masterok-market.com.ua/admin/api/timer/list`
 
 **Документация:** [timer-api-command.md](./timer-api-command.md)
 
-**Назначение:** Получение списка записей времени из таймера
+**Назначение:** Получение и импорт списка записей времени из таймера
+
+**Новые возможности:**
+- ✅ Импорт в базу данных (`--import`)
+- ✅ Очистка таблицы перед импортом (`--truncate`)
+- ✅ Прогресс-бар и статистика импорта
 
 ---
 
 ### 2. Команда получения списка актов выполненных работ
 
 ```bash
-php artisan app:fetch-act-of-work-list-from-api
+php artisan app:fetch-act-of-work-list-from-api --import --with-details
 ```
 
 **Endpoint:** `https://asana.masterok-market.com.ua/admin/api/act-of-work/list`
 
 **Документация:** [act-of-work-api-commands.md](./act-of-work-api-commands.md)
 
-**Назначение:** Получение списка всех актов выполненных работ
+**Назначение:** Получение и импорт списка всех актов выполненных работ
+
+**Новые возможности:**
+- ✅ Импорт в базу данных (`--import`)
+- ⚡ **Автоматический импорт деталей для каждого акта (`--with-details`)**
+- ✅ Очистка таблицы перед импортом (`--truncate`)
+- ✅ Прогресс-бар и статистика импорта
 
 ---
 
 ### 3. Команда получения деталей акта выполненных работ
 
 ```bash
-php artisan app:fetch-act-of-work-detail-from-api --act-id=23
+php artisan app:fetch-act-of-work-detail-from-api --act-id=23 --import
 ```
 
 **Endpoint:** `https://asana.masterok-market.com.ua/admin/api/act-of-work-detail/by-act?act_id={id}`
 
 **Документация:** [act-of-work-api-commands.md](./act-of-work-api-commands.md)
 
-**Назначение:** Получение детальной информации о конкретном акте выполненных работ
+**Назначение:** Получение и импорт детальной информации о конкретном акте
+
+**Новые возможности:**
+- ✅ Импорт в базу данных (`--import`)
+- ✅ Очистка таблицы перед импортом (`--truncate`)
+- ✅ Прогресс-бар и статистика импорта
 
 ---
 
@@ -56,7 +72,15 @@ php artisan app:fetch-act-of-work-detail-from-api --act-id=23
 |-------|----------|--------|
 | `--url` | Кастомный URL для API | `--url=https://api.example.com/data` |
 | `--save` | Сохранить данные в JSON файл | `--save` |
+| `--import` | Импортировать данные в БД | `--import` |
+| `--truncate` | Очистить таблицу перед импортом | `--truncate` |
 | `--format` | Формат вывода (json/table) | `--format=table` |
+
+Дополнительно для команды списка актов:
+
+| Опция | Описание | Пример |
+|-------|----------|--------|
+| `--with-details` | Автоматически импортировать детали | `--with-details` |
 
 Дополнительно для команды деталей акта:
 
@@ -68,16 +92,30 @@ php artisan app:fetch-act-of-work-detail-from-api --act-id=23
 
 ## Быстрый старт
 
-### Пример 1: Получить данные таймера
+### Пример 1: Импорт данных таймера
 
 ```bash
-php artisan app:fetch-timer-data-from-api --format=table
+php artisan app:fetch-timer-data-from-api --import --format=table
 ```
 
-### Пример 2: Получить список актов и сохранить
+### Пример 2: Полный импорт актов с деталями (рекомендуется)
 
 ```bash
-php artisan app:fetch-act-of-work-list-from-api --save
+php artisan app:fetch-act-of-work-list-from-api --import --with-details --save
+```
+
+### Пример 3: Импорт деталей конкретного акта
+
+```bash
+php artisan app:fetch-act-of-work-detail-from-api --act-id=23 --import
+```
+
+### Пример 4: Полная пересинхронизация (очистка и импорт)
+
+```bash
+# Очистить и импортировать все данные
+php artisan app:fetch-timer-data-from-api --import --truncate --no-interaction
+php artisan app:fetch-act-of-work-list-from-api --import --with-details --truncate --no-interaction
 ```
 
 ### Пример 3: Получить детали акта #23

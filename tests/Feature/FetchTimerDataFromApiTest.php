@@ -91,7 +91,7 @@ class FetchTimerDataFromApiTest extends TestCase
             '*' => Http::response([
                 [
                     'task_gid' => '1234567890',
-                    'minutes' => 120,
+                    'time' => '02:00:00',
                     'coefficient' => 1.2,
                     'status' => 0,
                     'status_act' => 'ok',
@@ -139,7 +139,7 @@ class FetchTimerDataFromApiTest extends TestCase
             '*' => Http::response([
                 [
                     'task_gid' => '1234567890',
-                    'minutes' => 60,
+                    'time' => '01:00:00',
                     'coefficient' => 1.0,
                     'status' => 1,
                     'created_at' => now()->toDateTimeString(),
@@ -167,7 +167,7 @@ class FetchTimerDataFromApiTest extends TestCase
             '*' => Http::response([
                 [
                     'task_gid' => 'nonexistent',
-                    'minutes' => 60,
+                    'time' => '01:00:00',
                     'coefficient' => 1.0,
                     'status' => 0,
                     'created_at' => now()->toDateTimeString(),
