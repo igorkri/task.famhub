@@ -10,6 +10,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Schema;
 
 class ActOfWorkForm
@@ -18,6 +19,11 @@ class ActOfWorkForm
     {
         return $schema
             ->components([
+                Tabs::make('Tabs')
+                    ->tabs([
+                        Tabs\Tab::make('Основна інформація')
+                            ->icon('heroicon-o-information-circle')
+                            ->schema([
                 Section::make('Основна інформація')
                     ->columns(2)
                     ->schema([
@@ -93,28 +99,39 @@ class ActOfWorkForm
                             ->step(0.01),
                     ]),
 
-                Section::make('Додаткові дані')
-                    ->columns(2)
-                    ->schema([
-                        FileUpload::make('file_excel')
-                            ->label('Файл Excel')
-                            ->acceptedFileTypes(['application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/excel'])
-                            ->disk('public')
-                            ->directory('act-of-works')
-                            ->visibility('private'),
+                                Section::make('Додаткові дані')
+                                    ->columns(2)
+                                    ->schema([
+                                        FileUpload::make('file_excel')
+                                            ->label('Файл Excel')
+                                            ->acceptedFileTypes(['application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/excel'])
+                                            ->disk('public')
+                                            ->directory('act-of-works')
+                                            ->visibility('private'),
 
-                        Select::make('telegram_status')
-                            ->label('Статус Telegram')
-                            ->options(ActOfWork::$telegramStatusList)
-                            ->required()
-                            ->default(ActOfWork::TELEGRAM_STATUS_PENDING),
+                                        Select::make('telegram_status')
+                                            ->label('Статус Telegram')
+                                            ->options(ActOfWork::$telegramStatusList)
+                                            ->required()
+                                            ->default(ActOfWork::TELEGRAM_STATUS_PENDING),
 
-                        TextInput::make('sort')
-                            ->label('Сортування')
-                            ->required()
-                            ->numeric()
-                            ->default(0),
-                    ]),
+                                        TextInput::make('sort')
+                                            ->label('Сортування')
+                                            ->required()
+                                            ->numeric()
+                                            ->default(0),
+                                    ]),
+                            ]),
+
+                        Tabs\Tab::make('Деталі')
+                            ->icon('heroicon-o-clipboard-document-list')
+                            ->schema([
+                                // The ActOfWorkDetailsTable can be included here as a relation manager or custom component
+
+                            ])
+                            ->hidden(fn ($record) => $record === null),
+                    ])
+                    ->columnSpanFull(),
             ]);
     }
 }

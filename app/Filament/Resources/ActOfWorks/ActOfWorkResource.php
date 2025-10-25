@@ -5,6 +5,7 @@ namespace App\Filament\Resources\ActOfWorks;
 use App\Filament\Resources\ActOfWorks\Pages\CreateActOfWork;
 use App\Filament\Resources\ActOfWorks\Pages\EditActOfWork;
 use App\Filament\Resources\ActOfWorks\Pages\ListActOfWorks;
+use App\Filament\Resources\ActOfWorks\RelationManagers;
 use App\Filament\Resources\ActOfWorks\Schemas\ActOfWorkForm;
 use App\Filament\Resources\ActOfWorks\Tables\ActOfWorksTable;
 use App\Models\ActOfWork;
@@ -35,7 +36,7 @@ class ActOfWorkResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            RelationManagers\DetailsRelationManager::class,
         ];
     }
 
