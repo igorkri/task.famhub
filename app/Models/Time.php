@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 /**
@@ -22,6 +23,8 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Time extends Model
 {
+    use HasFactory;
+
     const COEFFICIENT_STANDARD = 1.2; // стандартний коефіцієнт
 
     const PRICE = 400; // базова погодинна ставка в грн
