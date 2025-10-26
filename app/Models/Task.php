@@ -55,6 +55,7 @@ class Task extends Model
         'progress',
         'start_date',
         'end_date',
+        'permalink_url',
     ];
 
     public static array $statuses = [
@@ -118,6 +119,18 @@ class Task extends Model
     public function histories(): HasMany
     {
         return $this->hasMany(TaskHistory::class)->orderBy('event_at', 'desc');
+    }
+
+    /**
+     * Accessor для отримання посилання на задачу в Asana
+     */
+    public function getPermalinkUrlAttribute(): ?string
+    {
+        if (! $this->gid) {
+            return null;
+        }
+
+        return "https://app.asana.com/0/0/{$this->gid}";
     }
 
     /**

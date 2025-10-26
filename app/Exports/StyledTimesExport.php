@@ -17,36 +17,27 @@ class StyledTimesExport extends ExcelExport implements WithStyles
     {
         $this->withFilename(fn () => date('Y-m-d').' - Звіт_Times');
         $this->withColumns([
-            Column::make('id')->heading('ID'),
-            Column::make('user.name')->heading('Виконавець'),
-            Column::make('title')->heading('Завдання'),
+            Column::make('title')->heading('Назва задачі'),
+            Column::make('task.project.name')->heading('Проект'),
             Column::make('duration')
-                ->heading('Годин')
+                ->heading('Час')
                 ->formatStateUsing(fn ($state) => number_format($state / 3600, 2, '.', '')),
             Column::make('coefficient')->heading('Коефіцієнт'),
             Column::make('calculated_amount')
-                ->heading('Сума, грн')
+                ->heading('Ціна')
                 ->formatStateUsing(fn ($state, $record) => number_format(
                     $record->duration / 3600 * $record->coefficient * Time::PRICE,
                     2,
                     '.',
                     ''
                 )),
-            Column::make('status')
-                ->heading('Статус')
-                ->formatStateUsing(fn ($state) => $state ? Time::$statuses[$state] : ''),
-            Column::make('report_status')
-                ->heading('Статус акту')
-                ->formatStateUsing(fn ($state) => $state ? Time::$reportStatuses[$state] : ''),
-            Column::make('is_archived')
-                ->heading('Архів')
-                ->formatStateUsing(fn ($state) => $state ? 'Так' : 'Ні'),
-            Column::make('created_at')
-                ->heading('Створено')
-                ->formatStateUsing(fn ($state) => $state?->format('d.m.Y H:i')),
+            Column::make('comment')->heading('Коментар'),
             Column::make('updated_at')
-                ->heading('Оновлено')
+                ->heading('Дата модифікації таксу')
                 ->formatStateUsing(fn ($state) => $state?->format('d.m.Y H:i')),
+            Column::make('task.permalink_url')
+                ->heading('Посилання на задачу')
+                ->formatStateUsing(fn ($state, $record) => $record->task?->permalink_url ? '=HYPERLINK("'.$record->task->permalink_url.'", "Відкрити задачу")' : ''),
         ]);
     }
 
@@ -77,6 +68,7 @@ class StyledTimesExport extends ExcelExport implements WithStyles
                         'color' => ['rgb' => '000000'],
                     ],
                 ],
+                // Висота рядка заголовків
             ],
 
             // Рамки для всіх комірок з даними
@@ -92,20 +84,33 @@ class StyledTimesExport extends ExcelExport implements WithStyles
                 ],
             ],
 
-            // Вирівнювання числових колонок по центру
+            // Вирівнювання числових колонок
+            // C - Час (по центру)
+            "C2:C{$highestRow}" => [
+                'alignment' => [
+                    'horizontal' => Alignment::HORIZONTAL_CENTER,
+                ],
+            ],
+            // D - Коефіцієнт (по центру)
             "D2:D{$highestRow}" => [
                 'alignment' => [
                     'horizontal' => Alignment::HORIZONTAL_CENTER,
                 ],
             ],
+            // E - Ціна (праворуч)
             "E2:E{$highestRow}" => [
+                'alignment' => [
+                    'horizontal' => Alignment::HORIZONTAL_RIGHT,
+                ],
+            ],
+            // H - Посилання (по центру, синій, підкреслений)
+            "H2:H{$highestRow}" => [
                 'alignment' => [
                     'horizontal' => Alignment::HORIZONTAL_CENTER,
                 ],
-            ],
-            "F2:F{$highestRow}" => [
-                'alignment' => [
-                    'horizontal' => Alignment::HORIZONTAL_RIGHT,
+                'font' => [
+                    'color' => ['rgb' => '0563C1'],
+                    'underline' => true,
                 ],
             ],
         ];
