@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Times\Tables;
 
+use App\Exports\StyledTimesExport;
 use App\Models\Time;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -10,6 +11,7 @@ use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Table;
+use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 
 class TimesTable
 {
@@ -98,6 +100,10 @@ class TimesTable
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
+                    ExportBulkAction::make()
+                        ->exports([
+                            StyledTimesExport::make(),
+                        ]),
                     DeleteBulkAction::make(),
                 ]),
             ]);
