@@ -69,6 +69,9 @@
 - [**form-columns.md**](form-columns.md) - Налаштування колонок форм
 - [**form-table-customization.md**](form-table-customization.md) - Кастомізація форм і таблиць
 
+### Експорт даних
+- [**times-excel-export.md**](times-excel-export.md) - Excel експорт для таблиці Times
+
 ### UI елементи
 - [**breadcrumbs.md**](breadcrumbs.md) - Хлібні крихти
 - [**colors.md**](colors.md) - Колірна схема

@@ -1,167 +1,150 @@
-# Експорт часу (Times) у Excel
+# Excel експорт для таблиці Times
 
 ## Огляд
 
-У таблиці Times додано можливість експорту вибраних записів у файл Excel за допомогою пакету `pxlrbt/filament-excel`.
+Експорт вибраних записів Times у файл Excel з рамками та стилізацією через пакет `pxlrbt/filament-excel`.
 
-## Використання
+## Швидкий старт
 
-### 1. Виберіть записи для експорту
+1. Виберіть записи в таблиці Times (встановіть прапорці)
+2. Натисніть кнопку **"Export"** у панелі масових дій
+3. Файл `YYYY-MM-DD - Звіт_Times.xlsx` завантажиться автоматично
 
-У таблиці Times виберіть один або декілька записів, встановивши прапорці навпроти потрібних рядків.
+## Що експортується
 
-### 2. Натисніть кнопку "Експорт у Excel"
+- **ID** - ідентифікатор запису
+- **Виконавець** - ім'я користувача
+- **Завдання** - назва задачі
+- **Годин** - тривалість у годинах (конвертується з секунд)
+- **Коефіцієнт** - множник для розрахунку
+- **Сума, грн** - розрахована сума (години × коефіцієнт × ціна)
+- **Статус** - поточний статус задачі
+- **Статус акту** - статус документу
+- **Архів** - чи архівована задача
+- **Створено** - дата створення
+- **Оновлено** - дата оновлення
 
-Після вибору записів натисніть кнопку **"Експорт у Excel"** у панелі масових дій (вгорі таблиці).
-
-### 3. Завантажте файл
-
-Файл Excel буде автоматично завантажено на ваш комп'ютер. Він міститиме всі видимі колонки з вибраних записів:
-
-- Виконавець (user.name)
-- Завдання (title)
-- Годин (duration)
-- Коефіцієнт (coefficient)
-- Сума, грн (calculated_amount)
-- Статус (status)
-- Статус акту (report_status)
-- Архів (is_archived)
-- Created at
-- Updated at
-
-## Технічні деталі
-
-### Пакет
-- **Назва**: `pxlrbt/filament-excel`
-- **Версія**: ^3.1
-- **Документація**: https://github.com/pxlrbt/filament-excel
+## Технічна реалізація
 
 ### Файли
-- **Таблиця**: `app/Filament/Resources/Times/Tables/TimesTable.php`
-- **Ресурс**: `app/Filament/Resources/Times/TimeResource.php`
 
-### Код
+**Export клас**: `/app/Exports/StyledTimesExport.php`  
+**Таблиця**: `/app/Filament/Resources/Times/Tables/TimesTable.php`
+
+### StyledTimesExport
 
 ```php
-use App\Exports\TimesExport;
-use Maatwebsite\Excel\Facades\Excel;
+use pxlrbt\FilamentExcel\Exports\ExcelExport;
+use Maatwebsite\Excel\Concerns\WithStyles;
 
-// У методі configure()
+class StyledTimesExport extends ExcelExport implements WithStyles
+{
+    public function setUp(): void
+    {
+        $this->withFilename(fn () => date('Y-m-d') . ' - Звіт_Times');
+        $this->withColumns([...]);
+    }
+    
+    public function styles(Worksheet $sheet): array
+    {
+        // Рамки та стилі
+    }
+}
+```
+
+### Використання в таблиці
+
+```php
+use App\Exports\StyledTimesExport;
+use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
+
 ->toolbarActions([
     BulkActionGroup::make([
-        \Filament\Actions\Action::make('export')
-            ->label('Експорт в Excel')
-            ->icon('heroicon-o-arrow-down-tray')
-            ->action(function ($livewire) {
-                $selectedRecords = $livewire->getSelectedTableRecords()->pluck('id');
-                $query = Time::query()->whereIn('id', $selectedRecords);
-                
-                return Excel::download(
-                    new TimesExport($query),
-                    date('Y-m-d') . ' - Звіт_Times.xlsx'
-                );
-            }),
-        DeleteBulkAction::make(),
+        ExportBulkAction::make()
+            ->exports([
+                StyledTimesExport::make(),
+            ]),
     ]),
 ])
 ```
 
-## Клас TimesExport
+## Стилізація
 
-Створено власний клас `/app/Exports/TimesExport.php` який реалізує:
-
-- **FromQuery** - експорт з Eloquent query
-- **WithHeadings** - заголовки колонок  
-- **WithMapping** - маппінг даних з моделі
-- **WithStyles** - стилізація, рамки, кольори
-- **WithColumnWidths** - ширина колонок
-
-```php
-class TimesExport implements 
-    FromQuery, 
-    WithHeadings, 
-    WithMapping, 
-    WithStyles, 
-    WithColumnWidths
-{
-    // ...методи для налаштування експорту
-}
-```
-
-## Застосовані стилі
-
-Всі стилі налаштовуються в класі `TimesExport`:
-
-### Рамки (Borders)
+### Рамки
 - **Заголовки**: товсті чорні рамки (`BORDER_MEDIUM`)
-- **Дані**: тонкі чорні рамки (`BORDER_THIN`) навколо кожної комірки
+- **Дані**: тонкі чорні рамки (`BORDER_THIN`)
 
 ### Кольори
-- **Фон заголовків**: синій (#4472C4)
-- **Текст заголовків**: білий (#FFFFFF), жирний, 12pt
-
-### Автоматична ширина колонок
-Оптимальна ширина для кожної колонки:
-- ID: 10 символів
-- Виконавець: 20 символів
-- Завдання: 50 символів
-- Числові поля: 12-15 символів
-- Дати: 20 символів
-
-### Форматування даних
-- **Годин**: конвертується з секунд у години з форматом `0.00`
-- **Коефіцієнт**: зберігається як число (не текст)
-- **Сума**: обчислюється та зберігається як число для подальших розрахунків в Excel
-- **Дати**: формат `d.m.Y H:i` (наприклад: `26.10.2025 14:30`)
-- **Архів**: "Так" / "Ні"
-- **Статуси**: українською мовою
+- **Заголовки**: синій фон (#4472C4), білий текст
+- **Шрифт**: жирний, 12pt
 
 ### Вирівнювання
-- **Заголовки**: по центру (горизонтально та вертикально)
-- **Числа (Годин, Коефіцієнт)**: по центру
-- **Сума**: по правому краю
-- **Всі комірки**: по центру вертикально
+- **Заголовки**: по центру
+- **Числа**: по центру
+- **Сума**: праворуч
 
-### Оптимізація
-- `->with('user')` в query - eager loading для уникнення N+1 проблеми
+## Форматування даних
 
-Детальніше про стилі: 
-- [docs/times-excel-export-styles.md](times-excel-export-styles.md)
-- [docs/times-excel-borders.md](times-excel-borders.md)
-- [docs/times-excel-preview.md](times-excel-preview.md)
-
-## Налаштування
-
-### Базовий експорт
-
-Базова версія `ExportBulkAction` експортує всі видимі колонки таблиці автоматично:
-
+### Числа
 ```php
-ExportBulkAction::make()
-    ->label('Експорт у Excel')
+Column::make('duration')
+    ->formatStateUsing(fn ($state) => number_format($state / 3600, 2, '.', ''))
 ```
 
-### Розширені налаштування
+### Дати
+```php
+Column::make('created_at')
+    ->formatStateUsing(fn ($state) => $state?->format('d.m.Y H:i'))
+```
 
-Для більш детального налаштування експорту (назва файлу, вибір колонок, форматування) потрібно створити власний Exporter клас. Детальніше в офіційній документації пакету: https://github.com/pxlrbt/filament-excel
+### Статуси
+```php
+Column::make('status')
+    ->formatStateUsing(fn ($state) => $state ? Time::$statuses[$state] : '')
+```
+
+## Додаткові можливості
 
 ### Експорт усіх записів
 
-Для експорту всіх записів (не тільки вибраних) можна додати окрему HeaderAction:
+Додайте `ExportAction` до header actions:
 
 ```php
 use pxlrbt\FilamentExcel\Actions\Tables\ExportAction;
 
 ->headerActions([
     ExportAction::make()
-        ->label('Експортувати все'),
+        ->exports([StyledTimesExport::make()]),
 ])
 ```
 
-## Примітки
+### Експорт у чергу
 
-- Експортуються тільки вибрані записи
-- Дані експортуються з урахуванням поточних фільтрів
-- Формат файлу: `.xlsx` (Excel 2007+)
-- Всі форматовані дані (наприклад, duration/3600) експортуються у вже обрахованому вигляді
+Для великих обсягів даних:
+
+```php
+StyledTimesExport::make()->queue()
+```
+
+### Множинні формати експорту
+
+```php
+ExportBulkAction::make()
+    ->exports([
+        StyledTimesExport::make('styled')->label('З стилями'),
+        ExcelExport::make('simple')->fromTable()->label('Простий'),
+    ])
+```
+
+## Залежності
+
+- `pxlrbt/filament-excel` ^3.1
+- `maatwebsite/excel` (автоматично)
+- `phpoffice/phpspreadsheet` (автоматично)
+
+## Документація
+
+- **Офіційна документація**: https://filamentphp.com/plugins/pxlrbt-excel
+- **GitHub**: https://github.com/pxlrbt/filament-excel
+- **Laravel Excel**: https://laravel-excel.com/
 
