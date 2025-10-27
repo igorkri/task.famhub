@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Times\Tables;
 
 use App\Exports\StyledTimesExport;
+use App\Filament\Resources\Times\Actions\ExportToActOfWorkBulkAction;
 use App\Models\Time;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -100,6 +101,7 @@ class TimesTable
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
+                    ExportToActOfWorkBulkAction::make(),
                     ExportBulkAction::make()
                         ->exports([
                             StyledTimesExport::make(),
