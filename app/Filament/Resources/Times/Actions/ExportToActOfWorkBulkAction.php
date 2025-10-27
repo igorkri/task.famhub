@@ -85,7 +85,8 @@ class ExportToActOfWorkBulkAction
 
                 // Підрахунок загальної суми
                 $totalAmount = $records->sum(function ($record) {
-                    return $record->calculated_amount;
+                    // Використовуємо accessor для обчислення суми
+                    return (($record->duration / 3600) * $record->coefficient) * Time::PRICE;
                 });
 
                 // Створюємо акт роботи
@@ -110,6 +111,9 @@ class ExportToActOfWorkBulkAction
 
                 // Створюємо деталі акту для кожного запису
                 foreach ($records as $record) {
+                    // Обчислюємо суму для кожного запису
+                    $amount = (($record->duration / 3600) * $record->coefficient) * Time::PRICE;
+
                     ActOfWorkDetail::create([
                         'act_of_work_id' => $actOfWork->id,
                         'time_id' => $record->id,
@@ -118,7 +122,7 @@ class ExportToActOfWorkBulkAction
                         'project' => $record->task?->project?->name ?? '',
                         'task' => $record->title,
                         'description' => $record->description ?? '',
-                        'amount' => $record->calculated_amount,
+                        'amount' => $amount,
                         'hours' => $record->duration / 3600,
                     ]);
 
