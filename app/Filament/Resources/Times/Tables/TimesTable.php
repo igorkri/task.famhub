@@ -124,10 +124,10 @@ class TimesTable
                                     ->icon('heroicon-o-clipboard-document-list')
                                     ->schema([
                                         DatePicker::make('task_created_from')
-                                            ->label('Дата створення від')
+                                            ->label('Дата створення завдання від')
                                             ->native(false),
                                         DatePicker::make('task_created_to')
-                                            ->label('Дата створення до')
+                                            ->label('Дата створення завдання до')
                                             ->native(false),
                                         \Filament\Forms\Components\Select::make('task_status')
                                             ->label('Статус завдання')
@@ -149,6 +149,18 @@ class TimesTable
                                     ->description('Фільтрація за параметрами трекінгу часу')
                                     ->icon('heroicon-o-clock')
                                     ->schema([
+                                        DatePicker::make('time_created_from')
+                                            ->label('Дата створення трекінгу від')
+                                            ->native(false),
+                                        DatePicker::make('time_created_to')
+                                            ->label('Дата створення трекінгу до')
+                                            ->native(false),
+//                                        DatePicker::make('time_updated_from')
+//                                            ->label('Дата оновлення трекінгу від')
+//                                            ->native(false),
+//                                        DatePicker::make('time_updated_to')
+//                                            ->label('Дата оновлення трекінгу до')
+//                                            ->native(false),
                                         \Filament\Forms\Components\Select::make('time_status')
                                             ->label('Статус трекінгу')
                                             ->options(Time::$statuses)
@@ -161,11 +173,11 @@ class TimesTable
                                                 1 => 'В архіві',
                                             ])
                                             ->placeholder('Всі'),
-                                        \Filament\Forms\Components\Select::make('time_report_status')
-                                            ->label('Статус акту')
-                                            ->options(Time::$reportStatuses)
-                                            ->multiple()
-                                            ->searchable(),
+//                                        \Filament\Forms\Components\Select::make('time_report_status')
+//                                            ->label('Статус акту')
+//                                            ->options(Time::$reportStatuses)
+//                                            ->multiple()
+//                                            ->searchable(),
                                     ])
                                     ->columns(1)
                                     ->collapsible(),
@@ -208,6 +220,22 @@ class TimesTable
                             )
                             // Фільтри по трекінгу
                             ->when(
+                                $data['time_created_from'] ?? null,
+                                fn (Builder $q) => $q->whereDate('created_at', '>=', $data['time_created_from'])
+                            )
+                            ->when(
+                                $data['time_created_to'] ?? null,
+                                fn (Builder $q) => $q->whereDate('created_at', '<=', $data['time_created_to'])
+                            )
+                            ->when(
+                                $data['time_updated_from'] ?? null,
+                                fn (Builder $q) => $q->whereDate('updated_at', '>=', $data['time_updated_from'])
+                            )
+                            ->when(
+                                $data['time_updated_to'] ?? null,
+                                fn (Builder $q) => $q->whereDate('updated_at', '<=', $data['time_updated_to'])
+                            )
+                            ->when(
                                 filled($data['time_status'] ?? null),
                                 fn (Builder $q) => $q->whereIn('status', $data['time_status'])
                             )
@@ -236,6 +264,18 @@ class TimesTable
                         if ($data['task_project_id'] ?? null) {
                             $projects = \App\Models\Project::whereIn('id', $data['task_project_id'])->pluck('name')->join(', ');
                             $indicators['task_project_id'] = 'Проєкт: '.$projects;
+                        }
+                        if ($data['time_created_from'] ?? null) {
+                            $indicators['time_created_from'] = 'Трекінг від: '.\Carbon\Carbon::parse($data['time_created_from'])->format('d.m.Y');
+                        }
+                        if ($data['time_created_to'] ?? null) {
+                            $indicators['time_created_to'] = 'Трекінг до: '.\Carbon\Carbon::parse($data['time_created_to'])->format('d.m.Y');
+                        }
+                        if ($data['time_updated_from'] ?? null) {
+                            $indicators['time_updated_from'] = 'Оновлено від: '.\Carbon\Carbon::parse($data['time_updated_from'])->format('d.m.Y');
+                        }
+                        if ($data['time_updated_to'] ?? null) {
+                            $indicators['time_updated_to'] = 'Оновлено до: '.\Carbon\Carbon::parse($data['time_updated_to'])->format('d.m.Y');
                         }
                         if ($data['time_status'] ?? null) {
                             $statuses = collect($data['time_status'])->map(fn ($status) => Time::$statuses[$status] ?? $status)->join(', ');
