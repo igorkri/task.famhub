@@ -17,27 +17,34 @@ class StyledTimesExport extends ExcelExport implements WithStyles
     {
         $this->withFilename(fn () => date('Y-m-d').' - Звіт_Times');
         $this->withColumns([
+            Column::make('created_at')->heading('Дата створення')->formatStateUsing(fn ($state) => $state?->format('d.m.Y H:i')),
             Column::make('title')->heading('Назва задачі'),
-            Column::make('task.project.name')->heading('Проект'),
+            //            Column::make('task.project.name')->heading('Проект'),
+            Column::make('empty_1')->heading(''),
+            Column::make('empty_2')->heading(''),
+            Column::make('empty_3')->heading(''),
+            Column::make('id')->heading('Трекер часу')
+                ->formatStateUsing(fn ($state, $record) => $record->getDateRangeFormatted()),
+
             Column::make('duration')
-                ->heading('Час')
-                ->formatStateUsing(fn ($state) => number_format($state / 3600, 2, '.', '')),
+                ->heading('Час, хв')
+                ->formatStateUsing(fn ($state) => number_format($state / 60, 2, '.', '')),
             Column::make('coefficient')->heading('Коефіцієнт'),
-            Column::make('calculated_amount')
-                ->heading('Ціна')
-                ->formatStateUsing(fn ($state, $record) => number_format(
-                    $record->duration / 3600 * $record->coefficient * Time::PRICE,
-                    2,
-                    '.',
-                    ''
-                )),
-            Column::make('comment')->heading('Коментар'),
-            Column::make('updated_at')
-                ->heading('Дата модифікації таксу')
-                ->formatStateUsing(fn ($state) => $state?->format('d.m.Y H:i')),
+
+//            Column::make('calculated_amount')
+//                ->heading('Ціна')
+//                ->formatStateUsing(fn ($state, $record) => number_format(
+//                    $record->duration / 3600 * $record->coefficient * Time::PRICE,
+//                    2,
+//                    '.',
+//                    ''
+//                )),
+            Column::make('description')
+                ->heading('Коментар'),
+
             Column::make('task.permalink_url')
                 ->heading('Посилання на задачу')
-                ->formatStateUsing(fn ($state, $record) => $record->task?->permalink_url ? '=HYPERLINK("'.$record->task->permalink_url.'", "Відкрити задачу")' : ''),
+                ->formatStateUsing(fn ($state, $record) => $record->task?->permalink_url ? '=HYPERLINK("'.$record->task->permalink_url.'", "'. $record->task?->gid .'")' : ''),
         ]);
     }
 
@@ -52,11 +59,11 @@ class StyledTimesExport extends ExcelExport implements WithStyles
                 'font' => [
                     'bold' => true,
                     'size' => 12,
-                    'color' => ['rgb' => 'FFFFFF'],
+//                    'color' => ['rgb' => 'FFFFFF'],
                 ],
                 'fill' => [
                     'fillType' => Fill::FILL_SOLID,
-                    'startColor' => ['rgb' => '4472C4'],
+//                    'startColor' => ['rgb' => '4472C4'],
                 ],
                 'alignment' => [
                     'horizontal' => Alignment::HORIZONTAL_CENTER,
@@ -65,7 +72,7 @@ class StyledTimesExport extends ExcelExport implements WithStyles
                 'borders' => [
                     'allBorders' => [
                         'borderStyle' => Border::BORDER_MEDIUM,
-                        'color' => ['rgb' => '000000'],
+//                        'color' => ['rgb' => '000000'],
                     ],
                 ],
                 // Висота рядка заголовків
@@ -109,7 +116,7 @@ class StyledTimesExport extends ExcelExport implements WithStyles
                     'horizontal' => Alignment::HORIZONTAL_CENTER,
                 ],
                 'font' => [
-                    'color' => ['rgb' => '0563C1'],
+//                    'color' => ['rgb' => '0563C1'],
                     'underline' => true,
                 ],
             ],

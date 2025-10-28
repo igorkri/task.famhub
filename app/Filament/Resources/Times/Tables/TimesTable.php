@@ -103,6 +103,10 @@ class TimesTable
                 BulkActionGroup::make([
                     ExportToActOfWorkBulkAction::make(),
                     ExportBulkAction::make()
+                        ->label('Експорт у Excel в файл')
+                        ->icon('heroicon-o-document-text')
+                        ->color('success')
+                        ->requiresConfirmation()
                         ->exports([
                             StyledTimesExport::make(),
                         ]),

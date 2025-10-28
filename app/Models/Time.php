@@ -45,6 +45,7 @@ class Time extends Model
     const STATUS_EXPORT_AKT = 'export_akt'; // експорт акту
 
     public $calculated_amount;
+    public $date_range;
 
     protected $fillable = [
         'task_id',
@@ -56,6 +57,7 @@ class Time extends Model
         'status',
         'report_status',
         'is_archived',
+        'date_range'
     ];
 
     protected $casts = [
@@ -196,6 +198,18 @@ class Time extends Model
     {
         $hours = $this->duration / 3600;
         return $round ? round($hours, 2) : $hours;
-    }  
-    
+    }
+
+
+    /**
+     * Получаем диапазон дат создания и обновления записи
+     *
+     * @return string
+     */
+    public function getDateRangeFormatted()
+    {
+        $updatedAt = date('d.m.Y H:i',strtotime($this->created_at) + $this->duration);
+        return $this->created_at?->format('d.m.Y H:i') . ' ' . $updatedAt;
+//        return $this->created_at?->format('d.m.Y H:i') . ' ' . $this->updated_at?->format('d.m.Y H:i');
+    }
 }
