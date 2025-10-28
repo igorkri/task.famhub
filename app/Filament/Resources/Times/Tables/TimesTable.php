@@ -40,9 +40,26 @@ class TimesTable
                     ->searchable()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
+                // статус таска
+                TextColumn::make('task.status')
+                    ->label('Статус завдання')
+                    ->getStateUsing(fn ($record) => $record->task ? \App\Models\Task::$statuses[$record->task->status] : '')
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('title')
-                    ->label('Завдання')
+                    ->label('Завдання трекінгу')
+                    ->limit(50)
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('description')
+                    ->label('Опис трекінгу')
+                    ->limit(50)
+                    ->searchable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                TextColumn::make('task.title')
+                    ->label('Назва завдання')
                     ->limit(50)
                     ->searchable(),
 
@@ -68,9 +85,9 @@ class TimesTable
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('status')
-                    ->label('Статус')
+                    ->label('Статус трекінгу')
                     ->getStateUsing(fn ($record) => $record->status ? Time::$statuses[$record->status] : '')
-                    ->searchable(),
+                    ->searchable()->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('report_status')
                     ->label('Статус акту')
@@ -79,12 +96,20 @@ class TimesTable
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 ToggleColumn::make('is_archived')
-                    ->label('Архів'),
+                    ->label('Архів')->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('created_at')
+                    ->label('Створено')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('updated_at')
+                    ->label('Оновлено')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                // Дата створення таска
+                TextColumn::make('task.created_at')
+                    ->label('Дата створення завдання')
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -244,6 +269,8 @@ class TimesTable
                         ]),
                     DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->paginated([10, 25, 50, 100, 250, 500])
+            ->defaultPaginationPageOption(25);
     }
 }
