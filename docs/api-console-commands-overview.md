@@ -1,8 +1,39 @@
 # API Console Commands - Общий обзор
 
-Это набор консольных команд для получения данных из внешнего API Asana Masterok Market.
+Это набор консольных команд для получения данных из внешнего API Asana Masterok Market и управления данными Asana.
 
-## Доступные команды
+## Команды синхронизации Asana
+
+### Обновление timestamps задач
+
+```bash
+php artisan asana:update-timestamps
+```
+
+**Документация:** [asana-update-timestamps-command.md](./asana-update-timestamps-command.md)
+
+**Назначение:** Оновлення полів `created_at` і `updated_at` задач з даними з Asana API
+
+**Опції:**
+- `--task-id` - ID конкретної задачі для оновлення
+- `--limit=100` - Максимальна кількість задач (за замовчуванням: 100)
+- `--force` - Оновити всі задачі, навіть якщо timestamps вже встановлено
+
+**Приклади:**
+```bash
+# Оновити задачі без правильних timestamps
+php artisan asana:update-timestamps
+
+# Оновити конкретну задачу
+php artisan asana:update-timestamps --task-id=376
+
+# Оновити всі задачі (масове оновлення)
+php artisan asana:update-timestamps --force --limit=1000
+```
+
+---
+
+## Доступні команди API
 
 ### 1. Команда получения данных таймера
 
