@@ -33,6 +33,41 @@ php artisan asana:update-timestamps --force --limit=1000
 
 ---
 
+## Команды Masterok Market API
+
+### Обновление timestamps записей времени
+
+```bash
+php artisan masterok:update-time-timestamps
+```
+
+**Документация:** [masterok-update-time-timestamps-command.md](./masterok-update-time-timestamps-command.md)
+
+**Назначение:** Оновлення полів `created_at` і `updated_at` записів часу з даними з Masterok Market API
+
+**Опції:**
+- `--time-id` - ID конкретного запису часу для оновлення
+- `--limit=100` - Максимальна кількість записів (за замовчуванням: 100)
+- `--force` - Оновити всі записи, навіть якщо timestamps вже встановлено
+- `--url` - Кастомний URL API
+
+**Приклади:**
+```bash
+# Оновити записи без правильних timestamps
+php artisan masterok:update-time-timestamps
+
+# Оновити конкретний запис
+php artisan masterok:update-time-timestamps --time-id=123
+
+# Оновити всі записи (масове оновлення)
+php artisan masterok:update-time-timestamps --force --limit=1000
+
+# Використати кастомний URL
+php artisan masterok:update-time-timestamps --url=https://custom-api.com/timer/list
+```
+
+---
+
 ## Доступні команди API
 
 ### 1. Команда получения данных таймера
