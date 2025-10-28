@@ -8,10 +8,14 @@ use App\Models\Time;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\DatePicker;
 use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 
 class TimesTable
@@ -26,6 +30,12 @@ class TimesTable
 
                 TextColumn::make('user.name')
                     ->label('Виконавець')
+                    ->searchable()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+
+                TextColumn::make('task.project.name')
+                    ->label('Проєкт')
                     ->searchable()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
@@ -79,22 +89,59 @@ class TimesTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
+                // фільтр за датою створення завдання
+                Filter::make('task_created_at')
+                    ->label('Фільтр за датою створення завдання')
+                    ->form([
+                        DatePicker::make('task_created_from')->label('Від'),
+                        DatePicker::make('task_created_to')->label('До'),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when(
+                                $data['task_created_from'],
+                                fn (Builder $q) => $q->whereHas('task', fn (Builder $query) => $query->whereDate('created_at', '>=', $data['task_created_from']))
+                            )
+                            ->when(
+                                $data['task_created_to'],
+                                fn (Builder $q) => $q->whereHas('task', fn (Builder $query) => $query->whereDate('created_at', '<=', $data['task_created_to']))
+                            );
+                    }),
+                // фільтр за статусом завдання
+                SelectFilter::make('task_status')
+                    ->label('Фільтр за статусом завдання')
+                    ->options(\App\Models\Task::$statuses)
+                    ->multiple()
+                    ->query(function (Builder $query, array $data): Builder {
+                        if (filled($data['values'])) {
+                            return $query->whereHas('task', function (Builder $q) use ($data) {
+                                $q->whereIn('status', $data['values']);
+                            });
+                        }
+
+                        return $query;
+                    }),
                 // status filter
-                \Filament\Tables\Filters\SelectFilter::make('status')
+                SelectFilter::make('status')
                     ->options(Time::$statuses)
                     ->multiple()
-                    ->label('Фільтр за статусом'),
+                    ->label('Фільтр за статусом '),
                 // archived filter
-                \Filament\Tables\Filters\SelectFilter::make('is_archived')
+                SelectFilter::make('is_archived')
                     ->options([
                         0 => 'Не в архіві',
                         1 => 'В архіві',
                     ])->label('Фільтр за архівом'),
                 // report_status filter
-                \Filament\Tables\Filters\SelectFilter::make('report_status')
+                SelectFilter::make('report_status')
                     ->options(Time::$reportStatuses)
                     ->multiple()
                     ->label('Фільтр за статусом акту'),
+                // фильтр за проєктом через завдання
+                SelectFilter::make('task.project_id')
+                    ->label('Проєкт')
+                    ->relationship('task.project', 'name')
+                    ->multiple(),
             ])
             ->recordActions([
                 EditAction::make(),
