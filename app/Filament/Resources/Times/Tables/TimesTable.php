@@ -9,11 +9,12 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\DatePicker;
+use Filament\Schemas\Components\Grid;
+use Filament\Schemas\Components\Section;
 use Filament\Tables\Columns\Summarizers\Sum;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Filters\Filter;
-use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
@@ -89,60 +90,144 @@ class TimesTable
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                // фільтр за датою створення завдання
-                Filter::make('task_created_at')
-                    ->label('Фільтр за датою створення завдання')
+                Filter::make('filters')
                     ->form([
-                        DatePicker::make('task_created_from')->label('Від'),
-                        DatePicker::make('task_created_to')->label('До'),
+                        Grid::make(2)
+                            ->schema([
+                                Section::make('Фільтри по завданню')
+                                    ->description('Фільтрація за параметрами завдань')
+                                    ->icon('heroicon-o-clipboard-document-list')
+                                    ->schema([
+                                        DatePicker::make('task_created_from')
+                                            ->label('Дата створення від')
+                                            ->native(false),
+                                        DatePicker::make('task_created_to')
+                                            ->label('Дата створення до')
+                                            ->native(false),
+                                        \Filament\Forms\Components\Select::make('task_status')
+                                            ->label('Статус завдання')
+                                            ->options(\App\Models\Task::$statuses)
+                                            ->multiple()
+                                            ->searchable()
+                                            ->preload(),
+                                        \Filament\Forms\Components\Select::make('task_project_id')
+                                            ->label('Проєкт')
+                                            ->relationship('task.project', 'name')
+                                            ->multiple()
+                                            ->searchable()
+                                            ->preload(),
+                                    ])
+                                    ->columns(1)
+                                    ->collapsible(),
+
+                                Section::make('Фільтри по трекінгу')
+                                    ->description('Фільтрація за параметрами трекінгу часу')
+                                    ->icon('heroicon-o-clock')
+                                    ->schema([
+                                        \Filament\Forms\Components\Select::make('time_status')
+                                            ->label('Статус трекінгу')
+                                            ->options(Time::$statuses)
+                                            ->multiple()
+                                            ->searchable(),
+                                        \Filament\Forms\Components\Select::make('time_archived')
+                                            ->label('Архів')
+                                            ->options([
+                                                0 => 'Не в архіві',
+                                                1 => 'В архіві',
+                                            ])
+                                            ->placeholder('Всі'),
+                                        \Filament\Forms\Components\Select::make('time_report_status')
+                                            ->label('Статус акту')
+                                            ->options(Time::$reportStatuses)
+                                            ->multiple()
+                                            ->searchable(),
+                                    ])
+                                    ->columns(1)
+                                    ->collapsible(),
+                            ]),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query
+                            // Фільтри по завданню
                             ->when(
-                                $data['task_created_from'],
-                                fn (Builder $q) => $q->whereHas('task', fn (Builder $query) => $query->whereDate('created_at', '>=', $data['task_created_from']))
+                                $data['task_created_from'] ?? null,
+                                function (Builder $q) use ($data) {
+                                    return $q->whereHas('task', function (Builder $query) use ($data) {
+                                        $query->whereDate('created_at', '>=', $data['task_created_from']);
+                                    });
+                                }
                             )
                             ->when(
-                                $data['task_created_to'],
-                                fn (Builder $q) => $q->whereHas('task', fn (Builder $query) => $query->whereDate('created_at', '<=', $data['task_created_to']))
+                                $data['task_created_to'] ?? null,
+                                function (Builder $q) use ($data) {
+                                    return $q->whereHas('task', function (Builder $query) use ($data) {
+                                        $query->whereDate('created_at', '<=', $data['task_created_to']);
+                                    });
+                                }
+                            )
+                            ->when(
+                                filled($data['task_status'] ?? null),
+                                function (Builder $q) use ($data) {
+                                    return $q->whereHas('task', function (Builder $query) use ($data) {
+                                        $query->whereIn('status', $data['task_status']);
+                                    });
+                                }
+                            )
+                            ->when(
+                                filled($data['task_project_id'] ?? null),
+                                function (Builder $q) use ($data) {
+                                    return $q->whereHas('task', function (Builder $query) use ($data) {
+                                        $query->whereIn('project_id', $data['task_project_id']);
+                                    });
+                                }
+                            )
+                            // Фільтри по трекінгу
+                            ->when(
+                                filled($data['time_status'] ?? null),
+                                fn (Builder $q) => $q->whereIn('status', $data['time_status'])
+                            )
+                            ->when(
+                                isset($data['time_archived']),
+                                fn (Builder $q) => $q->where('is_archived', $data['time_archived'])
+                            )
+                            ->when(
+                                filled($data['time_report_status'] ?? null),
+                                fn (Builder $q) => $q->whereIn('report_status', $data['time_report_status'])
                             );
-                    }),
-                // фільтр за статусом завдання
-                SelectFilter::make('task_status')
-                    ->label('Фільтр за статусом завдання')
-                    ->options(\App\Models\Task::$statuses)
-                    ->multiple()
-                    ->query(function (Builder $query, array $data): Builder {
-                        if (filled($data['values'])) {
-                            return $query->whereHas('task', function (Builder $q) use ($data) {
-                                $q->whereIn('status', $data['values']);
-                            });
+                    })
+                    ->indicateUsing(function (array $data): array {
+                        $indicators = [];
+
+                        if ($data['task_created_from'] ?? null) {
+                            $indicators['task_created_from'] = 'Завдання від: '.\Carbon\Carbon::parse($data['task_created_from'])->format('d.m.Y');
+                        }
+                        if ($data['task_created_to'] ?? null) {
+                            $indicators['task_created_to'] = 'Завдання до: '.\Carbon\Carbon::parse($data['task_created_to'])->format('d.m.Y');
+                        }
+                        if ($data['task_status'] ?? null) {
+                            $statuses = collect($data['task_status'])->map(fn ($status) => \App\Models\Task::$statuses[$status] ?? $status)->join(', ');
+                            $indicators['task_status'] = 'Статус завдання: '.$statuses;
+                        }
+                        if ($data['task_project_id'] ?? null) {
+                            $projects = \App\Models\Project::whereIn('id', $data['task_project_id'])->pluck('name')->join(', ');
+                            $indicators['task_project_id'] = 'Проєкт: '.$projects;
+                        }
+                        if ($data['time_status'] ?? null) {
+                            $statuses = collect($data['time_status'])->map(fn ($status) => Time::$statuses[$status] ?? $status)->join(', ');
+                            $indicators['time_status'] = 'Статус трекінгу: '.$statuses;
+                        }
+                        if (isset($data['time_archived'])) {
+                            $indicators['time_archived'] = 'Архів: '.($data['time_archived'] ? 'В архіві' : 'Не в архіві');
+                        }
+                        if ($data['time_report_status'] ?? null) {
+                            $statuses = collect($data['time_report_status'])->map(fn ($status) => Time::$reportStatuses[$status] ?? $status)->join(', ');
+                            $indicators['time_report_status'] = 'Статус акту: '.$statuses;
                         }
 
-                        return $query;
+                        return $indicators;
                     }),
-                // status filter
-                SelectFilter::make('status')
-                    ->options(Time::$statuses)
-                    ->multiple()
-                    ->label('Фільтр за статусом '),
-                // archived filter
-                SelectFilter::make('is_archived')
-                    ->options([
-                        0 => 'Не в архіві',
-                        1 => 'В архіві',
-                    ])->label('Фільтр за архівом'),
-                // report_status filter
-                SelectFilter::make('report_status')
-                    ->options(Time::$reportStatuses)
-                    ->multiple()
-                    ->label('Фільтр за статусом акту'),
-                // фильтр за проєктом через завдання
-                SelectFilter::make('task.project_id')
-                    ->label('Проєкт')
-                    ->relationship('task.project', 'name')
-                    ->multiple(),
-            ])
+            ], layout: \Filament\Tables\Enums\FiltersLayout::Modal)
+            ->filtersFormWidth('5xl')
             ->recordActions([
                 EditAction::make(),
             ])
