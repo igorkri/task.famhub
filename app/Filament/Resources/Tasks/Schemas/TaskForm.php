@@ -74,9 +74,9 @@ class TaskForm
 
                     RichEditor::make('description')
                         ->label('Опис')
-                        // настойка файлов для редактора
                         ->fileAttachmentsDisk('public')
                         ->fileAttachmentsDirectory('task-descriptions')
+                        ->fileAttachmentsVisibility('public')
                         ->columnSpanFull(),
                 ])
                 ->grow(1), // занимает всю доступную ширину
