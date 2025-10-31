@@ -7,8 +7,8 @@ use App\Models\Time;
 use Filament\Actions\Action;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\DateTimePicker;
+use Filament\Forms\Components\MarkdownEditor;
 use Filament\Forms\Components\Repeater;
-use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -71,11 +71,10 @@ class TaskForm
                         ->label('Назва')
                         ->required(),
 
-                    RichEditor::make('description')
+                    MarkdownEditor::make('description')
                         ->label('Опис')
                         ->fileAttachmentsDisk('public')
                         ->fileAttachmentsDirectory('task-descriptions')
-                        ->fileAttachmentsVisibility('public')
                         ->columnSpanFull(),
                 ])
                 ->grow(1), // занимает всю доступную ширину
