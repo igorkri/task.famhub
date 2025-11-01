@@ -109,6 +109,9 @@ class QuickTimerTest extends TestCase
             ->set('isPaused', true)
             ->call('showConvertToTask')
             ->assertSet('showConvertForm', true)
+            ->set('selectedProjectId', $project->id)
+            ->call('updatedSelectedProjectId', $project->id)
+            ->assertCount('availableTasks', 1)
             ->set('selectedTaskId', $task->id)
             ->call('convertToTask');
 

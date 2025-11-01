@@ -151,25 +151,49 @@
                         </div>
                     </div>
 
+                    <!-- Выбор проекта -->
                     <div style="margin-bottom: 16px;">
                         <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500; color: #374151;">
-                            Виберіть завдання
+                            1️⃣ Виберіть проєкт
                         </label>
-                        <select wire:model="selectedTaskId"
-                                style="width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px;">
-                            <option value="">-- Оберіть завдання --</option>
-                            @foreach($availableTasks as $task)
-                                <option value="{{ $task['id'] }}">{{ $task['label'] }}</option>
+                        <select wire:model.live="selectedProjectId"
+                                style="width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; background: white;">
+                            <option value="">-- Оберіть проєкт --</option>
+                            @foreach($availableProjects as $project)
+                                <option value="{{ $project['id'] }}">{{ $project['name'] }}</option>
                             @endforeach
                         </select>
                     </div>
+
+                    <!-- Выбор задачи -->
+                    @if($selectedProjectId)
+                        <div style="margin-bottom: 16px;">
+                            <label style="display: block; margin-bottom: 8px; font-size: 14px; font-weight: 500; color: #374151;">
+                                2️⃣ Виберіть завдання
+                            </label>
+                            @if(count($availableTasks) > 0)
+                                <select wire:model.live="selectedTaskId"
+                                        style="width: 100%; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; background: white;">
+                                    <option value="">-- Оберіть завдання --</option>
+                                    @foreach($availableTasks as $task)
+                                        <option value="{{ $task['id'] }}">{{ $task['label'] }}</option>
+                                    @endforeach
+                                </select>
+                            @else
+                                <div style="padding: 12px; background: #fef3c7; border: 1px solid #fbbf24; border-radius: 6px; color: #92400e; font-size: 14px;">
+                                    ⚠️ У цьому проєкті немає активних завдань
+                                </div>
+                            @endif
+                        </div>
+                    @endif
 
                     <div style="display: flex; gap: 8px;">
                         <button type="button"
                                 wire:click="convertToTask"
                                 wire:loading.attr="disabled"
                                 wire:loading.class="opacity-50"
-                                style="flex: 1; background: #10b981; color: #fff; padding: 10px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: 500;">
+                                @if(!$selectedTaskId) disabled @endif
+                                style="flex: 1; background: @if($selectedTaskId) #10b981 @else #9ca3af @endif; color: #fff; padding: 10px 16px; border: none; border-radius: 6px; cursor: @if($selectedTaskId) pointer @else not-allowed @endif; font-weight: 500;">
                             <span wire:loading.remove wire:target="convertToTask">✅ Конвертувати</span>
                             <span wire:loading wire:target="convertToTask">🐱 Конвертую...</span>
                         </button>

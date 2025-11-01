@@ -27,9 +27,13 @@ class QuickTimer extends Component
 
     public bool $showConvertForm = false;
 
+    public array $availableProjects = [];
+
+    public ?string $selectedProjectId = null;
+
     public array $availableTasks = [];
 
-    public ?int $selectedTaskId = null;
+    public ?string $selectedTaskId = null;
 
     protected $listeners = ['timer-tick' => 'incrementTimer'];
 
@@ -161,17 +165,46 @@ class QuickTimer extends Component
             return;
         }
 
-        // Загружаем доступные задачи пользователя
-        $this->availableTasks = Task::where('user_id', auth()->id())
-            ->whereIn('status', [Task::STATUS_NEW, Task::STATUS_IN_PROGRESS])
+        // Загружаем доступные проекты пользователя
+        $this->availableProjects = \App\Models\Project::whereHas('tasks', function ($query) {
+            $query->where('user_id', auth()->id());
+//                ->whereIn('status', [Task::STATUS_NEW, Task::STATUS_IN_PROGRESS]);
+        })
+            ->where('is_active', true)
+            ->orderBy('name')
             ->get()
-            ->map(fn ($task) => [
-                'id' => $task->id,
-                'label' => $task->title.' ('.$task->project->name.')',
+            ->map(fn ($project) => [
+                'id' => $project->id,
+                'name' => $project->name,
             ])
             ->toArray();
 
         $this->showConvertForm = true;
+    }
+
+    public function updatedSelectedProjectId($projectId)
+    {
+        if (! $projectId) {
+            $this->availableTasks = [];
+            $this->selectedTaskId = null;
+
+            return;
+        }
+
+        // Загружаем задачи выбранного проекта
+        $this->availableTasks = Task::where('user_id', auth()->id())
+            ->where('project_id', $projectId)
+//            ->whereIn('status', [Task::STATUS_NEW, Task::STATUS_IN_PROGRESS])
+            ->orderBy('title')
+            ->get()
+            ->map(fn ($task) => [
+                'id' => $task->id,
+                'label' => $task->title,
+            ])
+            ->toArray();
+
+        // Сбрасываем выбранную задачу
+        $this->selectedTaskId = null;
     }
 
     public function convertToTask()
@@ -190,7 +223,7 @@ class QuickTimer extends Component
 
         // Обновляем запись времени, привязывая её к задаче
         $this->activeTime->update([
-            'task_id' => $this->selectedTaskId,
+            'task_id' => (int) $this->selectedTaskId,
             'duration' => $this->seconds,
             'title' => $this->title ?: $this->activeTime->title,
             'description' => $this->description ?: $this->activeTime->description,
@@ -203,7 +236,7 @@ class QuickTimer extends Component
             ->send();
 
         // Сбрасываем состояние
-        $this->reset(['seconds', 'isRunning', 'isPaused', 'timeId', 'activeTime', 'title', 'description', 'showConvertForm', 'selectedTaskId']);
+        $this->reset(['seconds', 'isRunning', 'isPaused', 'timeId', 'activeTime', 'title', 'description', 'showConvertForm', 'selectedProjectId', 'selectedTaskId', 'availableProjects', 'availableTasks']);
 
         $this->isLoading = false;
 
@@ -214,7 +247,10 @@ class QuickTimer extends Component
     public function cancelConvert()
     {
         $this->showConvertForm = false;
+        $this->selectedProjectId = null;
         $this->selectedTaskId = null;
+        $this->availableProjects = [];
+        $this->availableTasks = [];
     }
 
     public function incrementTimer()
