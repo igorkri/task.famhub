@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Tasks\Tables;
 
+use App\Exports\TasksExport;
 use App\Jobs\SyncProjectAsanaTasks;
 use App\Models\Task;
 use Filament\Actions\Action;
@@ -14,6 +15,7 @@ use Filament\Tables\Filters\Filter;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use pxlrbt\FilamentExcel\Actions\Tables\ExportBulkAction;
 
 class TasksTable
 {
@@ -237,6 +239,11 @@ class TasksTable
                     })
                     ->requiresConfirmation(),
                 BulkActionGroup::make([
+                    ExportBulkAction::make()
+                        ->label('Експорт в Excel')
+                        ->exports([
+                            TasksExport::make(),
+                        ]),
                     DeleteBulkAction::make(),
                 ]),
             ]);

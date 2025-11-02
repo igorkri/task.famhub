@@ -58,6 +58,19 @@ class Task extends Model
         'permalink_url',
     ];
 
+    protected function casts(): array
+    {
+        return [
+            'is_completed' => 'boolean',
+            'deadline' => 'datetime',
+            'start_date' => 'datetime',
+            'end_date' => 'datetime',
+            'budget' => 'decimal:2',
+            'spent' => 'decimal:2',
+            'progress' => 'integer',
+        ];
+    }
+
     public static array $statuses = [
         self::STATUS_NEW => 'Новий',
         self::STATUS_IN_PROGRESS => 'В процесі',
