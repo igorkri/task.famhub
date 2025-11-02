@@ -42,6 +42,31 @@ class TaskResource extends Resource
         return Navigation::NAVIGATION['TASK']['LABEL'];
     }
 
+    public static function getNavigationBadge(): ?string
+    {
+        $count = Task::whereIn('status', [Task::STATUS_NEW, Task::STATUS_IN_PROGRESS])
+            ->where('is_completed', false)
+            ->where('user_id', auth()->id())
+            ->count();
+
+        return $count > 0 ? (string) $count : null;
+    }
+
+    public static function getNavigationBadgeColor(): string|array|null
+    {
+        $count = Task::whereIn('status', [Task::STATUS_NEW, Task::STATUS_IN_PROGRESS])
+            ->where('user_id', auth()->id())
+            ->where('is_completed', false)
+            ->count();
+
+        return match (true) {
+            $count === 0 => null,
+            $count < 5 => 'success',
+            $count < 10 => 'warning',
+            default => 'danger',
+        };
+    }
+
     protected static ?string $recordTitleAttribute = 'title';
 
     public static function form(Schema $schema): Schema
