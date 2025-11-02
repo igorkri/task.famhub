@@ -42,9 +42,12 @@ class Time extends Model
 
     const STATUS_PLANNED = 'planned'; // заплановано
 
+    const STATUS_PAUSED = 'paused'; // на паузі
+
     const STATUS_EXPORT_AKT = 'export_akt'; // експорт акту
 
     public $calculated_amount;
+
     public $date_range;
 
     protected $fillable = [
@@ -57,7 +60,7 @@ class Time extends Model
         'status',
         'report_status',
         'is_archived',
-        'date_range'
+        'date_range',
     ];
 
     protected $casts = [
@@ -88,6 +91,7 @@ class Time extends Model
         self::STATUS_COMPLETED => 'Виконано',
         self::STATUS_CANCELED => 'Відхилено',
         self::STATUS_PLANNED => 'Заплановано',
+        self::STATUS_PAUSED => 'На паузі',
         self::STATUS_EXPORT_AKT => 'Експортовано в акти',
     ];
 
@@ -180,8 +184,6 @@ class Time extends Model
 
     /**
      * Получаем стоимость с учетом коэффициента
-     *
-     * @return float
      */
     public function getCalcPrice(): float
     {
@@ -197,9 +199,9 @@ class Time extends Model
     public function getTimeHour($round = true): float
     {
         $hours = $this->duration / 3600;
+
         return $round ? round($hours, 2) : $hours;
     }
-
 
     /**
      * Получаем диапазон дат создания и обновления записи
@@ -208,8 +210,9 @@ class Time extends Model
      */
     public function getDateRangeFormatted()
     {
-        $updatedAt = date('d.m.Y H:i',strtotime($this->created_at) + $this->duration);
-        return $this->created_at?->format('d.m.Y H:i') . ' ' . $updatedAt;
-//        return $this->created_at?->format('d.m.Y H:i') . ' ' . $this->updated_at?->format('d.m.Y H:i');
+        $updatedAt = date('d.m.Y H:i', strtotime($this->created_at) + $this->duration);
+
+        return $this->created_at?->format('d.m.Y H:i').' '.$updatedAt;
+        //        return $this->created_at?->format('d.m.Y H:i') . ' ' . $this->updated_at?->format('d.m.Y H:i');
     }
 }

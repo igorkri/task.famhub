@@ -161,66 +161,149 @@ class TaskForm
 
     private static function timerSection()
     {
-        return Section::make('Таймер')
+        return Section::make('⏱️ Облік часу')
+            ->description('Ведіть облік витраченого часу на завдання')
+            ->icon('heroicon-o-clock')
             ->schema([
-                ViewField::make('total_time')
-                    ->view('components.total-time')
-                    ->viewData(fn ($record) => [
-                        'times' => optional($record)?->times ?? collect(),
+                // Красивый блок с общей статистикой времени
+                Section::make('📊 Загальна статистика')
+                    ->schema([
+                        ViewField::make('total_time')
+                            ->view('components.total-time')
+                            ->viewData(fn ($record) => [
+                                'times' => optional($record)?->times ?? collect(),
+                            ])
+                            ->columnSpanFull(),
                     ])
+                    ->compact()
                     ->columnSpanFull(),
 
+                // Список записей времени с улучшенным дизайном
                 Repeater::make('times')
                     ->relationship('times')
-                    ->label('Записи часу')
+                    ->label('📝 Записи часу')
                     ->schema([
+                        // Первая строка: основная информация
+                        Flex::make([
+                            TimePicker::make('duration')
+                                ->label('⏰ Час')
+                                ->seconds(true)
+                                ->required()
+                                ->dehydrateStateUsing(fn ($state) => $state)
+                                ->afterStateHydrated(function ($component, $state) {
+                                    $component->state($state ?? '00:00:00');
+                                })
+                                ->grow(false),
 
-                        TimePicker::make('duration')
-                            ->label('Час')
-                            ->seconds(true)
-                            ->required()
-                            ->dehydrateStateUsing(fn ($state) => $state) // чтобы не сохранять duration_for_form напрямую
-                            ->afterStateHydrated(function ($component, $state) {
-                                $component->state($state ?? '00:00:00');
-                            }),
+                            Select::make('user_id')
+                                ->label('👤 Користувач')
+                                ->default(auth()->id())
+                                ->relationship('user', 'name')
+                                ->required()
+                                ->grow(false),
 
-                        // user_id
-                        Select::make('user_id')
-                            ->label('Користувач')
-                            ->default(auth()->id())
-                            ->relationship('user', 'name')
-                            ->required(),
-                        // task_id автоматически ставится
+                            TextInput::make('coefficient')
+                                ->label('📈 Коефіцієнт')
+                                ->default(Time::COEFFICIENT_STANDARD)
+                                ->numeric()
+                                ->step(0.1)
+                                ->required()
+                                ->grow(false)
+                                ->suffix('x'),
 
-                        TextInput::make('coefficient')
-                            ->label('Коефіцієнт')
-                            ->default(Time::COEFFICIENT_STANDARD)
-//                            ->options(collect(Time::$coefficients)->mapWithKeys(fn ($v, $k) => [(string) $k => $v])->toArray())
-                            ->numeric()
-                            ->required(),
-                        Select::make('status')
-                            ->label('Статус')
-                            ->default(Time::STATUS_PLANNED)
-                            ->options(Time::$statuses)
-                            ->required(),
+                            Select::make('status')
+                                ->label('🎯 Статус')
+                                ->default(Time::STATUS_PLANNED)
+                                ->options(Time::$statuses)
+                                ->required()
+                                ->grow(false),
+                        ])->from('md'),
+
+                        // Вторая строка: заголовок
                         TextInput::make('title')
-                            ->label('Заголовок')
-                            ->required()->columnSpanFull(),
+                            ->label('📋 Заголовок')
+                            ->required()
+                            ->placeholder('Опишіть що робили...')
+                            ->columnSpanFull(),
+
+                        // Третья строка: описание
                         Textarea::make('description')
-                            ->label('Опис')->columnSpanFull(),
+                            ->label('📄 Детальний опис')
+                            ->placeholder('Додаткові деталі роботи...')
+                            ->rows(2)
+                            ->columnSpanFull(),
                     ])
                     ->defaultItems(0)
-                    ->addActionLabel('Додати')
-                    // сворачиваемый
+                    ->addActionLabel('➕ Додати запис часу')
                     ->collapsible()
-                    // по умолчанию свернутый
                     ->collapsed()
-                    // делаем название из поля title
-                    ->itemLabel(fn ($state) => ($state['title'] ?? '').
-                         ' Час: '.($state['duration'] ?? '').
-                         ' Статус: '.(Time::$statuses[$state['status']] ?? '~ Новий ~')
+                    ->cloneable()
+                    ->reorderable()
+                    ->deleteAction(
+                        fn (Action $action) => $action
+                            ->requiresConfirmation()
+                            ->modalHeading('Видалити запис часу?')
+                            ->modalDescription('Ця дія незворотна.')
+                            ->modalSubmitActionLabel('Видалити')
                     )
-                    ->columns(4),
+                    ->itemLabel(function ($state) {
+                        $title = $state['title'] ?? 'Новий запис';
+                        $duration = $state['duration'] ?? '00:00:00';
+                        $status = Time::$statuses[$state['status'] ?? Time::STATUS_PLANNED] ?? 'Новий';
+                        $coefficient = $state['coefficient'] ?? 1;
+
+                        // Додаємо іконки статусу
+                        $statusIcon = match ($state['status'] ?? Time::STATUS_PLANNED) {
+                            Time::STATUS_PLANNED => '📋',
+                            Time::STATUS_IN_PROGRESS => '🔄',
+                            Time::STATUS_COMPLETED => '✅',
+                            Time::STATUS_PAUSED => '⏸️',
+                            default => '📋'
+                        };
+
+                        return "{$statusIcon} {$title} • ⏰ {$duration} • 📈 {$coefficient}x • {$status}";
+                    })
+                    ->extraItemActions([
+                        Action::make('duplicate')
+                            ->icon('heroicon-o-document-duplicate')
+                            ->tooltip('Дублювати')
+                            ->action(function (array $arguments, Repeater $component): void {
+                                $component->callAction('clone', $arguments);
+                            }),
+                    ])
+                    ->grid(1)
+                    ->live(),
+
+                // Подсказки и советы
+                Section::make('💡 Підказки')
+                    ->schema([
+                        \Filament\Forms\Components\Placeholder::make('timer_tips')
+                            ->label('')
+                            ->content(new \Illuminate\Support\HtmlString(
+                                '<div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                    <div class="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800">
+                                        <div class="font-medium text-blue-800 dark:text-blue-200 mb-1">⏰ Формат часу</div>
+                                        <div class="text-blue-600 dark:text-blue-300">Використовуйте формат ГГ:ХХ:СС (години:хвилини:секунди)</div>
+                                    </div>
+                                    <div class="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg border border-green-200 dark:border-green-800">
+                                        <div class="font-medium text-green-800 dark:text-green-200 mb-1">📈 Коефіцієнт</div>
+                                        <div class="text-green-600 dark:text-green-300">1.0 - стандарт, 1.5 - складна робота, 0.5 - проста</div>
+                                    </div>
+                                    <div class="bg-purple-50 dark:bg-purple-900/20 p-3 rounded-lg border border-purple-200 dark:border-purple-800">
+                                        <div class="font-medium text-purple-800 dark:text-purple-200 mb-1">🎯 Статуси</div>
+                                        <div class="text-purple-600 dark:text-purple-300">Відстежуйте прогрес: Заплановано → В процесі → Завершено</div>
+                                    </div>
+                                    <div class="bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg border border-amber-200 dark:border-amber-800">
+                                        <div class="font-medium text-amber-800 dark:text-amber-200 mb-1">📝 Заголовки</div>
+                                        <div class="text-amber-600 dark:text-amber-300">Вказуйте зрозумілі назви для легкого пошуку</div>
+                                    </div>
+                                </div>'
+                            ))
+                            ->columnSpanFull(),
+                    ])
+                    ->collapsible()
+                    ->collapsed()
+                    ->columnSpanFull(),
             ])
             ->id('timer-section')
             ->columnSpanFull();
@@ -228,63 +311,100 @@ class TaskForm
 
     private static function commentsSection()
     {
-        return Section::make('Коментарі')
-            // ->footer([
-            //     ViewField::make('syncActions')
-            //         ->view('filament.resources.tasks.sync-buttons')
-            //         ->columnSpanFull(),
-            // ])
+        return Section::make('💬 Коментарі')
+            ->description('Обговорення та нотатки по завданню')
+            ->icon('heroicon-o-chat-bubble-left-right')
             ->schema([
                 Repeater::make('comments')
                     ->relationship('comments')
-                    ->label('Коментарі задачі')
+                    ->label('📝 Коментарі задачі')
                     ->schema([
-                        Select::make('user_id')
-                            ->label('Автор')
-                            ->relationship('user', 'name')
-                            ->default(auth()->id())
-                            ->required(),
+                        Flex::make([
+                            Select::make('user_id')
+                                ->label('👤 Автор')
+                                ->relationship('user', 'name')
+                                ->default(auth()->id())
+                                ->required()
+                                ->grow(false),
+
+                            TextInput::make('asana_gid')
+                                ->label('🔗 Asana GID')
+                                ->disabled()
+                                ->visible(fn ($state) => ! empty($state))
+                                ->hint(fn ($state) => ! empty($state) ? '✅ Синхронізовано з Asana' : '⏳ Не синхронізовано')
+                                ->grow(false),
+
+                            \Filament\Forms\Components\TextInput::make('asana_created_at')
+                                ->label('📅 Дата створення в Asana')
+                                ->disabled()
+                                ->visible(fn ($state) => ! empty($state))
+                                ->grow(false),
+                        ])->from('md'),
 
                         Textarea::make('content')
-                            ->label('Коментар')
+                            ->label('💭 Коментар')
                             ->required()
                             ->rows(3)
+                            ->placeholder('Напишіть ваш коментар...')
                             ->columnSpanFull(),
-
-                        TextInput::make('asana_gid')
-                            ->label('Asana GID')
-                            ->disabled()
-                            ->visible(fn ($state) => ! empty($state))
-                            ->hint(fn ($state) => ! empty($state) ? 'Синхронізовано з Asana' : 'Не синхронізовано'),
-
-                        \Filament\Forms\Components\TextInput::make('asana_created_at')
-                            ->label('Дата створення в Asana')
-                            ->disabled()
-                            ->visible(fn ($state) => ! empty($state)),
                     ])
                     ->defaultItems(0)
-                    ->addActionLabel('Додати коментар')
+                    ->addActionLabel('➕ Додати коментар')
                     ->collapsible()
-                    ->itemLabel(fn ($state) => (! empty($state['asana_gid']) ? '✅ ' : '⏳ ').
-                        substr($state['content'] ?? 'Новий коментар', 0, 50).
-                        (strlen($state['content'] ?? '') > 50 ? '...' : '')
-                    )
-                    ->columns(2)
+                    ->collapsed()
+                    ->itemLabel(function ($state) {
+                        $syncIcon = ! empty($state['asana_gid']) ? '✅' : '⏳';
+                        $content = $state['content'] ?? 'Новий коментар';
+                        $truncated = substr($content, 0, 50);
+                        $truncated .= strlen($content) > 50 ? '...' : '';
+
+                        return "{$syncIcon} {$truncated}";
+                    })
+                    ->columns(1)
                     ->orderColumn('id')
                     ->reorderable(false)
-                    ->deleteAction(fn (Action $action) => $action->requiresConfirmation())
-                    ->cloneAction(fn (Action $action) => $action->label('Клонувати')),
+                    ->deleteAction(fn (Action $action) => $action
+                        ->requiresConfirmation()
+                        ->modalHeading('Видалити коментар?')
+                        ->modalDescription('Ця дія незворотна.')
+                        ->modalSubmitActionLabel('Видалити')
+                    )
+                    ->cloneAction(fn (Action $action) => $action->label('📋 Клонувати')),
+
+                // Подсказки для комментариев
+                Section::make('💡 Підказки')
+                    ->schema([
+                        \Filament\Forms\Components\Placeholder::make('comments_tips')
+                            ->label('')
+                            ->content(new \Illuminate\Support\HtmlString(
+                                '<div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                    <div class="bg-blue-50 dark:bg-blue-900/20 p-3 rounded-lg border border-blue-200 dark:border-blue-800">
+                                        <div class="font-medium text-blue-800 dark:text-blue-200 mb-1">💬 Коментарі</div>
+                                        <div class="text-blue-600 dark:text-blue-300">Використовуйте для обговорення деталей завдання</div>
+                                    </div>
+                                    <div class="bg-green-50 dark:bg-green-900/20 p-3 rounded-lg border border-green-200 dark:border-green-800">
+                                        <div class="font-medium text-green-800 dark:text-green-200 mb-1">🔄 Синхронізація</div>
+                                        <div class="text-green-600 dark:text-green-300">✅ - синхронізовано з Asana, ⏳ - локальний коментар</div>
+                                    </div>
+                                </div>'
+                            ))
+                            ->columnSpanFull(),
+                    ])
+                    ->collapsible()
+                    ->collapsed()
+                    ->columnSpanFull(),
             ])
             ->columnSpanFull();
     }
 
     private static function customFieldsSection()
     {
-        return Section::make('Кастомні поля з Asana')
+        return Section::make('⚙️ Кастомні поля з Asana')
             ->description('Редагуйте поля тут - вони синхронізуються з Asana при збереженні')
+            ->icon('heroicon-o-adjustments-horizontal')
             ->headerActions([
                 Action::make('auto_calculate_time')
-                    ->label('🔄 Автопрорахунок часу')
+                    ->label('🧮 Автопрорахунок часу')
                     ->icon('heroicon-o-calculator')
                     ->color('success')
                     ->action(function ($livewire, $get) {
@@ -292,7 +412,7 @@ class TaskForm
                         if (! $record) {
                             \Filament\Notifications\Notification::make()
                                 ->warning()
-                                ->title('Немає запису')
+                                ->title('❌ Немає запису')
                                 ->body('Спочатку збережіть таск')
                                 ->send();
 
@@ -322,7 +442,7 @@ class TaskForm
 
                             \Filament\Notifications\Notification::make()
                                 ->success()
-                                ->title('Час прораховано!')
+                                ->title('✅ Час прораховано!')
                                 ->body("Оновлено поле 'Час, факт.': {$totalHours} год ({$hours} год {$minutes} хв)")
                                 ->send();
 
@@ -331,7 +451,7 @@ class TaskForm
                         } else {
                             \Filament\Notifications\Notification::make()
                                 ->warning()
-                                ->title('Поле не знайдено')
+                                ->title('⚠️ Поле не знайдено')
                                 ->body('Не знайдено кастомне поле "Час, факт." для цього проєкту')
                                 ->send();
                         }
@@ -341,35 +461,48 @@ class TaskForm
             ->schema([
                 Repeater::make('customFields')
                     ->relationship('customFields')
-                    ->label('Поля')
+                    ->label('📋 Поля')
                     ->schema([
                         \Filament\Forms\Components\Hidden::make('asana_gid'),
                         \Filament\Forms\Components\Hidden::make('project_custom_field_id'),
                         \Filament\Forms\Components\Hidden::make('type'),
 
+                        // Название поля с иконкой типа
                         TextInput::make('name')
-                            ->label('Назва поля')
+                            ->label('🏷️ Назва поля')
                             ->disabled()
                             ->dehydrated(true)
+                            ->prefixIcon(function ($get) {
+                                return match ($get('type')) {
+                                    'text' => 'heroicon-o-document-text',
+                                    'number' => 'heroicon-o-calculator',
+                                    'date' => 'heroicon-o-calendar',
+                                    'enum' => 'heroicon-o-list-bullet',
+                                    default => 'heroicon-o-question-mark-circle',
+                                };
+                            })
                             ->columnSpan(1),
 
                         // Текстове поле
                         Textarea::make('text_value')
-                            ->label('Значення')
+                            ->label('📝 Значення')
                             ->rows(2)
+                            ->placeholder('Введіть текст...')
                             ->visible(fn ($get) => $get('type') === 'text')
                             ->columnSpan(3),
 
                         // Числове поле з кнопкою автопрорахунку для часу
                         TextInput::make('number_value')
-                            ->label('Значення')
+                            ->label('🔢 Значення')
                             ->numeric()
                             ->step(0.01)
+                            ->placeholder('0.00')
                             ->visible(fn ($get) => $get('type') === 'number')
                             ->suffixAction(
                                 Action::make('calculate_from_timer')
                                     ->icon('heroicon-o-calculator')
                                     ->tooltip('Порахувати з таймера')
+                                    ->color('success')
                                     ->action(function ($set, $get, $livewire, $record) {
                                         if (! $livewire->record) {
                                             return;
@@ -388,7 +521,7 @@ class TaskForm
 
                                             \Filament\Notifications\Notification::make()
                                                 ->success()
-                                                ->title('Прораховано з таймера')
+                                                ->title('🧮 Прораховано з таймера')
                                                 ->body("{$totalMinutes} хв ({$hours} год {$minutes} хв)")
                                                 ->send();
                                         }
@@ -404,13 +537,15 @@ class TaskForm
 
                         // Дата
                         DatePicker::make('date_value')
-                            ->label('Значення')
+                            ->label('📅 Значення')
+                            ->placeholder('Виберіть дату...')
                             ->visible(fn ($get) => $get('type') === 'date')
                             ->columnSpan(3),
 
                         // Enum (список)
                         Select::make('enum_value_gid')
-                            ->label('Значення')
+                            ->label('📋 Значення')
+                            ->placeholder('Виберіть варіант...')
                             ->options(function ($get, $record) {
                                 if (! $record || ! $record->projectCustomField) {
                                     return [];
@@ -441,6 +576,15 @@ class TaskForm
                     ->reorderable(false)
                     ->collapsible()
                     ->itemLabel(function ($state, $get) {
+                        // Получаем иконку для типа поля
+                        $typeIcon = match ($state['type'] ?? 'text') {
+                            'text' => '📝',
+                            'number' => '🔢',
+                            'date' => '📅',
+                            'enum' => '📋',
+                            default => '❓',
+                        };
+
                         // Отримуємо name через projectCustomField, оскільки поле disabled і не зберігається в $state
                         $name = $state['name'] ?? $get('name') ?? 'Поле';
 
@@ -452,15 +596,23 @@ class TaskForm
                             default => '—',
                         };
 
-                        return "{$name}: {$value}";
+                        return "{$typeIcon} {$name}: {$value}";
                     }),
 
                 \Filament\Forms\Components\Placeholder::make('sync_hint')
                     ->label('')
                     ->content(new \Illuminate\Support\HtmlString(
-                        '<div class="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                            💾 <strong>Збереження:</strong> Кастомні поля автоматично синхронізуються з Asana при натисканні "Відправити в Asana"<br>
-                            🔄 <strong>Підказка:</strong> Використовуйте кнопку "🔄 Автопрорахунок часу" вгорі для автоматичного підрахунку часу з таймера
+                        '<div class="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 rounded-lg p-4 border border-amber-200 dark:border-amber-800">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                <div>
+                                    <div class="font-medium text-amber-800 dark:text-amber-200 mb-1">💾 Збереження</div>
+                                    <div class="text-amber-600 dark:text-amber-300">Кастомні поля автоматично синхронізуються з Asana при натисканні "Відправити в Asana"</div>
+                                </div>
+                                <div>
+                                    <div class="font-medium text-orange-800 dark:text-orange-200 mb-1">🧮 Підказка</div>
+                                    <div class="text-orange-600 dark:text-orange-300">Використовуйте кнопку "🧮 Автопрорахунок часу" вгорі для автоматичного підрахунку часу з таймера</div>
+                                </div>
+                            </div>
                         </div>'
                     ))
                     ->columnSpanFull(),

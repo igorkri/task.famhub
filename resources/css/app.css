@@ -22,3 +22,48 @@
 }
 
 @variant dark (&:where(.dark, .dark *));
+
+/* Кастомные стили для компонентов времени */
+.timer-stats-grid {
+    @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4;
+}
+
+.timer-stat-item {
+    @apply text-center;
+}
+
+.timer-main-time {
+    @apply text-3xl font-bold text-blue-600 dark:text-blue-400;
+}
+
+.timer-label {
+    @apply text-sm text-gray-600 dark:text-gray-400 mt-1;
+}
+
+.timer-sublabel {
+    @apply text-xs text-gray-500 dark:text-gray-500;
+}
+
+.timer-container {
+    @apply bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-xl p-6 border border-blue-200 dark:border-blue-800;
+}
+
+.progress-bar-container {
+    @apply flex h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden;
+}
+
+.legend-container {
+    @apply flex flex-wrap justify-center gap-4 mt-3 text-xs;
+}
+
+.legend-item {
+    @apply flex items-center gap-1;
+}
+
+.legend-color {
+    @apply w-3 h-3 rounded;
+}
+
+.legend-text {
+    @apply text-gray-600 dark:text-gray-400;
+}
