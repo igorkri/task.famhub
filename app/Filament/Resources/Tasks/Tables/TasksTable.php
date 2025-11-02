@@ -185,21 +185,37 @@ class TasksTable
                     ->label('Синхронізувати проект Asana')
                     ->icon('heroicon-o-arrow-path')
                     ->action(function () use ($table) {
-                        // Попробуем прочитать фильтр project_id из table
                         $state = $table->getFilter('project_id')->getState();
                         $projectId = $state['values'][0] ?? null;
 
                         if (! $projectId) {
+                            // Якщо проект не вибрано, синхронізуємо всі проекти
+                            $projects = \App\Models\Project::all();
+
+                            if ($projects->isEmpty()) {
+                                \Filament\Notifications\Notification::make()
+                                    ->warning()
+                                    ->title('Немає проектів')
+                                    ->body('Немає проектів для синхронізації.')
+                                    ->send();
+
+                                return;
+                            }
+
+                            foreach ($projects as $project) {
+                                SyncProjectAsanaTasks::dispatch($project);
+                            }
+
                             \Filament\Notifications\Notification::make()
-                                ->danger()
-                                ->title('Не вибрано проект')
-                                ->body('Будь ласка, відфільтруйте завдання за проектом, щоб запустити синхронізацію проекту.')
+                                ->success()
+                                ->title('Синхронізація всіх проектів поставлена в чергу')
+                                ->body("Синхронізація {$projects->count()} проектів поставлена в чергу і буде виконана найближчим часом.")
                                 ->send();
 
                             return;
                         }
 
-                        // Достаём проект і диспатчим job
+                        // Синхронізуємо один вибраний проект
                         $project = \App\Models\Project::find($projectId);
                         if (! $project instanceof \App\Models\Project) {
                             \Filament\Notifications\Notification::make()
@@ -214,9 +230,9 @@ class TasksTable
                         SyncProjectAsanaTasks::dispatch($project);
 
                         \Filament\Notifications\Notification::make()
-                            ->info()
+                            ->success()
                             ->title('Синхронізація проекту поставлена в чергу')
-                            ->body('Синхронізація проекту поставлена в чергу і буде виконана найближчим часом.')
+                            ->body("Синхронізація проекту \"{$project->name}\" поставлена в чергу і буде виконана найближчим часом.")
                             ->send();
                     })
                     ->requiresConfirmation(),
