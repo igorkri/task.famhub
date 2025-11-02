@@ -134,7 +134,7 @@ class TaskForm
 
                             Select::make('user_id')
                                 ->label('Виконавець')
-                                ->visible(fn ($record) => optional($record)?->user_id == null)
+//                                ->visible(fn ($record) => optional($record)?->user_id == null)
                                 ->relationship('user', 'name'),
 
                             //                            DatePicker::make('deadline')
