@@ -33,6 +33,7 @@ class TasksTable
                 TextColumn::make('title')
                     ->label('Назва')
                     ->limit(50)
+                    ->tooltip(fn ($record) => $record->title)
                     ->searchable(),
                 TextColumn::make('user_id')
                     ->label('Відповідальний')
