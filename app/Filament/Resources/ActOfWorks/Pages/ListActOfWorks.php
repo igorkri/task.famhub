@@ -65,6 +65,7 @@ class ListActOfWorks extends ListRecords
                 ->label('Імпорт надходжень (CSV з перевіркою)')
                 ->icon('heroicon-o-document-text')
                 ->color('info')
+                ->visible(fn () => auth()->check() && auth()->user()->email === 'igorkri26@gmail.com')
                 ->form([
                     FileUpload::make('file')
                         ->label('Файл CSV')

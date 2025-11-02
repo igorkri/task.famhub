@@ -298,7 +298,7 @@ class TimesTable
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    ExportToActOfWorkBulkAction::make(),
+                    ExportToActOfWorkBulkAction::make()->visible(fn () => auth()->check() && auth()->user()->email === 'igorkri26@gmail.com'),
                     ExportBulkAction::make()
                         ->label('Експорт у Excel в файл')
                         ->icon('heroicon-o-document-text')
@@ -307,7 +307,7 @@ class TimesTable
                         ->exports([
                             StyledTimesExport::make(),
                         ]),
-                    DeleteBulkAction::make(),
+                    DeleteBulkAction::make()->visible(fn () => auth()->check() && auth()->user()->email === 'igorkri26@gmail.com'),
                 ]),
             ])
             ->paginated([10, 25, 50, 100, 250, 500])
