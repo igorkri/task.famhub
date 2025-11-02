@@ -44,7 +44,7 @@ class TaskResource extends Resource
 
     public static function getNavigationBadge(): ?string
     {
-        $count = Task::whereIn('status', [Task::STATUS_NEW, Task::STATUS_IN_PROGRESS])
+        $count = Task::whereIn('status', [Task::STATUS_NEW, Task::STATUS_IN_PROGRESS, Task::STATUS_NEEDS_CLARIFICATION])
             ->where('is_completed', false)
             ->where('user_id', auth()->id())
             ->count();
@@ -54,7 +54,7 @@ class TaskResource extends Resource
 
     public static function getNavigationBadgeColor(): string|array|null
     {
-        $count = Task::whereIn('status', [Task::STATUS_NEW, Task::STATUS_IN_PROGRESS])
+        $count = Task::whereIn('status', [Task::STATUS_NEW, Task::STATUS_IN_PROGRESS, Task::STATUS_NEEDS_CLARIFICATION])
             ->where('user_id', auth()->id())
             ->where('is_completed', false)
             ->count();
