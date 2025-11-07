@@ -165,7 +165,9 @@ class UserRoleManagement extends Page implements HasTable
                 ->form([
                     Select::make('user_id')
                         ->label('Користувач')
-                        ->options(User::all()->pluck('name', 'id'))
+                        ->options(function () {
+                            return \App\Models\User::usersList();
+                        })
                         ->searchable()
                         ->required(),
 

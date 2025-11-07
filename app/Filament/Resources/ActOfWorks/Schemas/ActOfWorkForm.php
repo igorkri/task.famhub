@@ -19,8 +19,8 @@ class ActOfWorkForm
     {
         return $schema
             ->components([
-               
-                        
+
+
                 Section::make('Основна інформація')
                     ->columns(2)
                     ->schema([
@@ -48,7 +48,9 @@ class ActOfWorkForm
 
                         Select::make('user_id')
                             ->label('Користувач')
-                            ->relationship('user', 'name')
+                            ->options(function () {
+                                return \App\Models\User::usersList();
+                            })
                             ->searchable()
                             ->preload()
                             ->required(),
@@ -112,7 +114,7 @@ class ActOfWorkForm
                                             ->required()
                                             ->default(ActOfWork::TELEGRAM_STATUS_PENDING),
 
-                            
+
                                     ]),
             ]);
     }

@@ -22,6 +22,7 @@ class TasksTable
     public static function configure(Table $table): Table
     {
         return $table
+            ->defaultSort('id', 'desc')
             ->columns([
 
                 //                TextColumn::make('parent_id')
@@ -94,7 +95,7 @@ class TasksTable
                     ->label('Створено')
                     ->dateTime()
                     ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->toggleable(),
                 TextColumn::make('updated_at')
                     ->label('Оновлено')
                     ->dateTime()
@@ -109,7 +110,10 @@ class TasksTable
                 SelectFilter::make('user_id')
                     ->label('Відповідальний')
                     ->multiple()
-                    ->relationship('user', 'name'),
+//                    ->relationship('user', 'name'),
+                    ->options(function () {
+                        return \App\Models\User::usersList();
+                    }),
                 SelectFilter::make('status')
                     ->label('Статус')
                     ->multiple()

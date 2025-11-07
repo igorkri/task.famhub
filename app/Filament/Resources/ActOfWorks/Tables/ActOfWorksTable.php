@@ -151,7 +151,9 @@ class ActOfWorksTable
 
                 SelectFilter::make('user_id')
                     ->label('Користувач')
-                    ->relationship('user', 'name')
+                    ->options(function () {
+                        return \App\Models\User::usersList();
+                    })
                     ->searchable()
                     ->preload(),
 

@@ -18,7 +18,9 @@ class TaskCommentForm
                     ->relationship('task', 'title')
                     ->required(),
                 Select::make('user_id')
-                    ->relationship('user', 'name')
+                    ->options(function () {
+                        return \App\Models\User::usersList();
+                    })
                     ->required(),
                 TextInput::make('asana_gid'),
                 Textarea::make('content')

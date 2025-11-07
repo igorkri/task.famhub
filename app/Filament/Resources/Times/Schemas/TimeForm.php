@@ -27,7 +27,9 @@ class TimeForm
                     ->searchable()
                     ->placeholder('Виберіть завдання...'),
                 Select::make('user_id')->label('Виконавець')->required()
-                    ->options(User::all()->sortByDesc('name')->pluck('name', 'id')->toArray()),
+                    ->options(function () {
+                        return \App\Models\User::usersList();
+                    }),
                 TextInput::make('title')->label('Назва')->required()->maxLength(255),
                 Textarea::make('description')
                     ->label('Опис')

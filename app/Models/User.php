@@ -37,6 +37,13 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         'remember_token',
     ];
 
+    public static function usersList()
+    {
+        return self::orderBy('name')
+            ->where('name', '!=', 'Private User')
+            ->pluck('name', 'id')->toArray();
+    }
+
     /**
      * Get the attributes that should be cast.
      *

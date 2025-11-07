@@ -20,7 +20,7 @@ class StyledTimesExport extends ExcelExport implements WithEvents, WithStyles
         $this->withFilename(fn () => date('Y-m-d').' - Звіт_Times');
         $this->withColumns([
             Column::make('created_at')->heading('Дата створення завдання')->formatStateUsing(fn ($state, $record) => $record->task?->created_at?->format('d.m.Y H:i') ?? $state?->format('d.m.Y H:i')),
-            Column::make('title')->heading('Назва задачі'),
+            Column::make('title')->heading('Назва задачі')->formatStateUsing(fn ($state, $record) => $record->task?->title ?? $state),
             //            Column::make('task.project.name')->heading('Проект'),
             Column::make('empty_1')->heading(''),
             Column::make('empty_2')->heading(''),

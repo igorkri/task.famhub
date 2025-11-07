@@ -135,7 +135,9 @@ class TaskForm
                             Select::make('user_id')
                                 ->label('Виконавець')
 //                                ->visible(fn ($record) => optional($record)?->user_id == null)
-                                ->relationship('user', 'name'),
+                                ->options(function () {
+                                    return \App\Models\User::usersList();
+                                }),
 
                             //                            DatePicker::make('deadline')
                             //                                ->label('Дедлайн'),
@@ -198,7 +200,9 @@ class TaskForm
                             Select::make('user_id')
                                 ->label('👤 Користувач')
                                 ->default(auth()->id())
-                                ->relationship('user', 'name')
+                                ->options(function () {
+                                    return \App\Models\User::usersList();
+                                })
                                 ->required()
                                 ->grow(false),
 
@@ -322,7 +326,9 @@ class TaskForm
                         Flex::make([
                             Select::make('user_id')
                                 ->label('👤 Автор')
-                                ->relationship('user', 'name')
+                                ->options(function () {
+                                    return \App\Models\User::usersList();
+                                })
                                 ->default(auth()->id())
                                 ->required()
                                 ->grow(false),
@@ -355,8 +361,8 @@ class TaskForm
                     ->itemLabel(function ($state) {
                         $syncIcon = ! empty($state['asana_gid']) ? '✅' : '⏳';
                         $content = $state['content'] ?? 'Новий коментар';
-                        $truncated = substr($content, 0, 50);
-                        $truncated .= strlen($content) > 50 ? '...' : '';
+                        $truncated = mb_substr($content, 0, 150, 'UTF-8');
+                        $truncated .= mb_strlen($content, 'UTF-8') > 150? '...' : '';
 
                         return "{$syncIcon} {$truncated}";
                     })
