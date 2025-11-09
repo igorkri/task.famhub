@@ -52,7 +52,7 @@ class PowerOutageImageGenerator
         // Заголовок та дата по центру вгорі
         $date = $schedule->schedule_date->format('d.m.Y');
         $time = $schedule->fetched_at->format('H:i');
-        $centerX = $width / 2 - 250;
+        $centerX = $width / 2 - 320;
 
         // Іконка блискавки
         $draw = new ImagickDraw;
@@ -66,17 +66,17 @@ class PowerOutageImageGenerator
         $draw = new ImagickDraw;
         $draw->setFillColor(new ImagickPixel('#FFFFFF'));
         $draw->setFont('DejaVu-Sans-Bold');
-        $draw->setFontSize(32);
+        $draw->setFontSize(28);
         $draw->setTextAntialias(true);
-        $draw->annotation($centerX + 20, 55, "Графік відключень електроенергії");
+        $draw->annotation($centerX + 20, 50, "Графік відключень електроенергії");
         $image->drawImage($draw);
 
-        // Дата та час оновлення
+        // Дата та час оновлення (з меншим відступом)
         $draw = new ImagickDraw;
-        $draw->setFillColor(new ImagickPixel('#E0E7FF'));
-        $draw->setFont('DejaVu-Sans');
-        $draw->setFontSize(18);
-        $draw->annotation($centerX + 30, 85, "📅 {$date}  •  🕐 Оновлено: {$time}");
+        $draw->setFillColor(new ImagickPixel('#FCD34D'));
+        $draw->setFont('DejaVu-Sans-Bold');
+        $draw->setFontSize(20);
+        $draw->annotation($centerX + 100, 75, "📅 {$date}  •  🕐 Оновлено: {$time}");
         $image->drawImage($draw);
 
         $startX = $this->padding + $this->labelWidth;
@@ -140,19 +140,19 @@ class PowerOutageImageGenerator
                 $totalHours = round($offCount * 0.5, 1); // кожен сегмент = 30 хв
                 $queueStats["{$queueName}.{$subqueue}"] = $totalHours;
                 
-                // Підпис черги з градієнтом
+                // Підпис черги з кольоровою заливкою (як у заголовках карточок)
                 $draw = new ImagickDraw;
                 $draw->setStrokeColor(new ImagickPixel('#94A3B8'));
                 $draw->setStrokeWidth(1.5);
                 
-                // Кольоровий фон для черги
+                // Використовуємо ті ж кольори що й у карточках
                 $queueColors = [
-                    '1' => '#FEF3C7',
-                    '2' => '#D1FAE5',
-                    '3' => '#FFEDD5',
-                    '4' => '#DBEAFE',
-                    '5' => '#FCE7F3',
-                    '6' => '#E9D5FF',
+                    '1' => '#FFD700', // Жовтий
+                    '2' => '#7CFC00', // Зелений
+                    '3' => '#FF8C00', // Помаранчевий
+                    '4' => '#00BFFF', // Блакитний
+                    '5' => '#FF69B4', // Рожевий
+                    '6' => '#9370DB', // Фіолетовий
                 ];
                 $bgColor = $queueColors[$queueName] ?? '#F3F4F6';
                 $draw->setFillColor(new ImagickPixel($bgColor));
