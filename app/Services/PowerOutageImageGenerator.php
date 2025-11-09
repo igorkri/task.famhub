@@ -470,7 +470,7 @@ class PowerOutageImageGenerator
             $statsY = $bottomY;
 
             // Фон для статистики
-            $statsHeight = count(array_filter($queueStats, fn ($h) => $h > 0)) * 30 + 55;
+            $statsHeight = count(array_filter($queueStats, fn ($h) => $h > 0)) * 28 + 60; // Оновлена висота
             $draw = new ImagickDraw;
             $draw->setFillColor(new ImagickPixel('#FFFFFF'));
             $draw->setStrokeColor(new ImagickPixel('#9CA3AF'));
@@ -499,21 +499,31 @@ class PowerOutageImageGenerator
             $draw->annotation($statsX + 12, $statsY + 24, 'Статистика відключень');
             $image->drawImage($draw);
 
-            $statsY += 45;
+            $statsY += 50; // Збільшено відступ від заголовка
 
             foreach ($queueStats as $queue => $hours) {
                 if ($hours > 0) {
                     $percentage = round(($hours / 24) * 100);
 
-                    // Прогрес-бар
-                    $barWidth = 170;
+                    // Текст черги зліва
+                    $draw = new ImagickDraw;
+                    $draw->setFillColor(new ImagickPixel('#374151'));
+                    $draw->setFont('DejaVu-Sans');
+                    $draw->setFontSize(13);
+                    $draw->annotation($statsX + 12, $statsY, "Черга {$queue}:");
+                    $image->drawImage($draw);
+
+                    // Прогрес-бар в одному рядку з текстом
+                    $barWidth = 220; // Збільшена ширина бару
+                    $barX = $statsX + 85; // Позиція бару праворуч від тексту
+                    $barY = $statsY - 13; // Вирівнювання по вертикалі
 
                     // Фон прогрес-бару
                     $draw = new ImagickDraw;
                     $draw->setFillColor(new ImagickPixel('#E5E7EB'));
                     $draw->setStrokeColor(new ImagickPixel('#D1D5DB'));
                     $draw->setStrokeWidth(0.5);
-                    $draw->roundRectangle($statsX + 78, $statsY - 12, $statsX + 78 + $barWidth, $statsY + 5, 2, 2);
+                    $draw->roundRectangle($barX, $barY, $barX + $barWidth, $barY + 16, 3, 3);
                     $image->drawImage($draw);
 
                     // Заповнення
@@ -522,26 +532,19 @@ class PowerOutageImageGenerator
 
                     $draw = new ImagickDraw;
                     $draw->setFillColor(new ImagickPixel($barColor));
-                    $draw->roundRectangle($statsX + 78, $statsY - 12, $statsX + 78 + $fillWidth, $statsY + 5, 2, 2);
+                    $draw->roundRectangle($barX, $barY, $barX + $fillWidth, $barY + 16, 3, 3);
                     $image->drawImage($draw);
 
-                    // Текст черги
+                    // Значення всередині або справа від прогрес-бару
                     $draw = new ImagickDraw;
-                    $draw->setFillColor(new ImagickPixel('#374151'));
-                    $draw->setFont('DejaVu-Sans');
-                    $draw->setFontSize(14);
-                    $draw->annotation($statsX + 12, $statsY, "Черга {$queue}:");
-                    $image->drawImage($draw);
-
-                    // Значення
-                    $draw = new ImagickDraw;
-                    $draw->setFillColor(new ImagickPixel('#1F2937'));
+                    $draw->setFillColor(new ImagickPixel('#FFFFFF')); // Білий текст всередині бару
                     $draw->setFont('DejaVu-Sans-Bold');
-                    $draw->setFontSize(13);
-                    $draw->annotation($statsX + 256, $statsY, "{$hours}г ({$percentage}%)");
+                    $draw->setFontSize(11);
+                    $valueText = "{$hours}г ({$percentage}%)";
+                    $draw->annotation($barX + 8, $barY + 12, $valueText);
                     $image->drawImage($draw);
 
-                    $statsY += 30;
+                    $statsY += 28; // Компактніший відступ між рядками
                 }
             }
         }
