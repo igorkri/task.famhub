@@ -159,6 +159,12 @@ class PowerOutageImageGenerator
                 $draw->rectangle($this->padding, $currentY, $this->padding + $this->labelWidth, $currentY + $this->cellHeight);
                 $image->drawImage($draw);
 
+                // Додаємо яскраву вертикальну смугу зліва для ідентифікації
+                $draw = new ImagickDraw;
+                $draw->setFillColor(new ImagickPixel($bgColor));
+                $draw->rectangle($this->padding, $currentY, $this->padding + 8, $currentY + $this->cellHeight);
+                $image->drawImage($draw);
+
                 // Номер черги великим шрифтом
                 $draw = new ImagickDraw;
                 $draw->setFillColor(new ImagickPixel('#000000')); // Чорний
@@ -180,11 +186,11 @@ class PowerOutageImageGenerator
                     $index2 = $hour * 2 + 1;
                     $status2 = $subqueueData['hourly_status'][$index2] ?? 'on';
 
-                    // Ліва половина (0-30 хв) з покращеними кольорами
+                    // Ліва половина (0-30 хв) з м'якими але читабельними кольорами
                     $color1 = match ($status1) {
-                        'off' => '#DC2626',    // Яскравіший червоний
-                        'maybe' => '#F59E0B',  // Яскравіший жовтий
-                        'on' => '#10B981',     // Яскравіший зелений
+                        'off' => '#E57373',    // Трохи яскравіший червоний
+                        'maybe' => '#FFB74D',  // Трохи яскравіший жовтий
+                        'on' => '#66BB6A',     // Трохи яскравіший зелений
                         default => '#FFFFFF'
                     };
 
@@ -197,9 +203,9 @@ class PowerOutageImageGenerator
 
                     // Права половина (30-60 хв)
                     $color2 = match ($status2) {
-                        'off' => '#DC2626',
-                        'maybe' => '#F59E0B',
-                        'on' => '#10B981',
+                        'off' => '#E57373',    // Трохи яскравіший червоний
+                        'maybe' => '#FFB74D',  // Трохи яскравіший жовтий
+                        'on' => '#66BB6A',     // Трохи яскравіший зелений
                         default => '#FFFFFF'
                     };
 
@@ -214,6 +220,9 @@ class PowerOutageImageGenerator
                 $currentY += $this->cellHeight;
             }
         }
+
+        // Зберігаємо висоту де закінчується основний графік (до легенд і карточок)
+        $graphEndY = $currentY;
 
         // Додаємо інформацію про періоди відключень внизу
         $bottomY = $currentY + 30;
@@ -303,6 +312,58 @@ class PowerOutageImageGenerator
 
         $bottomY += 45;
 
+        // Додаємо легенду черг для навігації
+        $queueLegendY = $bottomY;
+        $queueLegendX = $this->padding + 10;
+
+        // Фон для легенди черг
+        $draw = new ImagickDraw;
+        $draw->setFillColor(new ImagickPixel('#F0F9FF'));
+        $draw->setStrokeColor(new ImagickPixel('#BAE6FD'));
+        $draw->setStrokeWidth(1);
+        $draw->rectangle($queueLegendX - 5, $queueLegendY - 5, $width - $this->padding - 5, $queueLegendY + 30);
+        $image->drawImage($draw);
+
+        $draw = new ImagickDraw;
+        $draw->setFillColor(new ImagickPixel('#000000'));
+        $draw->setFont('DejaVu-Sans-Bold');
+        $draw->setFontSize(16);
+        $draw->annotation($queueLegendX + 5, $queueLegendY + 18, 'Черги:');
+        $image->drawImage($draw);
+
+        $queueLegendX += 75;
+
+        $queueColors = [
+            '1' => ['color' => '#FFD700', 'label' => 'Черга 1'],
+            '2' => ['color' => '#7CFC00', 'label' => 'Черга 2'],
+            '3' => ['color' => '#FF8C00', 'label' => 'Черга 3'],
+            '4' => ['color' => '#00BFFF', 'label' => 'Черга 4'],
+            '5' => ['color' => '#FF69B4', 'label' => 'Черга 5'],
+            '6' => ['color' => '#9370DB', 'label' => 'Черга 6'],
+        ];
+
+        foreach ($queueColors as $queue => $data) {
+            // Квадратик
+            $draw = new ImagickDraw;
+            $draw->setFillColor(new ImagickPixel($data['color']));
+            $draw->setStrokeColor(new ImagickPixel('#6B7280'));
+            $draw->setStrokeWidth(1);
+            $draw->rectangle($queueLegendX, $queueLegendY + 5, $queueLegendX + 20, $queueLegendY + 23);
+            $image->drawImage($draw);
+
+            // Текст
+            $draw = new ImagickDraw;
+            $draw->setFillColor(new ImagickPixel('#000000'));
+            $draw->setFont('DejaVu-Sans');
+            $draw->setFontSize(15);
+            $draw->annotation($queueLegendX + 26, $queueLegendY + 18, $data['label']);
+            $image->drawImage($draw);
+
+            $queueLegendX += 110;
+        }
+
+        $bottomY += 45;
+
         // Заголовок секції
         $draw = new ImagickDraw;
         $draw->setFillColor(new ImagickPixel('#000000')); // Чорний
@@ -355,11 +416,22 @@ class PowerOutageImageGenerator
 
                 $cellHeight += count($allPeriods) * 26; // Збільшено з 22
 
+                // Світліші кольори для фону карточок
+                $lightBgColors = [
+                    '1' => '#FFFACD', // Світло-жовтий
+                    '2' => '#F0FFF0', // Світло-зелений
+                    '3' => '#FFE4B5', // Світло-помаранчевий
+                    '4' => '#E0F7FF', // Світло-блакитний
+                    '5' => '#FFF0F5', // Світло-рожевий
+                    '6' => '#F3E5F5', // Світло-фіолетовий
+                ];
+                $cardBgColor = $lightBgColors[$queueName] ?? '#FFFFFF';
+
                 // Малюємо рамку комірки з тінню
                 $draw = new ImagickDraw;
                 $draw->setStrokeColor(new ImagickPixel('#9CA3AF'));
                 $draw->setStrokeWidth(2);
-                $draw->setFillColor(new ImagickPixel('#FFFFFF'));
+                $draw->setFillColor(new ImagickPixel($cardBgColor)); // Використовуємо світлий колір
 
                 // Додаємо тінь
                 $shadowDraw = new ImagickDraw;
@@ -373,7 +445,7 @@ class PowerOutageImageGenerator
                 );
                 $image->drawImage($shadowDraw);
 
-                // Основна рамка
+                // Основна рамка з кольоровим фоном
                 $draw->roundRectangle(
                     $currentX,
                     $cellStartY,
@@ -540,27 +612,31 @@ class PowerOutageImageGenerator
             }
         }
 
-        // Додаємо ватермарк по діагоналі
+        // Додаємо ватермарк по діагоналі - тільки на графіку
         // Створюємо окреме зображення для ватермарку
+        $graphStartY = $this->headerHeight + 110;
+        $graphHeight = $graphEndY - $graphStartY; // Висота тільки графіка
+        $graphWidth = $width - ($this->padding * 2); // Ширина графіка
+        
         $watermark = new Imagick();
-        $watermark->newImage($width * 2, $height * 2, new ImagickPixel('transparent'));
+        $watermark->newImage($graphWidth * 2, $graphHeight * 2, new ImagickPixel('transparent'));
         $watermark->setImageFormat('png');
         
         $drawWatermark = new ImagickDraw;
-        $drawWatermark->setFillColor(new ImagickPixel('#00000060'));
+        $drawWatermark->setFillColor(new ImagickPixel('#00000035')); // Трохи темніше
         $drawWatermark->setFont('DejaVu-Sans-Bold');
-        $drawWatermark->setFontSize(150);
+        $drawWatermark->setFontSize(120);
         $drawWatermark->setTextAlignment(\Imagick::ALIGN_CENTER);
-        $drawWatermark->annotation($width, $height, 'ANDROSOVA');
+        $drawWatermark->annotation($graphWidth, $graphHeight, 'ANDROSOVA');
         $watermark->drawImage($drawWatermark);
         
         // Обертаємо зображення ватермарку на -45 градусів
         $watermark->rotateImage(new ImagickPixel('transparent'), -45);
         
-        // Накладаємо ватермарк на основне зображення
+        // Накладаємо ватермарк тільки на графік (не на легенди і карточки)
         $image->compositeImage($watermark, Imagick::COMPOSITE_OVER, 
-            ($width - $watermark->getImageWidth()) / 2, 
-            ($height - $watermark->getImageHeight()) / 2);
+            $this->padding + ($graphWidth - $watermark->getImageWidth()) / 2, 
+            $graphStartY + ($graphHeight - $watermark->getImageHeight()) / 2);
         
         $watermark->clear();
         $watermark->destroy();
