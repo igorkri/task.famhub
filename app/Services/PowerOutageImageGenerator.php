@@ -49,11 +49,11 @@ class PowerOutageImageGenerator
         $centerX = $width / 2 - 180;
 
         $draw = new ImagickDraw;
-        $this->drawText($draw, "Графік відключень - {$date}", $centerX, 35, 22, true);
+        $this->drawText($draw, "Графік відключень - {$date}", $centerX, 35, 26, true);
         $image->drawImage($draw);
 
         $draw = new ImagickDraw;
-        $this->drawText($draw, "Оновлено: {$time}", $centerX + 100, 65, 16);
+        $this->drawText($draw, "Оновлено: {$time}", $centerX + 100, 65, 18);
         $image->drawImage($draw);
 
         // Легенда у верхньому блоці
@@ -61,7 +61,7 @@ class PowerOutageImageGenerator
         $legendX = $this->padding + 20;
 
         $draw = new ImagickDraw;
-        $this->drawText($draw, 'Легенда:', $legendX, $legendY, 16, true);
+        $this->drawText($draw, 'Легенда:', $legendX, $legendY, 18, true);
         $image->drawImage($draw);
 
         $legendX += 100;
@@ -75,7 +75,7 @@ class PowerOutageImageGenerator
         $image->drawImage($draw);
 
         $draw = new ImagickDraw;
-        $this->drawText($draw, '- Світло є', $legendX + 40, $legendY, 14);
+        $this->drawText($draw, '- Світло є', $legendX + 40, $legendY, 17);
         $image->drawImage($draw);
 
         // Червоний
@@ -88,7 +88,7 @@ class PowerOutageImageGenerator
         $image->drawImage($draw);
 
         $draw = new ImagickDraw;
-        $this->drawText($draw, '- Вимкнено', $legendX + 40, $legendY, 14);
+        $this->drawText($draw, '- Вимкнено', $legendX + 40, $legendY, 17);
         $image->drawImage($draw);
 
         // Жовтий
@@ -101,13 +101,13 @@ class PowerOutageImageGenerator
         $image->drawImage($draw);
 
         $draw = new ImagickDraw;
-        $this->drawText($draw, '- Можливо', $legendX + 40, $legendY, 14);
+        $this->drawText($draw, '- Можливо', $legendX + 40, $legendY, 17);
         $image->drawImage($draw);
 
         // Пояснення символу ⚠️
         $legendX += 160;
         $draw = new ImagickDraw;
-        $this->drawText($draw, '⚠️ - можливе відключення', $legendX, $legendY, 13);
+        $this->drawText($draw, '⚠️ - можливе відключення', $legendX, $legendY, 17);
         $image->drawImage($draw);
 
         $startX = $this->padding + $this->labelWidth;
@@ -122,20 +122,20 @@ class PowerOutageImageGenerator
             $draw->setStrokeColor(new ImagickPixel('#999999'));
             $draw->setStrokeWidth(1);
             $draw->setFillColor(new ImagickPixel('#FAFAFA'));
-            $draw->rectangle($x, $startY - 65, $x + $this->cellWidth, $startY);
+            $draw->rectangle($x, $startY - 85, $x + $this->cellWidth, $startY);
             $image->drawImage($draw);
 
             // "з 00:00"
             $draw = new ImagickDraw;
             $fromText = sprintf('з %02d:00', $hour);
-            $this->drawText($draw, $fromText, $x + 23, $startY - 50, 14);
+            $this->drawText($draw, $fromText, $x + 23, $startY - 60, 18, true);
             $image->drawImage($draw);
 
             // "по 01:00"
             $toHour = ($hour + 1) % 24;
             $draw = new ImagickDraw;
             $toText = sprintf('по %02d:00', $toHour);
-            $this->drawText($draw, $toText, $x + 18, $startY - 35, 14);
+            $this->drawText($draw, $toText, $x + 10, $startY - 43, 18, true);
             $image->drawImage($draw);
 
             // Горизонтальна лінія між "по" та годиною
@@ -148,7 +148,7 @@ class PowerOutageImageGenerator
             // Година великим жирним шрифтом (по центру)
             $draw = new ImagickDraw;
             $hourText = sprintf('%02d', $hour);
-            $this->drawText($draw, $hourText, $x + 35, $startY - 6, 24, true);
+            $this->drawText($draw, $hourText, $x + 35, $startY - 6, 28, true);
             $image->drawImage($draw);
         }
 
@@ -169,7 +169,7 @@ class PowerOutageImageGenerator
                 // Відображаємо у форматі "1.1", "2.2" і т.д.
                 $draw = new ImagickDraw;
                 $label = "{$queueName}.{$subqueue}";
-                $this->drawText($draw, $label, $this->padding + 32, $currentY + 32, 18, true);
+                $this->drawText($draw, $label, $this->padding + 32, $currentY + 32, 20, true);
                 $image->drawImage($draw);
 
                 // Малюємо клітинки для кожної години
@@ -224,7 +224,7 @@ class PowerOutageImageGenerator
 
         // Заголовок секції
         $draw = new ImagickDraw;
-        $this->drawText($draw, 'Періоди відключень:', $this->padding + 10, $bottomY, 18, true);
+        $this->drawText($draw, 'Періоди відключень:', $this->padding + 10, $bottomY, 20, true);
         $image->drawImage($draw);
 
         $bottomY += 35;
@@ -281,7 +281,7 @@ class PowerOutageImageGenerator
 
                 // Назва черги
                 $draw = new ImagickDraw;
-                $this->drawText($draw, "Черга {$label}", $currentX + 12, $cellStartY + 21, 17, true);
+                $this->drawText($draw, "Черга {$label}", $currentX + 12, $cellStartY + 21, 18, true);
                 $image->drawImage($draw);
 
                 // Відображаємо періоди у стовпчик
@@ -289,7 +289,7 @@ class PowerOutageImageGenerator
 
                 foreach ($allPeriods as $period) {
                     $draw = new ImagickDraw;
-                    $this->drawText($draw, $period, $currentX + 12, $lineY, 14);
+                    $this->drawText($draw, $period, $currentX + 12, $lineY, 15);
                     $image->drawImage($draw);
                     $lineY += 24;
                 }
@@ -364,6 +364,7 @@ class PowerOutageImageGenerator
         $draw->setFillColor(new ImagickPixel('black'));
         $draw->setFont('DejaVu-Sans'.($bold ? '-Bold' : ''));
         $draw->setFontSize($size);
+        $draw->setTextAntialias(true); // Згладжування шрифту
         $draw->annotation($x, $y, $text);
     }
 
