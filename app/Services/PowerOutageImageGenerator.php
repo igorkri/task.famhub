@@ -209,17 +209,6 @@ class PowerOutageImageGenerator
                     $draw->setStrokeWidth(0.5);
                     $draw->rectangle($x + $this->cellWidth / 2, $currentY, $x + $this->cellWidth, $currentY + $this->cellHeight);
                     $image->drawImage($draw);
-
-                    // Додаємо іконки для важливих періодів
-                    if ($status1 === 'off' && $status2 === 'off') {
-                        // Обидві половини червоні - додаємо іконку
-                        $draw = new ImagickDraw;
-                        $draw->setFillColor(new ImagickPixel('#FFFFFF'));
-                        $draw->setFont('DejaVu-Sans');
-                        $draw->setFontSize(16);
-                        $draw->annotation($x + 38, $currentY + 33, '⚠️');
-                        $image->drawImage($draw);
-                    }
                 }
 
                 $currentY += $this->cellHeight;
@@ -550,6 +539,31 @@ class PowerOutageImageGenerator
                 }
             }
         }
+
+        // Додаємо ватермарк по діагоналі
+        // Створюємо окреме зображення для ватермарку
+        $watermark = new Imagick();
+        $watermark->newImage($width * 2, $height * 2, new ImagickPixel('transparent'));
+        $watermark->setImageFormat('png');
+        
+        $drawWatermark = new ImagickDraw;
+        $drawWatermark->setFillColor(new ImagickPixel('#00000060'));
+        $drawWatermark->setFont('DejaVu-Sans-Bold');
+        $drawWatermark->setFontSize(150);
+        $drawWatermark->setTextAlignment(\Imagick::ALIGN_CENTER);
+        $drawWatermark->annotation($width, $height, 'ANDROSOVA');
+        $watermark->drawImage($drawWatermark);
+        
+        // Обертаємо зображення ватермарку на -45 градусів
+        $watermark->rotateImage(new ImagickPixel('transparent'), -45);
+        
+        // Накладаємо ватермарк на основне зображення
+        $image->compositeImage($watermark, Imagick::COMPOSITE_OVER, 
+            ($width - $watermark->getImageWidth()) / 2, 
+            ($height - $watermark->getImageHeight()) / 2);
+        
+        $watermark->clear();
+        $watermark->destroy();
 
         // Зберігаємо з високою якістю
         $filename = storage_path('app/temp/power_outage_'.uniqid().'.png');
