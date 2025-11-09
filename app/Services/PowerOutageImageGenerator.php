@@ -354,14 +354,17 @@ class PowerOutageImageGenerator
                 $cellStartY = $currentY;
                 $cellHeight = 32; // Збалансована висота заголовка
 
-                // Об'єднуємо всі періоди (або показуємо "Немає відключень")
+                // Об'єднуємо всі періоди та прибираємо знак ⚠️
                 $allPeriods = array_merge($periods['off'], $periods['maybe']);
+                $allPeriods = array_map(function($period) {
+                    return str_replace(' ⚠️', '', $period);
+                }, $allPeriods);
 
                 if (empty($allPeriods)) {
                     $allPeriods = ['Немає відключень'];
                 }
 
-                $cellHeight += count($allPeriods) * 22; // Збалансований відступ між періодами
+                $cellHeight += count($allPeriods) * 26; // Збільшено з 22
 
                 // Малюємо рамку комірки з тінню
                 $draw = new ImagickDraw;
@@ -409,40 +412,39 @@ class PowerOutageImageGenerator
                 $draw = new ImagickDraw;
                 $draw->setFillColor(new ImagickPixel('#000000')); // Чорний
                 $draw->setFont('DejaVu-Sans-Bold');
-                $draw->setFontSize(18); // Збільшено з 16
-                $draw->annotation($currentX + 12, $cellStartY + 22, "Черга {$label}");
+                $draw->setFontSize(20); // Збільшено з 18
+                $draw->annotation($currentX + 15, $cellStartY + 26, "Черга {$label}"); // Паддінг
                 $image->drawImage($draw);
 
                 // Відображаємо періоди у стовпчик з іконками
-                $lineY = $cellStartY + 50;
+                $lineY = $cellStartY + 55; // Збільшено відступ
 
                 foreach ($allPeriods as $period) {
-                    // Визначаємо іконку залежно від наявності ⚠️
-                    $icon = str_contains($period, '⚠️') ? '⚠️' : '🔴';
-                    $textColor = str_contains($period, '⚠️') ? '#F59E0B' : '#DC2626';
+                    // Всі періоди показуємо червоним
+                    $icon = '🔴';
+                    $textColor = '#000000'; // Чорний текст
 
                     // Іконка
                     $draw = new ImagickDraw;
-                    $draw->setFillColor(new ImagickPixel('#000000')); // Чорний
+                    $draw->setFillColor(new ImagickPixel('#DC2626')); // Червоний колір іконки
                     $draw->setFont('DejaVu-Sans');
-                    $draw->setFontSize(15); // Збільшено з 13
-                    $draw->annotation($currentX + 12, $lineY, $icon);
+                    $draw->setFontSize(16); // Збільшено
+                    $draw->annotation($currentX + 15, $lineY, $icon); // Паддінг
                     $image->drawImage($draw);
 
-                    // Текст періоду
-                    $periodText = str_replace(' ⚠️', '', $period);
+                    // Текст періоду (вже без ⚠️)
                     $draw = new ImagickDraw;
-                    $draw->setFillColor(new ImagickPixel($textColor));
-                    $draw->setFont('DejaVu-Sans');
-                    $draw->setFontSize(16); // Збільшено з 14
-                    $draw->annotation($currentX + 32, $lineY, $periodText);
+                    $draw->setFillColor(new ImagickPixel($textColor)); // Чорний текст
+                    $draw->setFont('DejaVu-Sans-Bold'); // Жирний шрифт
+                    $draw->setFontSize(17); // Збільшено з 16
+                    $draw->annotation($currentX + 38, $lineY, $period); // Паддінг
                     $image->drawImage($draw);
 
-                    $lineY += 22;
+                    $lineY += 26; // Збільшено вертикальний відступ з 22
                 }
 
                 // Переходимо до наступної комірки в стовпчику
-                $currentY += $cellHeight + 10;
+                $currentY += $cellHeight + 15; // Збільшено відступ між картками
             }
 
             // Запам'ятовуємо максимальну висоту колонки
@@ -606,48 +608,26 @@ class PowerOutageImageGenerator
      */
     protected function calculateOutagePeriods(array $hourlyStatus): array
     {
-        $periods = ['off' => [], 'maybe' => []];
+        $periods = [];
         $currentPeriod = null;
-        $currentType = null;
 
         for ($i = 0; $i < 48; $i++) {
             $status = $hourlyStatus[$i] ?? 'on';
 
             if ($status === 'off' || $status === 'maybe') {
-                if ($currentType === $status) {
-                    // Продовжуємо поточний період
-                    $currentPeriod['end'] = $i;
-                } else {
-                    // Зберігаємо попередній період
-                    if ($currentPeriod !== null) {
-                        $formattedPeriod = $this->formatPeriod($currentPeriod['start'], $currentPeriod['end']);
-                        // Додаємо позначку для жовтих періодів
-                        if ($currentType === 'maybe') {
-                            $formattedPeriod .= ' ⚠️';
-                        }
-                        $periods[$currentType][] = [
-                            'text' => $formattedPeriod,
-                            'start' => $currentPeriod['start'],
-                        ];
-                    }
+                if ($currentPeriod === null) {
                     // Починаємо новий період
                     $currentPeriod = ['start' => $i, 'end' => $i];
-                    $currentType = $status;
+                } else {
+                    // Продовжуємо поточний період
+                    $currentPeriod['end'] = $i;
                 }
             } else {
                 // Статус 'on' - зберігаємо поточний період якщо є
                 if ($currentPeriod !== null) {
                     $formattedPeriod = $this->formatPeriod($currentPeriod['start'], $currentPeriod['end']);
-                    // Додаємо позначку для жовтих періодів
-                    if ($currentType === 'maybe') {
-                        $formattedPeriod .= ' ⚠️';
-                    }
-                    $periods[$currentType][] = [
-                        'text' => $formattedPeriod,
-                        'start' => $currentPeriod['start'],
-                    ];
+                    $periods[] = $formattedPeriod;
                     $currentPeriod = null;
-                    $currentType = null;
                 }
             }
         }
@@ -655,25 +635,23 @@ class PowerOutageImageGenerator
         // Зберігаємо останній період
         if ($currentPeriod !== null) {
             $formattedPeriod = $this->formatPeriod($currentPeriod['start'], $currentPeriod['end']);
-            // Додаємо позначку для жовтих періодів
-            if ($currentType === 'maybe') {
-                $formattedPeriod .= ' ⚠️';
-            }
-            $periods[$currentType][] = [
-                'text' => $formattedPeriod,
-                'start' => $currentPeriod['start'],
-            ];
+            $periods[] = $formattedPeriod;
         }
 
-        // Об'єднуємо та сортуємо по часу початку
-        $allPeriods = array_merge($periods['off'], $periods['maybe']);
-        usort($allPeriods, fn ($a, $b) => $a['start'] <=> $b['start']);
-
-        // Повертаємо тільки текст
+        // Повертаємо всі періоди як 'off'
         return [
-            'off' => array_column($allPeriods, 'text'),
-            'maybe' => [], // Порожній масив, бо всі періоди вже в off
+            'off' => $periods,
+            'maybe' => [],
         ];
+    }
+
+    /**
+     * Конвертує час HH:MM в індекс півгодини
+     */
+    protected function timeToIndex(string $time): int
+    {
+        [$hour, $min] = explode(':', $time);
+        return (int)$hour * 2 + ((int)$min >= 30 ? 1 : 0);
     }
 
     /**
