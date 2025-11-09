@@ -9,15 +9,15 @@ use ImagickPixel;
 
 class PowerOutageImageGenerator
 {
-    protected int $cellWidth = 60;  // Збільшено для кращої якості
+    protected int $cellWidth = 100;  // Значно збільшено
 
-    protected int $cellHeight = 35; // Збільшено висоту
+    protected int $cellHeight = 50; // Значно збільшено висоту
 
-    protected int $headerHeight = 140; // Більше місця для заголовків та легенди
+    protected int $headerHeight = 180; // Більше місця для заголовків та легенди
 
-    protected int $padding = 15;
+    protected int $padding = 20;
 
-    protected int $labelWidth = 70; // Ширина для підписів черг
+    protected int $labelWidth = 90; // Ширина для підписів черг
 
     public function generate(PowerOutageSchedule $schedule): string
     {
@@ -28,79 +28,86 @@ class PowerOutageImageGenerator
         $totalRows = count($data);
 
         $width = ($hours * $this->cellWidth) + $this->labelWidth + ($this->padding * 2) + 20;
-        $height = ($totalRows * $this->cellHeight) + $this->headerHeight + ($this->padding * 2) + 400; // більше місця для періодів
+        $height = ($totalRows * $this->cellHeight) + $this->headerHeight + ($this->padding * 2) + 650; // Більше місця для періодів
 
         // Створюємо зображення з вищою якістю
         $image = new Imagick;
         $image->newImage($width, $height, new ImagickPixel('white'));
         $image->setImageFormat('png');
-        $image->setImageCompressionQuality(95);
+        $image->setImageCompressionQuality(100);
+        $image->setImageDepth(8);
 
         // Фон для заголовка вгорі
         $draw = new ImagickDraw;
         $draw->setFillColor(new ImagickPixel('#F5F5F5'));
-        $draw->rectangle(0, 0, $width, 110);
+        $draw->rectangle(0, 0, $width, 140);
         $image->drawImage($draw);
 
         // Заголовок та дата по центру вгорі
         $date = $schedule->schedule_date->format('d.m.Y');
         $time = $schedule->fetched_at->format('H:i');
-        $centerX = $width / 2 - 130;
+        $centerX = $width / 2 - 180;
 
         $draw = new ImagickDraw;
-        $this->drawText($draw, "Графік відключень - {$date}", $centerX, 28, 15, true);
+        $this->drawText($draw, "Графік відключень - {$date}", $centerX, 35, 22, true);
         $image->drawImage($draw);
 
         $draw = new ImagickDraw;
-        $this->drawText($draw, "Оновлено: {$time}", $centerX + 70, 50, 12);
+        $this->drawText($draw, "Оновлено: {$time}", $centerX + 100, 65, 16);
         $image->drawImage($draw);
 
         // Легенда у верхньому блоці
-        $legendY = 80;
-        $legendX = $this->padding + 15;
+        $legendY = 110;
+        $legendX = $this->padding + 20;
 
         $draw = new ImagickDraw;
-        $this->drawText($draw, 'Легенда:', $legendX, $legendY, 12, true);
+        $this->drawText($draw, 'Легенда:', $legendX, $legendY, 16, true);
         $image->drawImage($draw);
 
-        $legendX += 80;
+        $legendX += 100;
 
         // Зелений
         $draw = new ImagickDraw;
         $draw->setFillColor(new ImagickPixel('#66BB6A'));
         $draw->setStrokeColor(new ImagickPixel('#BDBDBD'));
         $draw->setStrokeWidth(1);
-        $draw->rectangle($legendX, $legendY - 12, $legendX + 25, $legendY + 5);
+        $draw->rectangle($legendX, $legendY - 16, $legendX + 35, $legendY + 6);
         $image->drawImage($draw);
 
         $draw = new ImagickDraw;
-        $this->drawText($draw, '- Світло є', $legendX + 30, $legendY, 11);
+        $this->drawText($draw, '- Світло є', $legendX + 40, $legendY, 14);
         $image->drawImage($draw);
 
         // Червоний
-        $legendX += 130;
+        $legendX += 160;
         $draw = new ImagickDraw;
         $draw->setFillColor(new ImagickPixel('#EF5350'));
         $draw->setStrokeColor(new ImagickPixel('#BDBDBD'));
         $draw->setStrokeWidth(1);
-        $draw->rectangle($legendX, $legendY - 12, $legendX + 25, $legendY + 5);
+        $draw->rectangle($legendX, $legendY - 16, $legendX + 35, $legendY + 6);
         $image->drawImage($draw);
 
         $draw = new ImagickDraw;
-        $this->drawText($draw, '- Вимкнено', $legendX + 30, $legendY, 11);
+        $this->drawText($draw, '- Вимкнено', $legendX + 40, $legendY, 14);
         $image->drawImage($draw);
 
         // Жовтий
-        $legendX += 130;
+        $legendX += 160;
         $draw = new ImagickDraw;
         $draw->setFillColor(new ImagickPixel('#FFC107'));
         $draw->setStrokeColor(new ImagickPixel('#BDBDBD'));
         $draw->setStrokeWidth(1);
-        $draw->rectangle($legendX, $legendY - 12, $legendX + 25, $legendY + 5);
+        $draw->rectangle($legendX, $legendY - 16, $legendX + 35, $legendY + 6);
         $image->drawImage($draw);
 
         $draw = new ImagickDraw;
-        $this->drawText($draw, '- Можливо', $legendX + 30, $legendY, 11);
+        $this->drawText($draw, '- Можливо', $legendX + 40, $legendY, 14);
+        $image->drawImage($draw);
+
+        // Пояснення символу ⚠️
+        $legendX += 160;
+        $draw = new ImagickDraw;
+        $this->drawText($draw, '⚠️ - можливе відключення', $legendX, $legendY, 13);
         $image->drawImage($draw);
 
         $startX = $this->padding + $this->labelWidth;
@@ -121,14 +128,14 @@ class PowerOutageImageGenerator
             // "з 00:00"
             $draw = new ImagickDraw;
             $fromText = sprintf('з %02d:00', $hour);
-            $this->drawText($draw, $fromText, $x + 13, $startY - 50, 11); // було 9
+            $this->drawText($draw, $fromText, $x + 23, $startY - 50, 14);
             $image->drawImage($draw);
 
             // "по 01:00"
             $toHour = ($hour + 1) % 24;
             $draw = new ImagickDraw;
             $toText = sprintf('по %02d:00', $toHour);
-            $this->drawText($draw, $toText, $x + 10, $startY - 35, 11); // було 9
+            $this->drawText($draw, $toText, $x + 18, $startY - 35, 14);
             $image->drawImage($draw);
 
             // Горизонтальна лінія між "по" та годиною
@@ -141,7 +148,7 @@ class PowerOutageImageGenerator
             // Година великим жирним шрифтом (по центру)
             $draw = new ImagickDraw;
             $hourText = sprintf('%02d', $hour);
-            $this->drawText($draw, $hourText, $x + 21, $startY - 6, 18, true); // було 15
+            $this->drawText($draw, $hourText, $x + 35, $startY - 6, 24, true);
             $image->drawImage($draw);
         }
 
@@ -162,7 +169,7 @@ class PowerOutageImageGenerator
                 // Відображаємо у форматі "1.1", "2.2" і т.д.
                 $draw = new ImagickDraw;
                 $label = "{$queueName}.{$subqueue}";
-                $this->drawText($draw, $label, $this->padding + 25, $currentY + 23, 14, true);
+                $this->drawText($draw, $label, $this->padding + 32, $currentY + 32, 18, true);
                 $image->drawImage($draw);
 
                 // Малюємо клітинки для кожної години
@@ -217,26 +224,23 @@ class PowerOutageImageGenerator
 
         // Заголовок секції
         $draw = new ImagickDraw;
-        $this->drawText($draw, 'Періоди відключень:', $this->padding + 10, $bottomY, 13, true);
+        $this->drawText($draw, 'Періоди відключень:', $this->padding + 10, $bottomY, 18, true);
         $image->drawImage($draw);
 
-        $bottomY += 25;
-        $columnWidth = 235; // Ширина колонки для таблиці
+        $bottomY += 35;
+        $columnWidth = 330; // Ширина колонки для таблиці
         $currentX = $this->padding + 10;
-        $column = 0;
-        $maxColumns = 6; // 6 колонок для всіх черг
-        $maxRowHeight = 0;
+        $currentY = $bottomY;
+        $maxQueueHeight = 0;
 
+        // Перегруповуємо дані: 1.1, 1.2 | 2.1, 2.2 | 3.1, 3.2 | ...
         foreach ($groupedData as $queueName => $subqueues) {
+            $columnStartY = $currentY;
+
             foreach ($subqueues as $subqueueData) {
                 $subqueue = $subqueueData['subqueue'];
                 $label = "{$queueName}.{$subqueue}";
                 $periods = $this->calculateOutagePeriods($subqueueData['hourly_status']);
-
-                // Пропускаємо черги без відключень
-                if (empty($periods['off']) && empty($periods['maybe'])) {
-                    continue;
-                }
 
                 // Малюємо комірку з кольором черги
                 $queueColors = [
@@ -249,12 +253,17 @@ class PowerOutageImageGenerator
                 ];
                 $bgColor = $queueColors[$queueName] ?? '#DDDDDD';
 
-                $cellStartY = $bottomY;
-                $cellHeight = 25; // Висота заголовка
+                $cellStartY = $currentY;
+                $cellHeight = 35; // Висота заголовка
 
-                // Об'єднуємо всі періоди
+                // Об'єднуємо всі періоди (або показуємо "Немає відключень")
                 $allPeriods = array_merge($periods['off'], $periods['maybe']);
-                $cellHeight += count($allPeriods) * 16; // Додаємо висоту для кожного періоду
+
+                if (empty($allPeriods)) {
+                    $allPeriods = ['Немає відключень'];
+                }
+
+                $cellHeight += count($allPeriods) * 24; // Додаємо висоту для кожного періоду
 
                 // Малюємо рамку комірки
                 $draw = new ImagickDraw;
@@ -267,39 +276,43 @@ class PowerOutageImageGenerator
                 // Заголовок черги з кольоровим фоном
                 $draw = new ImagickDraw;
                 $draw->setFillColor(new ImagickPixel($bgColor));
-                $draw->rectangle($currentX, $cellStartY, $currentX + $columnWidth - 5, $cellStartY + 20);
+                $draw->rectangle($currentX, $cellStartY, $currentX + $columnWidth - 5, $cellStartY + 30);
                 $image->drawImage($draw);
 
                 // Назва черги
                 $draw = new ImagickDraw;
-                $this->drawText($draw, "Черга {$label}", $currentX + 8, $cellStartY + 15, 11, true);
+                $this->drawText($draw, "Черга {$label}", $currentX + 12, $cellStartY + 21, 17, true);
                 $image->drawImage($draw);
 
                 // Відображаємо періоди у стовпчик
-                $lineY = $cellStartY + 33;
+                $lineY = $cellStartY + 50;
 
                 foreach ($allPeriods as $period) {
                     $draw = new ImagickDraw;
-                    $this->drawText($draw, $period, $currentX + 8, $lineY, 9);
+                    $this->drawText($draw, $period, $currentX + 12, $lineY, 14);
                     $image->drawImage($draw);
-                    $lineY += 16;
+                    $lineY += 24;
                 }
 
-                // Запам'ятовуємо максимальну висоту рядка
-                if ($cellHeight > $maxRowHeight) {
-                    $maxRowHeight = $cellHeight;
-                }
+                // Переходимо до наступної комірки в стовпчику
+                $currentY += $cellHeight + 10;
+            }
 
-                // Переходимо до наступної колонки
-                $column++;
-                if ($column >= $maxColumns) {
-                    $column = 0;
-                    $currentX = $this->padding + 10;
-                    $bottomY += $maxRowHeight + 10;
-                    $maxRowHeight = 0;
-                } else {
-                    $currentX += $columnWidth;
-                }
+            // Запам'ятовуємо максимальну висоту колонки
+            $columnHeight = $currentY - $columnStartY;
+            if ($columnHeight > $maxQueueHeight) {
+                $maxQueueHeight = $columnHeight;
+            }
+
+            // Переходимо до наступної колонки (наступної черги)
+            $currentX += $columnWidth;
+            $currentY = $columnStartY; // Повертаємося на початок для наступної колонки
+
+            // Якщо досягли краю, переходимо на новий рядок
+            if ($currentX + $columnWidth > $width - $this->padding) {
+                $currentX = $this->padding + 10;
+                $currentY = $columnStartY + $maxQueueHeight;
+                $maxQueueHeight = 0;
             }
         }
 
