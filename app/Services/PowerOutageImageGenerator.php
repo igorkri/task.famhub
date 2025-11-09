@@ -169,10 +169,16 @@ class PowerOutageImageGenerator
                 for ($hour = 0; $hour < $hours; $hour++) {
                     $x = $startX + ($hour * $this->cellWidth);
 
-                    $index = $hour * 2;
-                    $status = $subqueueData['hourly_status'][$index] ?? 'on';
+                    // Перші 30 хвилин (0-30)
+                    $index1 = $hour * 2;
+                    $status1 = $subqueueData['hourly_status'][$index1] ?? 'on';
 
-                    $color = match ($status) {
+                    // Другі 30 хвилин (30-60)
+                    $index2 = $hour * 2 + 1;
+                    $status2 = $subqueueData['hourly_status'][$index2] ?? 'on';
+
+                    // Ліва половина (0-30 хв)
+                    $color1 = match ($status1) {
                         'off' => '#EF5350',
                         'maybe' => '#FFC107',
                         'on' => '#66BB6A',
@@ -180,10 +186,25 @@ class PowerOutageImageGenerator
                     };
 
                     $draw = new ImagickDraw;
-                    $draw->setFillColor(new ImagickPixel($color));
+                    $draw->setFillColor(new ImagickPixel($color1));
                     $draw->setStrokeColor(new ImagickPixel('#E0E0E0'));
                     $draw->setStrokeWidth(1);
-                    $draw->rectangle($x, $currentY, $x + $this->cellWidth, $currentY + $this->cellHeight);
+                    $draw->rectangle($x, $currentY, $x + $this->cellWidth / 2, $currentY + $this->cellHeight);
+                    $image->drawImage($draw);
+
+                    // Права половина (30-60 хв)
+                    $color2 = match ($status2) {
+                        'off' => '#EF5350',
+                        'maybe' => '#FFC107',
+                        'on' => '#66BB6A',
+                        default => '#FFFFFF'
+                    };
+
+                    $draw = new ImagickDraw;
+                    $draw->setFillColor(new ImagickPixel($color2));
+                    $draw->setStrokeColor(new ImagickPixel('#E0E0E0'));
+                    $draw->setStrokeWidth(1);
+                    $draw->rectangle($x + $this->cellWidth / 2, $currentY, $x + $this->cellWidth, $currentY + $this->cellHeight);
                     $image->drawImage($draw);
                 }
 
