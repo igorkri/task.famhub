@@ -1,0 +1,218 @@
+<?php
+
+namespace App\Services;
+
+use App\Models\PowerOutageSchedule;
+use Imagick;
+use ImagickDraw;
+use ImagickPixel;
+
+class PowerOutageImageGeneratorMobile
+{
+    protected int $cellWidth = 45;  // Ширина для черги
+
+    protected int $cellHeight = 40; // Висота для години
+
+    protected int $headerWidth = 120; // Ширина заголовка з годинами
+
+    protected int $padding = 10;
+
+    protected int $labelHeight = 40; // Висота для підписів годин
+
+    public function generate(PowerOutageSchedule $schedule): string
+    {
+        $data = $schedule->schedule_data;
+        $groupedData = $this->groupByQueue($data);
+
+        $hours = 24;
+        $totalColumns = count($data); // Кількість підгруп (стовпців)
+
+        // Вертикальна орієнтація: години вниз, черги вправо
+        $width = ($totalColumns * $this->cellWidth) + $this->headerWidth + ($this->padding * 2);
+        $height = ($hours * $this->cellHeight) + $this->labelHeight + ($this->padding * 2) + 80;
+
+        // Створюємо зображення
+        $image = new Imagick;
+        $image->newImage($width, $height, new ImagickPixel('white'));
+        $image->setImageFormat('png');
+        $image->setImageCompressionQuality(95);
+
+        $startX = $this->padding + $this->headerWidth;
+        $startY = $this->padding + $this->labelHeight;
+
+        // Заголовок з датою вгорі
+        $date = $schedule->schedule_date->format('d.m.Y');
+        $time = $schedule->fetched_at->format('H:i');
+        $draw = new ImagickDraw;
+        $this->drawText($draw, 'Графік відключень', $this->padding + 10, 20, 15, true); // було 12
+        $image->drawImage($draw);
+
+        $draw = new ImagickDraw;
+        $this->drawText($draw, "{$date} • {$time}", $this->padding + 10, 38, 12); // було 9
+        $image->drawImage($draw);
+
+        // Заголовок "Години" зліва
+        $draw = new ImagickDraw;
+        $this->drawText($draw, 'Години', $this->padding + 35, $startY - 15, 13, true); // було 11
+        $image->drawImage($draw);
+
+        // Заголовки черг (горизонтально вгорі)
+        $currentX = $startX;
+        foreach ($groupedData as $queueName => $subqueues) {
+            foreach ($subqueues as $subqueueData) {
+                $subqueue = $subqueueData['subqueue'];
+
+                // Рамка для заголовка черги
+                $draw = new ImagickDraw;
+                $draw->setStrokeColor(new ImagickPixel('#999999'));
+                $draw->setStrokeWidth(1);
+                $draw->setFillColor(new ImagickPixel('#FAFAFA'));
+                $draw->rectangle($currentX, $this->padding, $currentX + $this->cellWidth, $this->padding + $this->labelHeight);
+                $image->drawImage($draw);
+
+                // Номер черги.підгрупи
+                $queueNumber = str_replace('черга ', '', $queueName);
+                $draw = new ImagickDraw;
+                $label = "{$queueNumber}.{$subqueue}";
+                $this->drawText($draw, $label, $currentX + 12, $startY - 10, 13, true); // було 11
+                $image->drawImage($draw);
+
+                $currentX += $this->cellWidth;
+            }
+        }
+
+        // Малюємо години зліва (вертикально)
+        for ($hour = 0; $hour < $hours; $hour++) {
+            $y = $startY + ($hour * $this->cellHeight);
+
+            // Рамка для години
+            $draw = new ImagickDraw;
+            $draw->setStrokeColor(new ImagickPixel('#999999'));
+            $draw->setStrokeWidth(1);
+            $draw->setFillColor(new ImagickPixel('#FAFAFA'));
+            $draw->rectangle($this->padding, $y, $this->padding + $this->headerWidth, $y + $this->cellHeight);
+            $image->drawImage($draw);
+
+            // Час
+            $toHour = ($hour + 1) % 24;
+            $timeText = sprintf('%02d:00-%02d:00', $hour, $toHour);
+            $draw = new ImagickDraw;
+            $this->drawText($draw, $timeText, $this->padding + 15, $y + 26, 12); // було 10
+            $image->drawImage($draw);
+        }
+
+        // Малюємо клітинки з даними
+        $currentX = $startX;
+        foreach ($groupedData as $queueName => $subqueues) {
+            foreach ($subqueues as $subqueueData) {
+                for ($hour = 0; $hour < $hours; $hour++) {
+                    $y = $startY + ($hour * $this->cellHeight);
+
+                    $index = $hour * 2;
+                    $status = $subqueueData['hourly_status'][$index] ?? 'on';
+
+                    $color = match ($status) {
+                        'off' => '#EF5350',
+                        'maybe' => '#FFC107',
+                        'on' => '#66BB6A',
+                        default => '#FFFFFF'
+                    };
+
+                    $draw = new ImagickDraw;
+                    $draw->setFillColor(new ImagickPixel($color));
+                    $draw->setStrokeColor(new ImagickPixel('#E0E0E0'));
+                    $draw->setStrokeWidth(1);
+                    $draw->rectangle($currentX, $y, $currentX + $this->cellWidth, $y + $this->cellHeight);
+                    $image->drawImage($draw);
+                }
+
+                $currentX += $this->cellWidth;
+            }
+        }
+
+        // Легенда внизу
+        $legendY = $height - 40;
+
+        $draw = new ImagickDraw;
+        $this->drawText($draw, 'Легенда:', $this->padding + 10, $legendY, 12, true); // було 10
+        $image->drawImage($draw);
+
+        $legendX = $this->padding + 80;
+
+        // Зелений
+        $draw = new ImagickDraw;
+        $draw->setFillColor(new ImagickPixel('#66BB6A'));
+        $draw->setStrokeColor(new ImagickPixel('#BDBDBD'));
+        $draw->setStrokeWidth(1);
+        $draw->rectangle($legendX, $legendY - 10, $legendX + 20, $legendY + 5);
+        $image->drawImage($draw);
+
+        $draw = new ImagickDraw;
+        $this->drawText($draw, '- Є', $legendX + 25, $legendY, 11); // було 9
+        $image->drawImage($draw);
+
+        // Червоний
+        $legendX += 70;
+        $draw = new ImagickDraw;
+        $draw->setFillColor(new ImagickPixel('#EF5350'));
+        $draw->setStrokeColor(new ImagickPixel('#BDBDBD'));
+        $draw->setStrokeWidth(1);
+        $draw->rectangle($legendX, $legendY - 10, $legendX + 20, $legendY + 5);
+        $image->drawImage($draw);
+
+        $draw = new ImagickDraw;
+        $this->drawText($draw, '- Вимк', $legendX + 25, $legendY, 11); // було 9
+        $image->drawImage($draw);
+
+        // Жовтий
+        $legendX += 85;
+        $draw = new ImagickDraw;
+        $draw->setFillColor(new ImagickPixel('#FFC107'));
+        $draw->setStrokeColor(new ImagickPixel('#BDBDBD'));
+        $draw->setStrokeWidth(1);
+        $draw->rectangle($legendX, $legendY - 10, $legendX + 20, $legendY + 5);
+        $image->drawImage($draw);
+
+        $draw = new ImagickDraw;
+        $this->drawText($draw, '- Можл', $legendX + 25, $legendY, 11); // було 9
+        $image->drawImage($draw);
+
+        // Зберігаємо
+        $filename = storage_path('app/temp/power_outage_mobile_'.uniqid().'.png');
+
+        if (! file_exists(dirname($filename))) {
+            mkdir(dirname($filename), 0755, true);
+        }
+
+        $image->writeImage($filename);
+        $image->clear();
+        $image->destroy();
+
+        return $filename;
+    }
+
+    protected function groupByQueue(array $data): array
+    {
+        $grouped = [];
+
+        foreach ($data as $row) {
+            $row['queue'] = str_replace(' черга', '', $row['queue']);
+            $queue = 'черга '.$row['queue'];
+
+            if (! isset($grouped[$queue])) {
+                $grouped[$queue] = [];
+            }
+            $grouped[$queue][] = $row;
+        }
+
+        return $grouped;
+    }
+
+    protected function drawText(ImagickDraw $draw, string $text, int $x, int $y, int $size = 12, bool $bold = false): void
+    {
+        $draw->setFillColor(new ImagickPixel('black'));
+        $draw->setFont('DejaVu-Sans'.($bold ? '-Bold' : ''));
+        $draw->setFontSize($size);
+        $draw->annotation($x, $y, $text);
+    }
+}

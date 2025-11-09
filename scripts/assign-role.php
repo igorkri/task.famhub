@@ -3,10 +3,10 @@
 
 /**
  * Скрипт для призначення ролі користувачу
- * 
+ *
  * Використання:
  *   php assign-role.php EMAIL ROLE_NAME
- * 
+ *
  * Приклади:
  *   php assign-role.php user@example.com super_admin
  *   php assign-role.php user@example.com panel_user
@@ -42,8 +42,8 @@ $roleName = $argv[2];
 try {
     // Знайти користувача
     $user = User::where('email', $email)->first();
-    
-    if (!$user) {
+
+    if (! $user) {
         echo "❌ Користувача з email '{$email}' не знайдено\n";
         echo "\nДоступні користувачі:\n";
         $users = User::select('id', 'name', 'email')->get();
@@ -52,11 +52,11 @@ try {
         }
         exit(1);
     }
-    
+
     // Перевірити, чи існує роль
     $role = Role::where('name', $roleName)->first();
-    
-    if (!$role) {
+
+    if (! $role) {
         echo "❌ Роль '{$roleName}' не знайдено\n";
         echo "\nДоступні ролі:\n";
         $roles = Role::all();
@@ -65,25 +65,25 @@ try {
         }
         exit(1);
     }
-    
+
     // Призначити роль
     $user->assignRole($roleName);
-    
+
     echo "✅ Успішно!\n\n";
     echo "Користувач: {$user->name}\n";
     echo "Email: {$user->email}\n";
     echo "Призначена роль: {$roleName}\n\n";
-    
+
     echo "Всі ролі користувача:\n";
     foreach ($user->roles as $userRole) {
         echo "  - {$userRole->name}\n";
     }
-    
+
     // Скинути кеш прав
     app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
     echo "\n✅ Кеш прав скинуто\n";
-    
+
 } catch (Exception $e) {
-    echo "❌ Помилка: " . $e->getMessage() . "\n";
+    echo '❌ Помилка: '.$e->getMessage()."\n";
     exit(1);
 }

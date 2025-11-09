@@ -50,4 +50,9 @@ return [
         'detail_url' => env('ACT_OF_WORK_DETAIL_API_URL', 'https://asana.masterok-market.com.ua/admin/api/act-of-work-detail/by-act'),
         'token' => env('ACT_OF_WORK_API_TOKEN'),
     ],
+
+    'telegram' => [
+        'bot_token' => env('TELEGRAM_BOT_TOKEN'),
+        'chat_id' => env('TELEGRAM_CHAT_ID'),
+    ],
 ];

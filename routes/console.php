@@ -14,3 +14,10 @@ Schedule::command('asana:sync-tasks --hours=6 --limit=100')
     ->withoutOverlapping()
     ->onOneServer()
     ->runInBackground();
+
+// Проверка графика отключений электроэнергии каждые 10 минут
+Schedule::command('power:fetch-schedule')
+    ->everyTenMinutes()
+    ->withoutOverlapping()
+    ->onOneServer()
+    ->runInBackground();

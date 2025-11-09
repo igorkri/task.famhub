@@ -28,3 +28,5 @@ Thumbs.db
 /storage/mysql/
 *.sql
 *.csv
+/TODO/
+/docs/test-img/

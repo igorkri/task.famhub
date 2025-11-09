@@ -12,7 +12,7 @@ use Maatwebsite\Excel\Facades\Excel;
 // Путь к тестовому файлу
 $filePath = __DIR__.'/docs/export.csv';
 
-if (!file_exists($filePath)) {
+if (! file_exists($filePath)) {
     echo "❌ Файл не знайдено: {$filePath}\n";
     exit(1);
 }
@@ -42,13 +42,13 @@ try {
         echo "\n";
     }
 } catch (\Exception $e) {
-    echo "❌ Помилка: " . $e->getMessage() . "\n";
+    echo '❌ Помилка: '.$e->getMessage()."\n";
     exit(1);
 }
 
 $countAfterFirst = ActOfWork::where('type', ActOfWork::TYPE_RECEIPT_OF_FUNDS)->count();
 echo "📊 Записів після першого імпорту: {$countAfterFirst}\n";
-echo "   Додано нових: " . ($countAfterFirst - $countBefore) . "\n\n";
+echo '   Додано нових: '.($countAfterFirst - $countBefore)."\n\n";
 
 // Другий імпорт (має пропустити всі записи як дублікати)
 echo "📥 Другий імпорт (перевірка дублікатів)...\n";
@@ -68,13 +68,13 @@ try {
         echo "\n";
     }
 } catch (\Exception $e) {
-    echo "❌ Помилка: " . $e->getMessage() . "\n";
+    echo '❌ Помилка: '.$e->getMessage()."\n";
     exit(1);
 }
 
 $countAfterSecond = ActOfWork::where('type', ActOfWork::TYPE_RECEIPT_OF_FUNDS)->count();
 echo "📊 Записів після другого імпорту: {$countAfterSecond}\n";
-echo "   Додано нових: " . ($countAfterSecond - $countAfterFirst) . "\n\n";
+echo '   Додано нових: '.($countAfterSecond - $countAfterFirst)."\n\n";
 
 // Результат
 if ($countAfterSecond == $countAfterFirst) {
@@ -82,7 +82,7 @@ if ($countAfterSecond == $countAfterFirst) {
     echo "   Всі записи з другого імпорту були правильно пропущені.\n";
 } else {
     echo "❌ УВАГА! Виявлено створення дублікатів.\n";
-    echo "   Додано записів при повторному імпорті: " . ($countAfterSecond - $countAfterFirst) . "\n";
+    echo '   Додано записів при повторному імпорті: '.($countAfterSecond - $countAfterFirst)."\n";
 }
 
 // Показуємо останній імпортований запис
@@ -94,6 +94,5 @@ if ($last) {
     echo "  Дата: {$last->date->format('d.m.Y')}\n";
     echo "  total_amount: {$last->total_amount}\n";
     echo "  paid_amount: {$last->paid_amount}\n";
-    echo "  Опис: " . mb_substr($last->description, 0, 80) . "...\n";
+    echo '  Опис: '.mb_substr($last->description, 0, 80)."...\n";
 }
-
