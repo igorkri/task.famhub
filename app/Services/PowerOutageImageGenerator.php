@@ -13,7 +13,7 @@ class PowerOutageImageGenerator
 
     protected int $cellHeight = 35; // Збільшено висоту
 
-    protected int $headerHeight = 90; // Більше місця для заголовків
+    protected int $headerHeight = 140; // Більше місця для заголовків та легенди
 
     protected int $padding = 15;
 
@@ -39,7 +39,7 @@ class PowerOutageImageGenerator
         // Фон для заголовка вгорі
         $draw = new ImagickDraw;
         $draw->setFillColor(new ImagickPixel('#F5F5F5'));
-        $draw->rectangle(0, 0, $width, 65);
+        $draw->rectangle(0, 0, $width, 110);
         $image->drawImage($draw);
 
         // Заголовок та дата по центру вгорі
@@ -48,11 +48,59 @@ class PowerOutageImageGenerator
         $centerX = $width / 2 - 130;
 
         $draw = new ImagickDraw;
-        $this->drawText($draw, "Графік відключень - {$date}", $centerX, 25, 16, true);
+        $this->drawText($draw, "Графік відключень - {$date}", $centerX, 28, 15, true);
         $image->drawImage($draw);
 
         $draw = new ImagickDraw;
-        $this->drawText($draw, "Оновлено: {$time}", $centerX + 50, 50, 13);
+        $this->drawText($draw, "Оновлено: {$time}", $centerX + 70, 50, 12);
+        $image->drawImage($draw);
+
+        // Легенда у верхньому блоці
+        $legendY = 80;
+        $legendX = $this->padding + 15;
+
+        $draw = new ImagickDraw;
+        $this->drawText($draw, 'Легенда:', $legendX, $legendY, 12, true);
+        $image->drawImage($draw);
+
+        $legendX += 80;
+
+        // Зелений
+        $draw = new ImagickDraw;
+        $draw->setFillColor(new ImagickPixel('#66BB6A'));
+        $draw->setStrokeColor(new ImagickPixel('#BDBDBD'));
+        $draw->setStrokeWidth(1);
+        $draw->rectangle($legendX, $legendY - 12, $legendX + 25, $legendY + 5);
+        $image->drawImage($draw);
+
+        $draw = new ImagickDraw;
+        $this->drawText($draw, '- Світло є', $legendX + 30, $legendY, 11);
+        $image->drawImage($draw);
+
+        // Червоний
+        $legendX += 130;
+        $draw = new ImagickDraw;
+        $draw->setFillColor(new ImagickPixel('#EF5350'));
+        $draw->setStrokeColor(new ImagickPixel('#BDBDBD'));
+        $draw->setStrokeWidth(1);
+        $draw->rectangle($legendX, $legendY - 12, $legendX + 25, $legendY + 5);
+        $image->drawImage($draw);
+
+        $draw = new ImagickDraw;
+        $this->drawText($draw, '- Вимкнено', $legendX + 30, $legendY, 11);
+        $image->drawImage($draw);
+
+        // Жовтий
+        $legendX += 130;
+        $draw = new ImagickDraw;
+        $draw->setFillColor(new ImagickPixel('#FFC107'));
+        $draw->setStrokeColor(new ImagickPixel('#BDBDBD'));
+        $draw->setStrokeWidth(1);
+        $draw->rectangle($legendX, $legendY - 12, $legendX + 25, $legendY + 5);
+        $image->drawImage($draw);
+
+        $draw = new ImagickDraw;
+        $this->drawText($draw, '- Можливо', $legendX + 30, $legendY, 11);
         $image->drawImage($draw);
 
         $startX = $this->padding + $this->labelWidth;
@@ -143,53 +191,6 @@ class PowerOutageImageGenerator
             }
         }
 
-        // Легенда
-        $legendY = $currentY + 22;
-
-        $draw = new ImagickDraw;
-        $this->drawText($draw, 'Легенда:', $this->padding + 12, $legendY, 12, true);
-        $image->drawImage($draw);
-
-        $legendX = $this->padding + 90;
-
-        // Зелений
-        $draw = new ImagickDraw;
-        $draw->setFillColor(new ImagickPixel('#66BB6A'));
-        $draw->setStrokeColor(new ImagickPixel('#BDBDBD'));
-        $draw->setStrokeWidth(1);
-        $draw->rectangle($legendX, $legendY - 12, $legendX + 25, $legendY + 5);
-        $image->drawImage($draw);
-
-        $draw = new ImagickDraw;
-        $this->drawText($draw, '- Світло є', $legendX + 30, $legendY, 11);
-        $image->drawImage($draw);
-
-        // Червоний
-        $legendX += 130;
-        $draw = new ImagickDraw;
-        $draw->setFillColor(new ImagickPixel('#EF5350'));
-        $draw->setStrokeColor(new ImagickPixel('#BDBDBD'));
-        $draw->setStrokeWidth(1);
-        $draw->rectangle($legendX, $legendY - 12, $legendX + 25, $legendY + 5);
-        $image->drawImage($draw);
-
-        $draw = new ImagickDraw;
-        $this->drawText($draw, '- Вимкнено', $legendX + 30, $legendY, 11);
-        $image->drawImage($draw);
-
-        // Жовтий
-        $legendX += 130;
-        $draw = new ImagickDraw;
-        $draw->setFillColor(new ImagickPixel('#FFC107'));
-        $draw->setStrokeColor(new ImagickPixel('#BDBDBD'));
-        $draw->setStrokeWidth(1);
-        $draw->rectangle($legendX, $legendY - 12, $legendX + 25, $legendY + 5);
-        $image->drawImage($draw);
-
-        $draw = new ImagickDraw;
-        $this->drawText($draw, '- Можливо', $legendX + 30, $legendY, 11);
-        $image->drawImage($draw);
-
         // Зберігаємо з високою якістю
         $filename = storage_path('app/temp/power_outage_'.uniqid().'.png');
 
@@ -207,10 +208,23 @@ class PowerOutageImageGenerator
     protected function groupByQueue(array $data): array
     {
         $grouped = [];
+        $seen = [];
 
         foreach ($data as $row) {
-//            "1 черга" - remove " черга"
+            //            "1 черга" - remove " черга"
             $queue = str_replace(' черга', '', $row['queue']);
+            $subqueue = $row['subqueue'];
+
+            // Створюємо унікальний ключ для перевірки дублікатів
+            $uniqueKey = "{$queue}.{$subqueue}";
+
+            // Пропускаємо дублікати
+            if (isset($seen[$uniqueKey])) {
+                continue;
+            }
+
+            $seen[$uniqueKey] = true;
+
             if (! isset($grouped[$queue])) {
                 $grouped[$queue] = [];
             }
