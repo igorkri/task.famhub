@@ -99,9 +99,9 @@ class PowerOutageImageGenerator
 
             // "з 00:00" - менший текст
             $draw = new ImagickDraw;
-            $draw->setFillColor(new ImagickPixel('#64748B'));
+            $draw->setFillColor(new ImagickPixel('#000000')); // Чорний
             $draw->setFont('DejaVu-Sans');
-            $draw->setFontSize(14);
+            $draw->setFontSize(16); // Збільшено з 14
             $draw->setTextAntialias(true);
             $fromText = sprintf('з %02d:00', $hour);
             $draw->annotation($x + 18, $startY - 68, $fromText);
@@ -110,18 +110,18 @@ class PowerOutageImageGenerator
             // "по 01:00" - менший текст
             $toHour = ($hour + 1) % 24;
             $draw = new ImagickDraw;
-            $draw->setFillColor(new ImagickPixel('#64748B'));
+            $draw->setFillColor(new ImagickPixel('#000000')); // Чорний
             $draw->setFont('DejaVu-Sans');
-            $draw->setFontSize(14);
+            $draw->setFontSize(16); // Збільшено з 14
             $toText = sprintf('по %02d:00', $toHour);
             $draw->annotation($x + 10, $startY - 48, $toText);
             $image->drawImage($draw);
 
             // Велика година по центру
             $draw = new ImagickDraw;
-            $draw->setFillColor(new ImagickPixel('#1E293B'));
+            $draw->setFillColor(new ImagickPixel('#000000')); // Чорний
             $draw->setFont('DejaVu-Sans-Bold');
-            $draw->setFontSize(26);
+            $draw->setFontSize(30); // Збільшено з 26
             $hourText = sprintf('%02d', $hour);
             $draw->annotation($x + 32, $startY - 15, $hourText);
             $image->drawImage($draw);
@@ -161,9 +161,9 @@ class PowerOutageImageGenerator
 
                 // Номер черги великим шрифтом
                 $draw = new ImagickDraw;
-                $draw->setFillColor(new ImagickPixel('#1F2937'));
+                $draw->setFillColor(new ImagickPixel('#000000')); // Чорний
                 $draw->setFont('DejaVu-Sans-Bold');
-                $draw->setFontSize(22);
+                $draw->setFontSize(26); // Збільшено з 22
                 $label = "{$queueName}.{$subqueue}";
                 $draw->annotation($this->padding + 28, $currentY + 34, $label);
                 $image->drawImage($draw);
@@ -243,9 +243,9 @@ class PowerOutageImageGenerator
 
         // Легенда
         $draw = new ImagickDraw;
-        $draw->setFillColor(new ImagickPixel('#1F2937'));
+        $draw->setFillColor(new ImagickPixel('#000000')); // Чорний
         $draw->setFont('DejaVu-Sans-Bold');
-        $draw->setFontSize(15);
+        $draw->setFontSize(17); // Збільшено з 15
         $draw->annotation($legendX + 5, $legendY + 16, 'Легенда:');
         $image->drawImage($draw);
 
@@ -265,9 +265,9 @@ class PowerOutageImageGenerator
         $image->drawImage($draw);
 
         $draw = new ImagickDraw;
-        $draw->setFillColor(new ImagickPixel('#1F2937'));
+        $draw->setFillColor(new ImagickPixel('#000000')); // Чорний
         $draw->setFont('DejaVu-Sans');
-        $draw->setFontSize(14);
+        $draw->setFontSize(16); // Збільшено з 14
         $draw->annotation($legendX + 36, $legendY + 16, 'Світло є');
         $image->drawImage($draw);
 
@@ -281,9 +281,9 @@ class PowerOutageImageGenerator
         $image->drawImage($draw);
 
         $draw = new ImagickDraw;
-        $draw->setFillColor(new ImagickPixel('#1F2937'));
+        $draw->setFillColor(new ImagickPixel('#000000')); // Чорний
         $draw->setFont('DejaVu-Sans');
-        $draw->setFontSize(14);
+        $draw->setFontSize(16); // Збільшено з 14
         $draw->annotation($legendX + 36, $legendY + 16, 'Вимкнено');
         $image->drawImage($draw);
 
@@ -297,18 +297,18 @@ class PowerOutageImageGenerator
         $image->drawImage($draw);
 
         $draw = new ImagickDraw;
-        $draw->setFillColor(new ImagickPixel('#1F2937'));
+        $draw->setFillColor(new ImagickPixel('#000000')); // Чорний
         $draw->setFont('DejaVu-Sans');
-        $draw->setFontSize(14);
+        $draw->setFontSize(16); // Збільшено з 14
         $draw->annotation($legendX + 36, $legendY + 16, 'Можливо');
         $image->drawImage($draw);
 
         // Пояснення
         $legendX += 145;
         $draw = new ImagickDraw;
-        $draw->setFillColor(new ImagickPixel('#6B7280'));
+        $draw->setFillColor(new ImagickPixel('#000000')); // Чорний
         $draw->setFont('DejaVu-Sans');
-        $draw->setFontSize(13);
+        $draw->setFontSize(15); // Збільшено з 13
         $draw->annotation($legendX, $legendY + 16, '(клітинка = 30 хв)');
         $image->drawImage($draw);
 
@@ -316,9 +316,9 @@ class PowerOutageImageGenerator
 
         // Заголовок секції
         $draw = new ImagickDraw;
-        $draw->setFillColor(new ImagickPixel('#1F2937'));
+        $draw->setFillColor(new ImagickPixel('#000000')); // Чорний
         $draw->setFont('DejaVu-Sans-Bold');
-        $draw->setFontSize(17);
+        $draw->setFontSize(19); // Збільшено з 17
         $draw->annotation($this->padding + 10, $bottomY, 'Детальні періоди відключень:');
         $image->drawImage($draw);
 
@@ -407,9 +407,9 @@ class PowerOutageImageGenerator
 
                 // Назва черги
                 $draw = new ImagickDraw;
-                $draw->setFillColor(new ImagickPixel('#1F2937'));
+                $draw->setFillColor(new ImagickPixel('#000000')); // Чорний
                 $draw->setFont('DejaVu-Sans-Bold');
-                $draw->setFontSize(16);
+                $draw->setFontSize(18); // Збільшено з 16
                 $draw->annotation($currentX + 12, $cellStartY + 22, "Черга {$label}");
                 $image->drawImage($draw);
 
@@ -423,9 +423,9 @@ class PowerOutageImageGenerator
 
                     // Іконка
                     $draw = new ImagickDraw;
-                    $draw->setFillColor(new ImagickPixel('#1F2937'));
+                    $draw->setFillColor(new ImagickPixel('#000000')); // Чорний
                     $draw->setFont('DejaVu-Sans');
-                    $draw->setFontSize(13);
+                    $draw->setFontSize(15); // Збільшено з 13
                     $draw->annotation($currentX + 12, $lineY, $icon);
                     $image->drawImage($draw);
 
@@ -434,7 +434,7 @@ class PowerOutageImageGenerator
                     $draw = new ImagickDraw;
                     $draw->setFillColor(new ImagickPixel($textColor));
                     $draw->setFont('DejaVu-Sans');
-                    $draw->setFontSize(14);
+                    $draw->setFontSize(16); // Збільшено з 14
                     $draw->annotation($currentX + 32, $lineY, $periodText);
                     $image->drawImage($draw);
 
@@ -469,8 +469,8 @@ class PowerOutageImageGenerator
             $statsX = $maxCardsWidth + 15;
             $statsY = $bottomY;
 
-            // Фон для статистики
-            $statsHeight = count(array_filter($queueStats, fn ($h) => $h > 0)) * 28 + 60; // Оновлена висота
+            // Фон для статистики - збільшена висота з паддінгами
+            $statsHeight = count(array_filter($queueStats, fn ($h) => $h > 0)) * 40 + 70; // Збільшено для паддінгів
             $draw = new ImagickDraw;
             $draw->setFillColor(new ImagickPixel('#FFFFFF'));
             $draw->setStrokeColor(new ImagickPixel('#9CA3AF'));
@@ -486,44 +486,44 @@ class PowerOutageImageGenerator
             $draw->roundRectangle($statsX, $statsY, $width - $this->padding - 10, $statsY + $statsHeight, 6, 6);
             $image->drawImage($draw);
 
-            // Заголовок з градієнтом
+            // Заголовок з градієнтом - збільшений
             $draw = new ImagickDraw;
             $draw->setFillColor(new ImagickPixel('#EEF2FF'));
-            $draw->roundRectangle($statsX + 2, $statsY + 2, $width - $this->padding - 12, $statsY + 35, 5, 5);
+            $draw->roundRectangle($statsX + 2, $statsY + 2, $width - $this->padding - 12, $statsY + 40, 5, 5);
             $image->drawImage($draw);
 
             $draw = new ImagickDraw;
-            $draw->setFillColor(new ImagickPixel('#1F2937'));
+            $draw->setFillColor(new ImagickPixel('#000000')); // Чорний
             $draw->setFont('DejaVu-Sans-Bold');
-            $draw->setFontSize(15);
-            $draw->annotation($statsX + 12, $statsY + 24, 'Статистика відключень');
+            $draw->setFontSize(20); // Збільшено з 17
+            $draw->annotation($statsX + 12, $statsY + 28, 'Статистика відключень');
             $image->drawImage($draw);
 
-            $statsY += 50; // Збільшено відступ від заголовка
+            $statsY += 55; // Збільшено відступ від заголовка з 50
 
             foreach ($queueStats as $queue => $hours) {
                 if ($hours > 0) {
                     $percentage = round(($hours / 24) * 100);
 
-                    // Текст черги зліва
+                    // Текст черги зліва - збільшений з паддінгом
                     $draw = new ImagickDraw;
-                    $draw->setFillColor(new ImagickPixel('#374151'));
-                    $draw->setFont('DejaVu-Sans');
-                    $draw->setFontSize(13);
-                    $draw->annotation($statsX + 12, $statsY, "Черга {$queue}:");
+                    $draw->setFillColor(new ImagickPixel('#000000')); // Чорний
+                    $draw->setFont('DejaVu-Sans-Bold'); // Жирний шрифт
+                    $draw->setFontSize(18); // Збільшено з 15
+                    $draw->annotation($statsX + 15, $statsY, "Черга {$queue}:"); // Додано паддінг зліва +15
                     $image->drawImage($draw);
 
-                    // Прогрес-бар в одному рядку з текстом
-                    $barWidth = 220; // Збільшена ширина бару
-                    $barX = $statsX + 85; // Позиція бару праворуч від тексту
-                    $barY = $statsY - 13; // Вирівнювання по вертикалі
+                    // Прогрес-бар в одному рядку з текстом - більший з паддінгом
+                    $barWidth = 230; // Зменшена ширина для паддінгу справа
+                    $barX = $statsX + 125; // Позиція бару з паддінгом
+                    $barY = $statsY - 16; // Вирівнювання по вертикалі
 
-                    // Фон прогрес-бару
+                    // Фон прогрес-бару - вищий
                     $draw = new ImagickDraw;
                     $draw->setFillColor(new ImagickPixel('#E5E7EB'));
                     $draw->setStrokeColor(new ImagickPixel('#D1D5DB'));
-                    $draw->setStrokeWidth(0.5);
-                    $draw->roundRectangle($barX, $barY, $barX + $barWidth, $barY + 16, 3, 3);
+                    $draw->setStrokeWidth(1);
+                    $draw->roundRectangle($barX, $barY, $barX + $barWidth, $barY + 22, 4, 4); // Висота 22 замість 16
                     $image->drawImage($draw);
 
                     // Заповнення
@@ -532,19 +532,19 @@ class PowerOutageImageGenerator
 
                     $draw = new ImagickDraw;
                     $draw->setFillColor(new ImagickPixel($barColor));
-                    $draw->roundRectangle($barX, $barY, $barX + $fillWidth, $barY + 16, 3, 3);
+                    $draw->roundRectangle($barX, $barY, $barX + $fillWidth, $barY + 22, 4, 4);
                     $image->drawImage($draw);
 
-                    // Значення всередині або справа від прогрес-бару
+                    // Значення всередині бару - більший шрифт
                     $draw = new ImagickDraw;
                     $draw->setFillColor(new ImagickPixel('#FFFFFF')); // Білий текст всередині бару
                     $draw->setFont('DejaVu-Sans-Bold');
-                    $draw->setFontSize(11);
+                    $draw->setFontSize(16); // Збільшено з 13
                     $valueText = "{$hours}г ({$percentage}%)";
-                    $draw->annotation($barX + 8, $barY + 12, $valueText);
+                    $draw->annotation($barX + 10, $barY + 16, $valueText);
                     $image->drawImage($draw);
 
-                    $statsY += 28; // Компактніший відступ між рядками
+                    $statsY += 40; // Ще більший відступ між рядками для паддінгу
                 }
             }
         }
