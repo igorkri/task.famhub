@@ -380,7 +380,7 @@ class PowerOutageImageGenerator
                     $allPeriods = ['Немає відключень'];
                 }
 
-                $cellHeight += count($allPeriods) * 22 + $topPadding + $bottomPadding; // Ще більша висота рядків
+                $cellHeight += count($allPeriods) * 24 + $topPadding + $bottomPadding; // Ще більша висота рядків
 
                 // Світліші кольори для фону карточок
                 $lightBgColors = [
@@ -449,13 +449,17 @@ class PowerOutageImageGenerator
                 $lineY = $cellStartY + 58 + $topPadding; // Ще більший відступ зверху
 
                 foreach ($allPeriods as $period) {
+            
                     // Всі періоди показуємо червоним
                     $icon = '🔴';
                     $textColor = '#000000'; // Чорний текст
 
                     // Центруємо список в карточці
-                    $textStartX = $currentX + ($columnWidth / 2) - 80; // Зміщуємо вправо для центрування
-
+                    if ($period == 'Немає відключень') {
+                        $textStartX = $currentX + ($columnWidth / 2) - 120; // Зміщуємо вправо для центрування
+                    } else {
+                        $textStartX = $currentX + ($columnWidth / 2) - 80; // Зміщуємо вправо для центрування
+                    }
                     // Іконка
                     $draw = new ImagickDraw;
                     $draw->setFillColor(new ImagickPixel('#DC2626')); // Червоний колір іконки
@@ -716,6 +720,6 @@ class PowerOutageImageGenerator
         $rowSpacing = 20; // Відступ між рядками карточок
         $bottomMargin = 50; // Відступ знизу для футера
         
-        return $legendHeight + $maxHeightRow1 + $rowSpacing + $maxHeightRow2 + $bottomMargin + $this->padding + 40;
+        return $legendHeight + $maxHeightRow1 + $rowSpacing + $maxHeightRow2 + $bottomMargin + $this->padding + 120;
     }
 }
