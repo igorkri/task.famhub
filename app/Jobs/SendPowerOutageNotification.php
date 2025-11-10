@@ -130,8 +130,8 @@ class SendPowerOutageNotification implements ShouldQueue
         }
 
         // Додаткова інформація з metadata
-        if (! empty($this->schedule->metadata['created_date'])) {
-            $message .= "📝 <i>Опубліковано: {$this->schedule->metadata['created_date']}</i>\n";
+        if (! empty($this->schedule['fetched_at'])) {
+            $message .= "📝 <i>Опубліковано: {$this->schedule->fetched_at->format('d.m.Y H:i')}</i>\n";
         }
 
 //        // Статистика по чергах
