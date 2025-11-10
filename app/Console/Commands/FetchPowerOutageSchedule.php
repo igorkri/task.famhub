@@ -51,18 +51,18 @@ class FetchPowerOutageSchedule extends Command
                             ->latest('fetched_at')
                             ->first();
 
-                        if ($existing && $existing->metadata && isset($existing->metadata['created_date'])) {
-                            if ($existing->metadata['created_date'] === $latestCreatedDate) {
-                                $this->info('Данные актуальны (по дате создания). Пропуск загрузки HTML.');
-
-                                if ($this->option('notify')) {
-                                    $this->info('Принудительная отправка уведомления (флаг --notify)...');
-                                    SendPowerOutageNotification::dispatchSync($existing);
-                                }
-
-                                return Command::SUCCESS;
-                            }
-                        }
+//                        if ($existing && $existing->metadata && isset($existing->metadata['created_date'])) {
+//                            if ($existing->metadata['created_date'] === $latestCreatedDate) {
+//                                $this->info('Данные актуальны (по дате создания). Пропуск загрузки HTML.');
+//
+//                                if ($this->option('notify')) {
+//                                    $this->info('Принудительная отправка уведомления (флаг --notify)...');
+//                                    SendPowerOutageNotification::dispatchSync($existing);
+//                                }
+//
+//                                return Command::SUCCESS;
+//                            }
+//                        }
 
                         $this->line('Обнаружены изменения. Загрузка полного графика...');
                     }
