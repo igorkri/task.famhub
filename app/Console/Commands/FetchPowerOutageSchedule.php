@@ -24,54 +24,54 @@ class FetchPowerOutageSchedule extends Command
             // Шаг 1: Проверяем наличие данных через легкий API запрос
             $this->line('Проверка наличия обновлений...');
 
-//            $infoResponse = Http::asForm()
-//                ->withHeaders($this->getBrowserHeaders())
-//                ->timeout(15)
-//                ->retry(2, 100)
-//                ->post('https://www.poe.pl.ua/customs/unloading-info.php', [
-//                    'seldate' => json_encode(['date_in' => $date]),
-//                ]);
-//
-//            if ($infoResponse->successful()) {
-//                $infoData = $infoResponse->json();
-//
-//                if (! empty($infoData)) {
-//                    $this->line('Найдено записей: '.count($infoData));
-//
-//                    // Проверяем дату создания последнего изменения
-//                    $latestCreatedDate = collect($infoData)
-//                        ->max('createddate');
-//
-//                    if ($latestCreatedDate) {
-//                        $this->line("Последнее изменение: {$latestCreatedDate}");
-//
-//                        // Проверяем, есть ли у нас уже данные с такой же датой создания
-//                        $scheduleDate = now()->createFromFormat('d-m-Y', $date)->format('Y-m-d');
-//                        $existing = PowerOutageSchedule::where('schedule_date', $scheduleDate)
-//                            ->latest('fetched_at')
-//                            ->first();
-//
-////                        if ($existing && $existing->metadata && isset($existing->metadata['created_date'])) {
-////                            if ($existing->metadata['created_date'] === $latestCreatedDate) {
-////                                $this->info('Данные актуальны (по дате создания). Пропуск загрузки HTML.');
-////
-////                                if ($this->option('notify')) {
-////                                    $this->info('Принудительная отправка уведомления (флаг --notify)...');
-////                                    SendPowerOutageNotification::dispatchSync($existing);
-////                                }
-////
-////                                return Command::SUCCESS;
-////                            }
-////                        }
-//
-//                        $this->line('Обнаружены изменения. Загрузка полного графика...');
-//                    }
-//                } else {
-//                    $this->warn('API не вернул данных. Возможно, график ещё не опубликован.');
-//                }
-//            } else {
-//                $this->warn('Не удалось проверить через API. Пробуем загрузить напрямую...');
-//            }
+            //            $infoResponse = Http::asForm()
+            //                ->withHeaders($this->getBrowserHeaders())
+            //                ->timeout(15)
+            //                ->retry(2, 100)
+            //                ->post('https://www.poe.pl.ua/customs/unloading-info.php', [
+            //                    'seldate' => json_encode(['date_in' => $date]),
+            //                ]);
+            //
+            //            if ($infoResponse->successful()) {
+            //                $infoData = $infoResponse->json();
+            //
+            //                if (! empty($infoData)) {
+            //                    $this->line('Найдено записей: '.count($infoData));
+            //
+            //                    // Проверяем дату создания последнего изменения
+            //                    $latestCreatedDate = collect($infoData)
+            //                        ->max('createddate');
+            //
+            //                    if ($latestCreatedDate) {
+            //                        $this->line("Последнее изменение: {$latestCreatedDate}");
+            //
+            //                        // Проверяем, есть ли у нас уже данные с такой же датой создания
+            //                        $scheduleDate = now()->createFromFormat('d-m-Y', $date)->format('Y-m-d');
+            //                        $existing = PowerOutageSchedule::where('schedule_date', $scheduleDate)
+            //                            ->latest('fetched_at')
+            //                            ->first();
+            //
+            // //                        if ($existing && $existing->metadata && isset($existing->metadata['created_date'])) {
+            // //                            if ($existing->metadata['created_date'] === $latestCreatedDate) {
+            // //                                $this->info('Данные актуальны (по дате создания). Пропуск загрузки HTML.');
+            // //
+            // //                                if ($this->option('notify')) {
+            // //                                    $this->info('Принудительная отправка уведомления (флаг --notify)...');
+            // //                                    SendPowerOutageNotification::dispatchSync($existing);
+            // //                                }
+            // //
+            // //                                return Command::SUCCESS;
+            // //                            }
+            // //                        }
+            //
+            //                        $this->line('Обнаружены изменения. Загрузка полного графика...');
+            //                    }
+            //                } else {
+            //                    $this->warn('API не вернул данных. Возможно, график ещё не опубликован.');
+            //                }
+            //            } else {
+            //                $this->warn('Не удалось проверить через API. Пробуем загрузить напрямую...');
+            //            }
 
             // Шаг 2: Получаем HTML данные с заголовками браузера для имитации обычного пользователя
             $response = Http::asForm()
@@ -109,22 +109,33 @@ class FetchPowerOutageSchedule extends Command
             // Генерируем хеш только из schedule_data для проверки изменений
             $hash = $parser->generateHash($parsedData['schedule_data']);
 
-            // Проверяем, есть ли уже такие данныеГрафік на завтра опубліковано!
+            // Проверяем, есть ли уже такие данные
             $scheduleDate = now()->createFromFormat('d-m-Y', $date)->format('Y-m-d');
             $existing = PowerOutageSchedule::where('schedule_date', $scheduleDate)
                 ->latest('fetched_at')
                 ->first();
 
-            if ($existing && $existing->hash === $hash) {
-                $this->info('Данные не изменились');
+            if ($existing) {
+                // Двойная проверка: по хешу и по фактическим данным
+                $hashMatch = $existing->hash === $hash;
+                $dataMatch = $this->compareScheduleData(
+                    $existing->schedule_data ?? [],
+                    $parsedData['schedule_data']
+                );
 
-                // Если передан флаг --notify, отправляем уведомление даже если данные не изменились
-                if ($this->option('notify')) {
-                    $this->info('Принудительная отправка уведомления (флаг --notify)...');
-                    SendPowerOutageNotification::dispatchSync($existing);
+                if ($hashMatch || $dataMatch) {
+                    $this->info('Данные не изменились'.($hashMatch ? ' (по хешу)' : ' (по содержимому)'));
+
+                    // Если передан флаг --notify, отправляем уведомление даже если данные не изменились
+                    if ($this->option('notify')) {
+                        $this->info('Принудительная отправка уведомления (флаг --notify)...');
+                        SendPowerOutageNotification::dispatchSync($existing);
+                    }
+
+                    return Command::SUCCESS;
                 }
 
-                return Command::SUCCESS;
+                $this->line('Обнаружены изменения в графике');
             }
 
             // Сохраняем новые данные
@@ -191,5 +202,67 @@ class FetchPowerOutageSchedule extends Command
             'Upgrade-Insecure-Requests' => '1',
             'Cache-Control' => 'max-age=0',
         ];
+    }
+
+    /**
+     * Детальное сравнение данных расписания для выявления реальных изменений
+     */
+    private function compareScheduleData(array $existing, array $new): bool
+    {
+        // Если разное количество записей - точно изменилось
+        if (count($existing) !== count($new)) {
+            return false;
+        }
+
+        // Сортируем оба массива для корректного сравнения
+        $sortSchedule = function ($data) {
+            usort($data, function ($a, $b) {
+                $queueCompare = strcmp($a['queue'] ?? '', $b['queue'] ?? '');
+                if ($queueCompare !== 0) {
+                    return $queueCompare;
+                }
+
+                return strcmp($a['subqueue'] ?? '', $b['subqueue'] ?? '');
+            });
+
+            return $data;
+        };
+
+        $existing = $sortSchedule($existing);
+        $new = $sortSchedule($new);
+
+        // Сравниваем каждую запись
+        foreach ($existing as $index => $existingItem) {
+            $newItem = $new[$index] ?? null;
+
+            if (! $newItem) {
+                return false;
+            }
+
+            // Сравниваем queue и subqueue
+            if (($existingItem['queue'] ?? '') !== ($newItem['queue'] ?? '')) {
+                return false;
+            }
+
+            if (($existingItem['subqueue'] ?? '') !== ($newItem['subqueue'] ?? '')) {
+                return false;
+            }
+
+            // Сравниваем hourly_status
+            $existingStatus = $existingItem['hourly_status'] ?? [];
+            $newStatus = $newItem['hourly_status'] ?? [];
+
+            if (count($existingStatus) !== count($newStatus)) {
+                return false;
+            }
+
+            foreach ($existingStatus as $hour => $status) {
+                if (($newStatus[$hour] ?? null) !== $status) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 }
