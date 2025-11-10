@@ -27,6 +27,7 @@
 
 ### Технические
 
+- **[API-OPTIMIZATION.md](API-OPTIMIZATION.md)** - ⚡ Оптимізація запитів до API (економія 96% трафіку)
 - **[HTTP-HEADERS.md](HTTP-HEADERS.md)** - 🔐 HTTP заголовки для імітації браузера
 - **[IMAGE-FORMAT.md](IMAGE-FORMAT.md)** - Формат зображень графіків
 - **[IMAGICK-INSTALL.md](IMAGICK-INSTALL.md)** - Встановлення Imagick

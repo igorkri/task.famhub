@@ -17,6 +17,7 @@ class PowerOutageSchedule extends Model
         'schedule_data',
         'fetched_at',
         'hash',
+        'metadata',
     ];
 
     protected function casts(): array
@@ -26,6 +27,7 @@ class PowerOutageSchedule extends Model
             'periods' => 'array',
             'schedule_data' => 'array',
             'fetched_at' => 'datetime',
+            'metadata' => 'array',
         ];
     }
 }
