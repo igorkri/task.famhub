@@ -16,12 +16,12 @@ class FetchPowerOutageSchedule extends Command
 
     public function handle(PowerOutageParserService $parser): int
     {
+        date_default_timezone_set('Europe/Kyiv');
         $date = $this->argument('date') ?? now()->format('d-m-Y');
 
         echo "Сейчас время: ".now()->toDateTimeString().PHP_EOL;
         echo "Запрошенная дата: {$date}".PHP_EOL;
         echo 'time zone: ' . date_default_timezone_get() . PHP_EOL;
-
         echo "-----------------------------------".PHP_EOL;
 
         $this->info("Получение графика отключений на {$date}...");
