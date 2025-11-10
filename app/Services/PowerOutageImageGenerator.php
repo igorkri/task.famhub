@@ -27,8 +27,11 @@ class PowerOutageImageGenerator
         $hours = 24;
         $totalRows = count($data);
 
+        // Розраховуємо динамічну висоту для карточок
+        $cardsHeight = $this->calculateCardsHeight($groupedData);
+
         $width = ($hours * $this->cellWidth) + $this->labelWidth + ($this->padding * 2) + 20;
-        $height = ($totalRows * $this->cellHeight) + $this->headerHeight + ($this->padding * 2) + 900; // Збільшена висота для двох рядів карточок
+        $height = ($totalRows * $this->cellHeight) + $this->headerHeight + ($this->padding * 2) + $cardsHeight;
 
         // Створюємо зображення з вищою якістю
         $image = new Imagick;
@@ -654,5 +657,65 @@ class PowerOutageImageGenerator
         }
 
         return sprintf('%02d:%02d - %02d:%02d', $startHour, $startMin, $endHour, $endMin);
+    }
+
+    /**
+     * Розраховує необхідну висоту для секції з карточками
+     */
+    protected function calculateCardsHeight(array $groupedData): int
+    {
+        $topPadding = 10;
+        $bottomPadding = 10;
+        $lineHeight = 22; // Висота одного рядка періоду
+        $headerHeight = 46; // Висота заголовка карточки
+        $cardSpacing = 15; // Відступ між карточками по вертикалі
+        
+        $maxHeightRow1 = 0; // Максимальна висота першого рядку (черги 1-3)
+        $maxHeightRow2 = 0; // Максимальна висота другого рядку (черги 4-6)
+        
+        $queueIndex = 0;
+        
+        foreach ($groupedData as $queueName => $subqueues) {
+            $queueMaxHeight = 0;
+            
+            foreach ($subqueues as $subqueueData) {
+                $periods = $this->calculateOutagePeriods($subqueueData['hourly_status']);
+                $allPeriods = array_merge($periods['off'], $periods['maybe']);
+                
+                if (empty($allPeriods)) {
+                    $allPeriods = ['Немає відключень'];
+                }
+                
+                // Розрахунок висоти однієї карточки
+                $cardHeight = $headerHeight + (count($allPeriods) * $lineHeight) + $topPadding + $bottomPadding;
+                
+                if ($cardHeight > $queueMaxHeight) {
+                    $queueMaxHeight = $cardHeight;
+                }
+            }
+            
+            // Додаємо висоту + вертикальний відступ між підчергами однієї черги
+            $totalQueueHeight = $queueMaxHeight + ($queueMaxHeight + $cardSpacing);
+            
+            // Визначаємо в який рядок потрапляє черга (1-3 в перший, 4-6 в другий)
+            if ($queueIndex < 3) {
+                if ($totalQueueHeight > $maxHeightRow1) {
+                    $maxHeightRow1 = $totalQueueHeight;
+                }
+            } else {
+                if ($totalQueueHeight > $maxHeightRow2) {
+                    $maxHeightRow2 = $totalQueueHeight;
+                }
+            }
+            
+            $queueIndex++;
+        }
+        
+        // Загальна висота = легенда + заголовок секції + два рядки карточок + відступи
+        $legendHeight = 75; // Легенда + заголовок "Детальні періоди"
+        $rowSpacing = 20; // Відступ між рядками карточок
+        $bottomMargin = 50; // Відступ знизу для футера
+        
+        return $legendHeight + $maxHeightRow1 + $rowSpacing + $maxHeightRow2 + $bottomMargin + $this->padding + 40;
     }
 }
