@@ -24,54 +24,54 @@ class FetchPowerOutageSchedule extends Command
             // Шаг 1: Проверяем наличие данных через легкий API запрос
             $this->line('Проверка наличия обновлений...');
 
-            $infoResponse = Http::asForm()
-                ->withHeaders($this->getBrowserHeaders())
-                ->timeout(15)
-                ->retry(2, 100)
-                ->post('https://www.poe.pl.ua/customs/unloading-info.php', [
-                    'seldate' => json_encode(['date_in' => $date]),
-                ]);
-
-            if ($infoResponse->successful()) {
-                $infoData = $infoResponse->json();
-
-                if (! empty($infoData)) {
-                    $this->line('Найдено записей: '.count($infoData));
-
-                    // Проверяем дату создания последнего изменения
-                    $latestCreatedDate = collect($infoData)
-                        ->max('createddate');
-
-                    if ($latestCreatedDate) {
-                        $this->line("Последнее изменение: {$latestCreatedDate}");
-
-                        // Проверяем, есть ли у нас уже данные с такой же датой создания
-                        $scheduleDate = now()->createFromFormat('d-m-Y', $date)->format('Y-m-d');
-                        $existing = PowerOutageSchedule::where('schedule_date', $scheduleDate)
-                            ->latest('fetched_at')
-                            ->first();
-
-//                        if ($existing && $existing->metadata && isset($existing->metadata['created_date'])) {
-//                            if ($existing->metadata['created_date'] === $latestCreatedDate) {
-//                                $this->info('Данные актуальны (по дате создания). Пропуск загрузки HTML.');
+//            $infoResponse = Http::asForm()
+//                ->withHeaders($this->getBrowserHeaders())
+//                ->timeout(15)
+//                ->retry(2, 100)
+//                ->post('https://www.poe.pl.ua/customs/unloading-info.php', [
+//                    'seldate' => json_encode(['date_in' => $date]),
+//                ]);
 //
-//                                if ($this->option('notify')) {
-//                                    $this->info('Принудительная отправка уведомления (флаг --notify)...');
-//                                    SendPowerOutageNotification::dispatchSync($existing);
-//                                }
+//            if ($infoResponse->successful()) {
+//                $infoData = $infoResponse->json();
 //
-//                                return Command::SUCCESS;
-//                            }
-//                        }
-
-                        $this->line('Обнаружены изменения. Загрузка полного графика...');
-                    }
-                } else {
-                    $this->warn('API не вернул данных. Возможно, график ещё не опубликован.');
-                }
-            } else {
-                $this->warn('Не удалось проверить через API. Пробуем загрузить напрямую...');
-            }
+//                if (! empty($infoData)) {
+//                    $this->line('Найдено записей: '.count($infoData));
+//
+//                    // Проверяем дату создания последнего изменения
+//                    $latestCreatedDate = collect($infoData)
+//                        ->max('createddate');
+//
+//                    if ($latestCreatedDate) {
+//                        $this->line("Последнее изменение: {$latestCreatedDate}");
+//
+//                        // Проверяем, есть ли у нас уже данные с такой же датой создания
+//                        $scheduleDate = now()->createFromFormat('d-m-Y', $date)->format('Y-m-d');
+//                        $existing = PowerOutageSchedule::where('schedule_date', $scheduleDate)
+//                            ->latest('fetched_at')
+//                            ->first();
+//
+////                        if ($existing && $existing->metadata && isset($existing->metadata['created_date'])) {
+////                            if ($existing->metadata['created_date'] === $latestCreatedDate) {
+////                                $this->info('Данные актуальны (по дате создания). Пропуск загрузки HTML.');
+////
+////                                if ($this->option('notify')) {
+////                                    $this->info('Принудительная отправка уведомления (флаг --notify)...');
+////                                    SendPowerOutageNotification::dispatchSync($existing);
+////                                }
+////
+////                                return Command::SUCCESS;
+////                            }
+////                        }
+//
+//                        $this->line('Обнаружены изменения. Загрузка полного графика...');
+//                    }
+//                } else {
+//                    $this->warn('API не вернул данных. Возможно, график ещё не опубликован.');
+//                }
+//            } else {
+//                $this->warn('Не удалось проверить через API. Пробуем загрузить напрямую...');
+//            }
 
             // Шаг 2: Получаем HTML данные с заголовками браузера для имитации обычного пользователя
             $response = Http::asForm()
