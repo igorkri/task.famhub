@@ -109,7 +109,7 @@ class FetchPowerOutageSchedule extends Command
             // Генерируем хеш только из schedule_data для проверки изменений
             $hash = $parser->generateHash($parsedData['schedule_data']);
 
-            // Проверяем, есть ли уже такие данные
+            // Проверяем, есть ли уже такие данныеГрафік на завтра опубліковано!
             $scheduleDate = now()->createFromFormat('d-m-Y', $date)->format('Y-m-d');
             $existing = PowerOutageSchedule::where('schedule_date', $scheduleDate)
                 ->latest('fetched_at')

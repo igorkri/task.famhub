@@ -112,7 +112,7 @@ class SendPowerOutageNotification implements ShouldQueue
         } elseif ($isTomorrow) {
             $message = "📅 <b>НОВИЙ графік на ЗАВТРА</b>\n";
             $message .= "🗓 {$date} ({$dayOfWeek})\n\n";
-            $message .= "✨ <i>Графік на завтра опубліковано!</i>\n\n";
+//            $message .= "✨ <i>Графік на завтра опубліковано!</i>\n\n";
         } else {
             $message = "🔌 <b>Графік відключень</b>\n";
             $message .= "📅 {$date} ({$dayOfWeek})\n\n";
