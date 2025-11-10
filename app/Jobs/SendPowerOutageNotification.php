@@ -119,20 +119,20 @@ class SendPowerOutageNotification implements ShouldQueue
         }
 
         // Інформація про періоди відключень
-        if (! empty($this->schedule->periods)) {
-            $message .= "⏰ <b>Періоди відключень:</b>\n";
-            foreach ($this->schedule->periods as $period) {
-                $duration = $this->calculateDuration($period['from'], $period['to']);
-                $message .= "• {$period['from']} - {$period['to']} ({$duration})\n";
-                $message .= "  └ Черги: <b>{$period['queues']}</b>\n";
-            }
-            $message .= "\n";
-        }
+//        if (! empty($this->schedule->periods)) {
+//            $message .= "⏰ <b>Періоди відключень:</b>\n";
+//            foreach ($this->schedule->periods as $period) {
+//                $duration = $this->calculateDuration($period['from'], $period['to']);
+//                $message .= "• {$period['from']} - {$period['to']} ({$duration})\n";
+//                $message .= "  └ Черги: <b>{$period['queues']}</b>\n";
+//            }
+//            $message .= "\n";
+//        }
 
         // Додаткова інформація з metadata
-        if (! empty($this->schedule['fetched_at'])) {
-            $message .= "📝 <i>Опубліковано: {$this->schedule->fetched_at->format('d.m.Y H:i')}</i>\n";
-        }
+//        if (! empty($this->schedule['fetched_at'])) {
+//            $message .= "📝 <i>Опубліковано: {$this->schedule->fetched_at->format('d.m.Y H:i')}</i>\n";
+//        }
 
 //        // Статистика по чергах
 //        $queueStats = $this->getQueueStatistics();
