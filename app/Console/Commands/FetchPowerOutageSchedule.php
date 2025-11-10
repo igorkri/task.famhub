@@ -20,6 +20,8 @@ class FetchPowerOutageSchedule extends Command
 
         echo "Сейчас время: ".now()->toDateTimeString().PHP_EOL;
         echo "Запрошенная дата: {$date}".PHP_EOL;
+        echo 'time zone: ' . date_default_timezone_get() . PHP_EOL;
+
         echo "-----------------------------------".PHP_EOL;
 
         $this->info("Получение графика отключений на {$date}...");
