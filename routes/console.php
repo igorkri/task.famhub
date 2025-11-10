@@ -21,3 +21,19 @@ Schedule::command('power:fetch-schedule')
     ->withoutOverlapping()
     ->onOneServer()
     ->runInBackground();
+
+// Проверка графика на следующий день с случайным интервалом от 30 до 60 минут
+Schedule::call(function () {
+    \Illuminate\Support\Facades\Artisan::call('power:fetch-schedule', [
+        'date' => now()->addDay()->format('d-m-Y'),
+    ]);
+})
+    ->cron('*/30 * * * *') // Каждые 30 минут
+    ->skip(function () {
+        // Пропускаем выполнение с вероятностью 50% для рандомизации (среднее ~45-60 мин)
+        return rand(0, 1) === 0;
+    })
+    ->name('power:fetch-schedule-next-day')
+    ->withoutOverlapping()
+    ->onOneServer();
+
