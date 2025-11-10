@@ -18,6 +18,10 @@ class FetchPowerOutageSchedule extends Command
     {
         $date = $this->argument('date') ?? now()->format('d-m-Y');
 
+        echo "Сейчас время: ".now()->toDateTimeString().PHP_EOL;
+        echo "Запрошенная дата: {$date}".PHP_EOL;
+        echo "-----------------------------------".PHP_EOL;
+
         $this->info("Получение графика отключений на {$date}...");
 
         try {
