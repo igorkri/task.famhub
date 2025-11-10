@@ -52,31 +52,34 @@ class PowerOutageImageGenerator
         // Заголовок та дата по центру вгорі
         $date = $schedule->schedule_date->format('d.m.Y');
         $time = $schedule->fetched_at->format('H:i');
-        $centerX = $width / 2 - 320;
+        $updateDateTime = $schedule->fetched_at->format('d.m.Y H:i');
 
         // Іконка блискавки
         $draw = new ImagickDraw;
         $draw->setFillColor(new ImagickPixel('#FCD34D'));
         $draw->setFont('DejaVu-Sans');
         $draw->setFontSize(28);
-        $draw->annotation($centerX - 50, 38, '⚡');
+        $draw->setTextAlignment(\Imagick::ALIGN_CENTER);
+        $draw->annotation($width / 2, 30, '⚡');
         $image->drawImage($draw);
 
-        // Заголовок білим кольором
+        // Заголовок білим кольором по центру
         $draw = new ImagickDraw;
         $draw->setFillColor(new ImagickPixel('#FFFFFF'));
         $draw->setFont('DejaVu-Sans-Bold');
         $draw->setFontSize(20);
         $draw->setTextAntialias(true);
-        $draw->annotation($centerX + 20, 35, 'Графік відключень електроенергії');
+        $draw->setTextAlignment(\Imagick::ALIGN_CENTER);
+        $draw->annotation($width / 2, 55, 'Графік відключень електроенергії в місті Полтава');
         $image->drawImage($draw);
 
-        // Дата та час оновлення (з меншим відступом)
+        // Дата по центру
         $draw = new ImagickDraw;
         $draw->setFillColor(new ImagickPixel('#FCD34D'));
         $draw->setFont('DejaVu-Sans-Bold');
-        $draw->setFontSize(14);
-        $draw->annotation($centerX + 100, 52, "📅 {$date}  •  🕐 Оновлено: {$time}");
+        $draw->setFontSize(16);
+        $draw->setTextAlignment(\Imagick::ALIGN_CENTER);
+        $draw->annotation($width / 2, 78, "📅 {$date}");
         $image->drawImage($draw);
 
         $startX = $this->padding + $this->labelWidth;
@@ -251,15 +254,15 @@ class PowerOutageImageGenerator
         $draw->setFillColor(new ImagickPixel('#000000')); // Чорний
         $draw->setFont('DejaVu-Sans-Bold');
         $draw->setFontSize(20);
-        $draw->annotation($legendX + 5, $legendY + 16, 'Легенда:');
+        $draw->annotation($legendX, $legendY + 18, 'Легенда:');
         $image->drawImage($draw);
 
-        $legendX += 95;
+        $legendX += 5;
         // Компактна легенда в один рядок
         $legendY = $bottomY;
         $legendX = $this->padding + 10;
 
-        $legendX += 95;
+        $legendX += 115;
 
         // Зелений
         $draw = new ImagickDraw;
@@ -273,7 +276,7 @@ class PowerOutageImageGenerator
         $draw->setFillColor(new ImagickPixel('#000000')); // Чорний
         $draw->setFont('DejaVu-Sans');
         $draw->setFontSize(18);
-        $draw->annotation($legendX + 36, $legendY + 16, 'Світло є');
+        $draw->annotation($legendX + 36, $legendY + 20, 'Світло є');
         $image->drawImage($draw);
 
         // Червоний
@@ -289,7 +292,7 @@ class PowerOutageImageGenerator
         $draw->setFillColor(new ImagickPixel('#000000')); // Чорний
         $draw->setFont('DejaVu-Sans');
         $draw->setFontSize(18);
-        $draw->annotation($legendX + 36, $legendY + 16, 'Вимкнено');
+        $draw->annotation($legendX + 36, $legendY + 20, 'Вимкнено');
         $image->drawImage($draw);
 
         // Жовтий
@@ -305,7 +308,7 @@ class PowerOutageImageGenerator
         $draw->setFillColor(new ImagickPixel('#000000')); // Чорний
         $draw->setFont('DejaVu-Sans');
         $draw->setFontSize(18);
-        $draw->annotation($legendX + 36, $legendY + 16, 'Можливо');
+        $draw->annotation($legendX + 36, $legendY + 20, 'Можливо');
         $image->drawImage($draw);
 
         // Пояснення
@@ -314,7 +317,7 @@ class PowerOutageImageGenerator
         $draw->setFillColor(new ImagickPixel('#000000')); // Чорний
         $draw->setFont('DejaVu-Sans');
         $draw->setFontSize(17);
-        $draw->annotation($legendX, $legendY + 16, '(клітинка = 30 хв)');
+        $draw->annotation($legendX, $legendY + 20, '(клітинка = 30 хв)');
         $image->drawImage($draw);
 
         $bottomY += 45;
@@ -324,7 +327,7 @@ class PowerOutageImageGenerator
         $draw->setFillColor(new ImagickPixel('#000000')); // Чорний
         $draw->setFont('DejaVu-Sans-Bold');
         $draw->setFontSize(18);
-        $draw->annotation($this->padding + 10, $bottomY, 'Детальні періоди відключень:');
+        $draw->annotation($this->padding + 10, $bottomY + 10, 'Детальні періоди відключень:');
         $image->drawImage($draw);
 
         $bottomY += 25; // Зменшено відступ
@@ -508,26 +511,28 @@ class PowerOutageImageGenerator
         $watermark->setImageFormat('png');
         
         $drawWatermark = new ImagickDraw;
-        $drawWatermark->setFillColor(new ImagickPixel('#00000020')); // Прозоріший
+        $drawWatermark->setFillColor(new ImagickPixel('#00000030')); // Темніший
         $drawWatermark->setFont('DejaVu-Sans-Bold');
-        $drawWatermark->setFontSize(80); // Менший розмір
+        $drawWatermark->setFontSize(60); // Менший розмір
         $drawWatermark->setTextAlignment(\Imagick::ALIGN_CENTER);
+        // Позиція по центру графіка
         $drawWatermark->annotation($graphWidth / 2, $graphHeight / 2, 'ANDROSOVA');
         $watermark->drawImage($drawWatermark);
         
-        // Обертаємо зображення ватермарку на -45 градусів
-        $watermark->rotateImage(new ImagickPixel('transparent'), -45);
-        
-        // Обрізаємо ватермарк до розмірів графіка
-        $watermark->cropImage($graphWidth, $graphHeight, 
-            ($watermark->getImageWidth() - $graphWidth) / 2,
-            ($watermark->getImageHeight() - $graphHeight) / 2);
-        
-        // Накладаємо ватермарк тільки на графік
+        // Накладаємо ватермарк по центру графіка без обертання
         $image->compositeImage($watermark, Imagick::COMPOSITE_OVER, 0, $graphStartY);
         
         $watermark->clear();
         $watermark->destroy();
+
+        // Додаємо інформацію про оновлення внизу справа
+        $draw = new ImagickDraw;
+        $draw->setFillColor(new ImagickPixel('#6B7280'));
+        $draw->setFont('DejaVu-Sans');
+        $draw->setFontSize(12);
+        $draw->setTextAlignment(\Imagick::ALIGN_RIGHT);
+        $draw->annotation($width - $this->padding - 10, $height - 15, "🕐 Останнє оновлення: {$updateDateTime}");
+        $image->drawImage($draw);
 
         // Зберігаємо з високою якістю
         $filename = storage_path('app/temp/power_outage_'.uniqid().'.png');
