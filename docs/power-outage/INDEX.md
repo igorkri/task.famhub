@@ -24,6 +24,7 @@
 - **[SUMMARY.md](SUMMARY.md)** - Итоги разработки и статистика
 - **[CHANGELOG.md](CHANGELOG.md)** - История изменений
 - **[TELEGRAM-GUIDE.md](TELEGRAM-GUIDE.md)** - Настройка Telegram уведомлений
+- **[TELEGRAM-MESSAGES.md](TELEGRAM-MESSAGES.md)** - 💬 Формат повідомлень в Telegram
 - **[HOW-NOTIFICATIONS-WORK.md](HOW-NOTIFICATIONS-WORK.md)** - Как работают уведомления
 
 ### Технические
