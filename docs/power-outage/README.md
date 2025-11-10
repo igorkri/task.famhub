@@ -34,11 +34,15 @@ php artisan power:fetch-schedule 09-11-2025
 
 Система автоматически проверяет график каждые 10 минут через Laravel Scheduler.
 
+**📖 Детальна інструкція:** [AUTO-SCHEDULE-SETUP.md](AUTO-SCHEDULE-SETUP.md) | [Швидкий довідник](AUTO-SCHEDULE-QUICKREF.md)
+
 Убедитесь, что настроен cron:
 
 ```bash
 * * * * * cd /path-to-project && php artisan schedule:run >> /dev/null 2>&1
 ```
+
+Для production рекомендуется использовать Supervisor или systemd timer.
 
 ## Возможности
 

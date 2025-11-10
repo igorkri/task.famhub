@@ -21,10 +21,28 @@ class FetchPowerOutageSchedule extends Command
         $this->info("Получение графика отключений на {$date}...");
 
         try {
-            // Получаем HTML данные
-            $response = Http::asForm()->post('https://www.poe.pl.ua/customs/newgpv-info.php', [
-                'seldate' => json_encode(['date_in' => $date]),
-            ]);
+            // Получаем HTML данные с заголовками браузера для имитации обычного пользователя
+            $response = Http::asForm()
+                ->withHeaders([
+                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
+                    'Accept' => 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+                    'Accept-Language' => 'uk-UA,uk;q=0.9,ru;q=0.8,en;q=0.7',
+                    'Accept-Encoding' => 'gzip, deflate, br',
+                    'Referer' => 'https://www.poe.pl.ua/',
+                    'Origin' => 'https://www.poe.pl.ua',
+                    'Connection' => 'keep-alive',
+                    'Sec-Fetch-Dest' => 'document',
+                    'Sec-Fetch-Mode' => 'navigate',
+                    'Sec-Fetch-Site' => 'same-origin',
+                    'Sec-Fetch-User' => '?1',
+                    'Upgrade-Insecure-Requests' => '1',
+                    'Cache-Control' => 'max-age=0',
+                ])
+                ->timeout(30)
+                ->retry(3, 100)
+                ->post('https://www.poe.pl.ua/customs/newgpv-info.php', [
+                    'seldate' => json_encode(['date_in' => $date]),
+                ]);
 
             if ($response->failed()) {
                 $this->error('Не удалось получить данные с сервера');
