@@ -55,4 +55,8 @@ return [
         'bot_token' => env('TELEGRAM_BOT_TOKEN'),
         'chat_id' => env('TELEGRAM_CHAT_ID'),
     ],
+
+    'air_alert' => [
+        'token' => env('AIR_ALERT_API_TOKEN'),
+    ],
 ];

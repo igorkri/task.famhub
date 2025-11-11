@@ -37,3 +37,34 @@ Schedule::call(function () {
     ->withoutOverlapping()
     ->onOneServer();
 
+// ==========================================
+// Моніторинг повітряних тривог
+// ==========================================
+
+// Загальний моніторинг всіх областей України кожні 30 секунд
+Schedule::command('air-alert:monitor')
+    ->everyThirtySeconds()
+    ->withoutOverlapping()
+    ->onOneServer()
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/air-alert-monitor.log'));
+
+// Детальний моніторинг Полтавської області кожну хвилину
+Schedule::command('air-alert:monitor-poltava --all')
+    ->everyMinute()
+    ->withoutOverlapping()
+    ->onOneServer()
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/poltava-alerts.log'));
+
+// Щоденний звіт про тривоги о 20:00
+Schedule::command('air-alert:daily-report')
+    ->dailyAt('20:00')
+    ->onOneServer()
+    ->runInBackground();
+
+// Щоденний звіт по Полтавській області о 21:00
+Schedule::command('air-alert:daily-report --region=19')
+    ->dailyAt('21:00')
+    ->onOneServer()
+    ->runInBackground();
