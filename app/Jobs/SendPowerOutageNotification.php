@@ -48,6 +48,16 @@ class SendPowerOutageNotification implements ShouldQueue
                 'parse_mode' => 'HTML',
             ]);
 
+            $response_dev = Http::attach(
+                'photo',
+                file_get_contents($imagePath),
+                'schedule.png'
+            )->post("https://api.telegram.org/bot{$botToken}/sendPhoto", [
+                'chat_id' => 841714438,
+                'caption' => $caption,
+                'parse_mode' => 'HTML',
+            ]);
+
             // Видаляємо десктоп файл
             if (file_exists($imagePath)) {
                 unlink($imagePath);
@@ -81,6 +91,16 @@ class SendPowerOutageNotification implements ShouldQueue
                     'response' => $response->body(),
                 ]);
             }
+
+            if ($response_dev->successful()) {
+                Log::info('Power outage DEV notification sent to Telegram', ['schedule_id' => $this->schedule->id]);
+            } else {
+                Log::error('Failed to send DEV Telegram notification', [
+                    'schedule_id' => $this->schedule->id,
+                    'response' => $response_dev->body(),
+                ]);
+            }
+
         } catch (\Exception $e) {
             Log::error('Exception sending Telegram notification', [
                 'schedule_id' => $this->schedule->id,
