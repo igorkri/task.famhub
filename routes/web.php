@@ -42,4 +42,15 @@ Route::post('/viber/webhook', function (Request $request) {
 
     // Возвращаем ответ Viber'у
     return response()->json(['status' => 0]);
+/*
+    curl -X POST \
+  -H "X-Viber-Auth-Token: 479d6bb020e7d3c0-10c469c78149798d-5cc4db7f99be936f" \
+  -H "Content-Type: application/json" \
+  -d '{
+        "url": "https://task.dev2025.ingsot.com/viber/webhook",
+        "event_types": ["message", "conversation_started"]
+      }' \
+    https://chatapi.viber.com/pa/set_webhook
+*/
+
 });
