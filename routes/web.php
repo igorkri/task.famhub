@@ -2,6 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 
@@ -22,7 +23,7 @@ Route::get('/asana-test-projects', [\App\Http\Controllers\AsanaTestController::c
 
 Route::post('/viber/webhook', function (Request $request) {
     // Логируем всё в файл
-    Storage::disk('logs')->append('viber_log.txt', json_encode($request->all(), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+    \Log::info('Viber Webhook', $request->all());
 
     // Проверяем, есть ли сообщение от пользователя
     if (isset($request['event']) && $request['event'] === 'message') {
