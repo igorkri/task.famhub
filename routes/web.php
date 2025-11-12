@@ -18,8 +18,8 @@ Route::get('/asana-test-projects', [\App\Http\Controllers\AsanaTestController::c
 Route::post('/viber/webhook', function (Request $request) {
     $data = $request->all();
 
-    // Логируем всё, что приходит от Viber
-    Storage::append('viber_log.txt', json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+    // Логируем всё в storage/logs/viber_log.txt
+    Storage::disk('logs')->append('viber_log.txt', json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
 
     // Если это обычное сообщение от пользователя
     if (isset($data['event']) && $data['event'] === 'message') {
@@ -27,7 +27,6 @@ Route::post('/viber/webhook', function (Request $request) {
         $userName = $data['sender']['name'] ?? 'Без имени';
         $text = $data['message']['text'] ?? '';
 
-        // Отправляем автоответ пользователю
         if ($userId) {
             Http::withHeaders([
                 'X-Viber-Auth-Token' => '479d6bb020e7d3c0-10c469c78149798d-5cc4db7f99be936f',
@@ -40,8 +39,8 @@ Route::post('/viber/webhook', function (Request $request) {
         }
     }
 
-    // Возвращаем ответ Viber'у
     return response()->json(['status' => 0]);
+});
 /*
     curl -X POST \
   -H "X-Viber-Auth-Token: 479d6bb020e7d3c0-10c469c78149798d-5cc4db7f99be936f" \
@@ -53,4 +52,3 @@ Route::post('/viber/webhook', function (Request $request) {
     https://chatapi.viber.com/pa/set_webhook
 */
 
-});
