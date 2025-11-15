@@ -86,13 +86,13 @@ class AdminPanelProvider extends PanelProvider
                                     'values' => [$currentUserId],
                                 ],
                                 'status' => [
-                                    'values' => ['in_progress', 'planned', 'new', 'needs_clarification'],
+                                    'values' => ['in_progress', 'planned', 'new', /*'needs_clarification'*/],
                                 ],
                             ],
                         ]))
                         ->badge(fn () => \App\Models\Task::where('project_id', $project->id)
                             ->where('user_id', $currentUserId)
-                            ->whereIn('status', ['in_progress', 'planned', 'new', 'needs_clarification'])
+                            ->whereIn('status', ['in_progress', 'planned', 'new', /*'needs_clarification'*/])
                             ->count())
                     )
                     ->all();
