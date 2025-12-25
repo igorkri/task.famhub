@@ -156,6 +156,19 @@ class TaskTimer extends Component
         }
     }
 
+    /**
+     * Автосохранение времени каждую минуту (вызывается из JS).
+     */
+    public function autoSave(int $seconds): void
+    {
+        if ($this->activeTime && $this->isRunning && ! $this->isPaused) {
+            $this->seconds = $seconds;
+            $this->activeTime->update([
+                'duration' => $seconds,
+            ]);
+        }
+    }
+
     public function getFormattedTimeProperty()
     {
         $hours = str_pad(floor($this->seconds / 3600), 2, '0', STR_PAD_LEFT);
