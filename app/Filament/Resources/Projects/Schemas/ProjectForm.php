@@ -40,10 +40,14 @@ class ProjectForm
                             Toggle::make('is_active')->label('Активний проект')->default(true)->inline(false),
                             Toggle::make('is_favorite')->label('Вибране')->default(false)->inline(false),
                             Toggle::make('is_archived')->label('Архівований')->default(false)->inline(false),
+                            TextInput::make('asana_id')
+                                ->label('Project GID')
+                                ->helperText('Ідентифікатор проекту в Asana')
+                                ->maxLength(255),
                         ])
                         ->grow(false)
                         ->columns(1),
-                ])->from('md'),
+                ]),
             ])
             ->columns(1);
     }
