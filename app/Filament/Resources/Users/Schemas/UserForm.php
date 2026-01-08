@@ -61,6 +61,46 @@ class UserForm
                     ])
                     ->collapsible()
                     ->collapsed(),
+
+                Section::make('Налаштування цілей')
+                    ->schema([
+                        TextInput::make('hourly_rate')
+                            ->label('Тариф за годину')
+                            ->numeric()
+                            ->default(400)
+                            ->suffix('₴'),
+
+                        TextInput::make('currency')
+                            ->label('Валюта')
+                            ->default('UAH')
+                            ->maxLength(10),
+
+                        TextInput::make('rate_coefficient')
+                            ->label('Коефіцієнт')
+                            ->numeric()
+                            ->default(1.00)
+                            ->step(0.01),
+
+                        TextInput::make('monthly_hours_goal')
+                            ->label('Місячна ціль годин')
+                            ->numeric()
+                            ->default(160)
+                            ->suffix('год.'),
+
+                        TextInput::make('monthly_earnings_goal')
+                            ->label('Місячна ціль заробітку')
+                            ->numeric()
+                            ->default(64000)
+                            ->suffix('₴'),
+
+                        TextInput::make('weekly_tasks_goal')
+                            ->label('Тижнева ціль завдань')
+                            ->numeric()
+                            ->default(10)
+                            ->suffix('шт.'),
+                    ])
+                    ->columns(3)
+                    ->collapsible(),
             ]);
     }
 }

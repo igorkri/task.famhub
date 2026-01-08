@@ -19,17 +19,17 @@ class GoalsWidget extends Widget
 
     public function getViewData(): array
     {
-        $userId = auth()->id();
+        $user = auth()->user();
+        $userId = $user->id;
         $now = Carbon::now();
 
-        // Місячна ціль годин (налаштовується)
-        $monthlyHoursGoal = 160; // 160 годин на місяць
-
-        // Місячна ціль заробітку
-        $monthlyEarningsGoal = 64000; // 64000 грн на місяць
-
-        // Тижнева ціль завдань
-        $weeklyTasksGoal = 10;
+        // Отримуємо налаштування з профілю користувача
+        $monthlyHoursGoal = $user->monthly_hours_goal ?? 160;
+        $monthlyEarningsGoal = $user->monthly_earnings_goal ?? 64000;
+        $weeklyTasksGoal = $user->weekly_tasks_goal ?? 10;
+        $hourlyRate = $user->hourly_rate ?? 400;
+        $currency = $user->currency ?? 'UAH';
+        $rateCoefficient = $user->rate_coefficient ?? 1.0;
 
         // Фактичні дані за поточний місяць
         $currentMonthTimes = Time::where('user_id', $userId)

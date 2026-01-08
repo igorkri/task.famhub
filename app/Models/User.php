@@ -25,6 +25,12 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         'email',
         'password',
         'asana_gid',
+        'hourly_rate',
+        'currency',
+        'rate_coefficient',
+        'monthly_hours_goal',
+        'monthly_earnings_goal',
+        'weekly_tasks_goal',
     ];
 
     /**
@@ -54,6 +60,11 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'hourly_rate' => 'decimal:2',
+            'rate_coefficient' => 'decimal:2',
+            'monthly_hours_goal' => 'integer',
+            'monthly_earnings_goal' => 'decimal:2',
+            'weekly_tasks_goal' => 'integer',
         ];
     }
 
