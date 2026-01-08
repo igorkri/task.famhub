@@ -6,7 +6,7 @@ use Filament\Widgets\Widget;
 
 class QuickTimerWidget extends Widget
 {
-    protected static ?string $heading = 'Швидкий трекінг часу';
+    protected ?string $heading = 'Швидкий трекінг часу';
 
     protected string $view = 'filament.widgets.quick-timer-widget';
 
@@ -16,6 +16,6 @@ class QuickTimerWidget extends Widget
 
     public static function canView(): bool
     {
-        return auth()->check();
+        return false;
     }
 }
