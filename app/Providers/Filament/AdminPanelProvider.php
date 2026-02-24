@@ -3,6 +3,7 @@
 namespace App\Providers\Filament;
 
 use App\Filament\Resources\ActOfWorks\ActOfWorkResource;
+use App\Filament\Resources\Contractors\ContractorResource;
 use App\Filament\Resources\Sections\SectionResource;
 use App\Filament\Resources\Tasks\TaskResource;
 use App\Filament\Resources\Times\TimeResource;
@@ -112,6 +113,7 @@ class AdminPanelProvider extends PanelProvider
                         ...UserResource::getNavigationItems(),
                         ...\App\Filament\Pages\ManageCustomFields::getNavigationItems(),
                         ...ActOfWorkResource::getNavigationItems(),
+                        ...ContractorResource::getNavigationItems(),
                     ]);
             })
             ->authMiddleware([
