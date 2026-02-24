@@ -44,7 +44,7 @@ class ContractorSeeder extends Seeder
             ],
         ]);
 
-        // ТОВ «ІНГСОТ» (Замовник / Моя компанія)
+        // ТОВ «ІНГСОТ» (Замовник)
         Contractor::updateOrCreate(
             ['email' => 'sergii.gryniuk@gmail.com'],
             [

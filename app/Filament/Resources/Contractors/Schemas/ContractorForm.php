@@ -46,8 +46,16 @@ class ContractorForm
 
                 TextInput::make('in_the_person_of')->label('В особі кого діє підрядник')->required(),
 
-                Section::make('dogovor')
-                    ->label('Договір')
+                Toggle::make('is_active')
+                    ->label('Активний')
+                    ->required(),
+
+                Toggle::make('my_company')
+                    ->label('Моя компанія')
+                    ->required()
+                    ->live(),
+
+                Section::make('Договір')
                     ->schema([
                         TextInput::make('dogovor.number')
                             ->label('Номер договору')
@@ -60,15 +68,7 @@ class ContractorForm
                     ->columns(2)
                     ->collapsible()
                     ->columnSpanFull()
-                ,
-
-                Toggle::make('is_active')
-                    ->label('Активний')
-                    ->required(),
-
-                Toggle::make('my_company')
-                    ->label('Моя компанія')
-                    ->required(),
+                    ->hidden(fn ($get) => $get('my_company') === true),
 
                 RichEditor::make('description')
                     ->label('Опис / Примітки')
@@ -115,7 +115,9 @@ class ContractorForm
                     ->disk('public')
                     ->directory('contractor-dogovors')
                     ->visibility('public')
-                    ->multiple()->columnSpanFull(),
+                    ->multiple()
+                    ->columnSpanFull()
+                    ->hidden(fn ($get) => $get('my_company') === true),
             ]);
     }
 }
