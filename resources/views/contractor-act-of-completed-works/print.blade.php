@@ -5,98 +5,173 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Акт № {{ $act->number }} — {{ $act->date?->format('d.m.Y') }}</title>
     <style>
-        body { font-family: system-ui, 'Segoe UI', sans-serif; font-size: 12px; line-height: 1.4; color: #111; max-width: 800px; margin: 0 auto; padding: 20px; }
-        .no-print { margin-bottom: 16px; }
-        @media print { .no-print { display: none !important; } body { padding: 0; } }
-        h1 { font-size: 16px; text-align: center; margin: 0 0 20px; font-weight: 600; }
-        .meta { margin-bottom: 16px; }
-        .meta p { margin: 4px 0; }
-        .parties { display: grid; gap: 16px; margin: 16px 0; }
-        .party { border: 1px solid #ccc; padding: 10px; }
-        .party strong { display: block; margin-bottom: 6px; }
-        table { width: 100%; border-collapse: collapse; margin: 16px 0; }
-        th, td { border: 1px solid #333; padding: 6px 8px; text-align: left; }
-        th { background: #f0f0f0; font-weight: 600; }
-        .num { text-align: center; width: 36px; }
-        .qty, .price, .amount { text-align: right; white-space: nowrap; }
-        .totals { margin-top: 12px; text-align: right; }
-        .totals p { margin: 4px 0; }
-        .amount-words { margin-top: 12px; font-style: italic; }
+        * { font-family: 'DejaVu Sans', sans-serif !important; font-weight: normal !important; }
+        body { font-size: 11px; line-height: 1.35; color: #111; max-width: 210mm; margin: 0 auto; padding: 18px 24px; }
+        .no-print { margin-bottom: 12px; }
+        @media print { .no-print { display: none !important; } body { padding: 8px; } }
+        .header-approve { display: table; width: 100%; margin-bottom: 18px; }
+        .header-approve .left, .header-approve .right { display: table-cell; width: 50%; vertical-align: top; }
+        .header-approve .right { text-align: right; }
+        .header-approve .label { margin-bottom: 4px; }
+        .stamp-placeholder { min-height: 60px; }
+        .act-title { text-align: center; font-size: 13px; font-weight: bold; margin-bottom: 10px; }
+        .intro { margin: 12px 0; text-align: justify; }
+        .agreement-line { margin: 8px 0; }
+        .services-intro { margin: 8px 0; }
+        table.act-table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+        table.act-table th, table.act-table td { border: 1px solid #333; padding: 5px 6px; text-align: left; font-size: 10px; }
+        table.act-table th { background: #f5f5f5; }
+        table.act-table .col-num { width: 32px; text-align: center; }
+        table.act-table .col-unit { width: 60px; text-align: center; }
+        table.act-table .col-qty { width: 50px; text-align: center; }
+        table.act-table .col-price, table.act-table .col-sum { width: 80px; text-align: right; white-space: nowrap; }
+        .totals-block { margin: 10px 0; width: 260px; margin-left: auto; }
+        .totals-block p { margin: 3px 0; display: flex; justify-content: space-between; }
+        .totals-block .label { padding-right: 6px; }
+        .totals-block .value { min-width: 90px; text-align: right; }
+        .place-compilation { margin: 6px 0; width: 260px; margin-left: auto; }
+        .amount-words { margin: 10px 0; }
+        .declarations { margin: 10px 0; }
+        .signatures { display: table; width: 100%; margin-top: 24px; }
+        .signatures .left, .signatures .right { display: table-cell; width: 50%; vertical-align: top; padding-top: 40px; }
+        .signatures .right { text-align: right; }
+        .signatures .label { margin-bottom: 4px; }
+        .footer-block { display: table; width: 100%; margin-top: 24px; padding-top: 12px; border-top: 1px solid #ccc; font-size: 10px; }
+        .footer-block .left, .footer-block .right { display: table-cell; width: 50%; vertical-align: top; padding-right: 12px; }
+        .footer-block .right { padding-right: 0; padding-left: 12px; }
+        .footer-block p { margin: 2px 0; }
         .btn { padding: 8px 16px; background: #f59e0b; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-size: 14px; }
         .btn:hover { background: #d97706; }
     </style>
 </head>
 <body>
-    <div class="no-print">
-        <button type="button" class="btn" onclick="window.print();">🖨️ Друк</button>
-    </div>
-
-    <h1>АКТ здачі-прийняття робіт (надання послуг)</h1>
-
-    <div class="meta">
-        <p><strong>№</strong> {{ $act->number }} &nbsp; <strong>від</strong> {{ $act->date?->format('d.m.Y') }}</p>
-        @if($act->place_of_compilation)
-            <p><strong>Місце складання:</strong> {{ $act->place_of_compilation }}</p>
-        @endif
-        @if($act->agreement_number || $act->agreement_date)
-            <p><strong>За договором:</strong> {{ $act->agreement_number }} від {{ $act->agreement_date?->format('d.m.Y') }}</p>
-        @endif
-    </div>
-
-    <div class="parties">
-        <div class="party">
-            <strong>Замовник:</strong>
-            @php $c = $act->customer_data ?? []; @endphp
-            {{ $c['name'] ?? '—' }}<br>
-            @if(!empty($c['director'])) {{ $c['director'] }}<br> @endif
-            @if(!empty($c['identification_code'])) ЄДРПОУ {{ $c['identification_code'] }}<br> @endif
-            @if(!empty($c['address'])) {{ $c['address'] }}<br> @endif
-            @if(!empty($c['bank_name']) || !empty($c['iban'])) {{ $c['bank_name'] ?? '' }} {{ $c['iban'] ?? '' }} @endif
+    @php $isPdf = $isPdf ?? false; @endphp
+    @if (! $isPdf)
+        <div class="no-print">
+            <button type="button" class="btn" onclick="window.print();">🖨️ Друк</button>
         </div>
-        <div class="party">
-            <strong>Виконавець:</strong>
-            {{ $act->contractor->full_name ?? $act->contractor->name }}<br>
-            @if($act->contractor->requisites)
-                @if(!empty($act->contractor->requisites['identification_code'])) ЄДРПОУ/ІПН {{ $act->contractor->requisites['identification_code'] }}<br> @endif
-                @if(!empty($act->contractor->requisites['legal_address'])) {{ $act->contractor->requisites['legal_address'] }}<br> @endif
-                @if(!empty($act->contractor->requisites['physical_address'])) {{ $act->contractor->requisites['physical_address'] }}<br> @endif
-                @if(!empty($act->contractor->requisites['bank_name']) || !empty($act->contractor->requisites['iban'])) {{ $act->contractor->requisites['bank_name'] ?? '' }} {{ $act->contractor->requisites['iban'] ?? '' }} @endif
-            @endif
+    @endif
+
+    {{-- ЗАТВЕРДЖУЮ (дві колонки) --}}
+    <div class="header-approve">
+        <div class="left">
+            <div class="label">ЗАТВЕРДЖУЮ</div>
+            <div>{{ $act->contractor->full_name ?? $act->contractor->name }}</div>
+            <div class="stamp-placeholder"></div>
+        </div>
+        <div class="right">
+            <div class="label">ЗАТВЕРДЖУЮ</div>
+            <div>Директор {{ $customerName = ($act->customer_data['name'] ?? $act->customer?->name ?? '—') }}</div>
+            <div>{{ $act->customer_data['director'] ?? $act->customer?->in_the_person_of ?? '—' }}</div>
         </div>
     </div>
 
-    <table>
+    <div class="act-title">
+        Акт здачі-приймання робіт (надання послуг) № {{ $act->number }} від {{ $act->date?->format('d.m.Y') ?? '—' }} р.
+    </div>
+
+    <div class="intro">
+        Ми, що нижче підписалися, представник Замовника {{ $customerName }} в особі директора {{ $act->customer_data['director'] ?? $act->customer?->in_the_person_of ?? '—' }}, з одного боку, і представник Виконавця {{ $act->contractor->full_name ?? $act->contractor->name }} в особі {{ $act->contractor->in_the_person_of ?? $act->contractor->full_name ?? $act->contractor->name }}, з іншого боку, склали цей акт про те, що на підставі наступних документів:
+    </div>
+
+    <div class="agreement-line">
+        Договір: № {{ $act->agreement_number ?? '—' }} від {{ $act->agreement_date?->format('d.m.Y') ?? '—' }}р.
+    </div>
+
+    <div class="services-intro">
+        виконавцем були проведені наступні роботи (зроблені такі послуги):
+    </div>
+
+    <table class="act-table">
         <thead>
             <tr>
-                <th class="num">№ п/п</th>
-                <th>Послуга / робота</th>
-                <th>Од.</th>
-                <th class="qty">К-сть</th>
-                <th class="price">Ціна</th>
-                <th class="amount">Сума</th>
+                <th class="col-num">№ п/п</th>
+                <th>Послуга</th>
+                <th class="col-unit">Од.</th>
+                <th class="col-qty">К-сть</th>
+                <th class="col-price">Ціна</th>
+                <th class="col-sum">Сума</th>
             </tr>
         </thead>
         <tbody>
             @foreach($act->items as $item)
             <tr>
-                <td class="num">{{ $item->sequence_number }}</td>
+                <td class="col-num">{{ $item->sequence_number }}</td>
                 <td>{{ $item->service_description }}</td>
-                <td>{{ $item->unit }}</td>
-                <td class="qty">{{ number_format($item->quantity, 2, ',', ' ') }}</td>
-                <td class="price">{{ number_format($item->unit_price, 2, ',', ' ') }}</td>
-                <td class="amount">{{ number_format($item->amount, 2, ',', ' ') }}</td>
+                <td class="col-unit">{{ $item->unit }}</td>
+                <td class="col-qty">{{ number_format($item->quantity, 2, ',', ' ') }}</td>
+                <td class="col-price">{{ number_format($item->unit_price, 2, ',', ' ') }}</td>
+                <td class="col-sum">{{ number_format($item->amount, 2, ',', ' ') }}</td>
             </tr>
             @endforeach
         </tbody>
     </table>
 
-    <div class="totals">
-        <p><strong>Всього:</strong> {{ number_format($act->total_amount, 2, ',', ' ') }} грн</p>
-        <p><strong>ПДВ:</strong> {{ number_format($act->vat_amount, 2, ',', ' ') }} грн</p>
-        <p><strong>Загальна вартість з ПДВ:</strong> {{ number_format($act->total_with_vat, 2, ',', ' ') }} грн</p>
+    <div class="totals-block">
+        <p>
+            <span class="label">Всього:</span>
+            <span class="value">{{ number_format($act->total_amount, 2, ',', ' ') }}</span>
+        </p>
+        <p>
+            <span class="label">Податок на додану вартість (ПДВ):</span>
+            <span class="value">{{ number_format($act->vat_amount, 2, ',', ' ') }}</span>
+        </p>
+        <p>
+            <span class="label">Загальна вартість з ПДВ:</span>
+            <span class="value">{{ number_format($act->total_with_vat, 2, ',', ' ') }}</span>
+        </p>
     </div>
-    @if($act->total_amount_in_words)
-        <p class="amount-words"><strong>Сума прописом:</strong> {{ $act->total_amount_in_words }}</p>
+
+    @if($act->place_of_compilation)
+    <div class="place-compilation">
+        Місце складання: {{ $act->place_of_compilation }}
+    </div>
     @endif
+
+    @if($act->total_amount_in_words)
+    <div class="amount-words">
+        Загальна вартість робіт (послуг) склала: {{ $act->total_amount_in_words }}
+    </div>
+    @endif
+
+    <div class="declarations">
+        <p>Сторони претензій не мають.</p>
+        <p>Виконавець працює за спрощеною системою оподаткування. ПДВ не сплачується.</p>
+    </div>
+
+    <div class="signatures">
+        <div class="left">
+            <div class="label">Від Виконавця</div>
+        </div>
+        <div class="right">
+            <div class="label">Від Замовника</div>
+            <div>Директор: {{ $act->customer_data['director'] ?? $act->customer?->in_the_person_of ?? '—' }}</div>
+        </div>
+    </div>
+
+    <div class="footer-block">
+        <div class="left">
+            <p><strong>{{ $act->contractor->full_name ?? $act->contractor->name }}</strong></p>
+            @php $req = $act->contractor->requisites ?? []; @endphp
+            @if(!empty($req['identification_code']))<p>Ідентифікаційний номер: {{ $req['identification_code'] }}</p>@endif
+            @if(!empty($req['legal_address']))<p>Юридична адреса: {{ $req['legal_address'] }}</p>@endif
+            @if(!empty($req['physical_address']))<p>Фізична адреса: {{ $req['physical_address'] }}</p>@endif
+            @if(!empty($act->contractor->phone))<p>тел.: {{ $act->contractor->phone }}</p>@endif
+            @if(!empty($req['iban']))<p>р/р No: {{ $req['iban'] }}</p>@endif
+            @if(!empty($req['bank_name']))<p>Банк: {{ $req['bank_name'] }}</p>@endif
+            @if(!empty($req['mfo']))<p>МФО: {{ $req['mfo'] }}</p>@endif
+        </div>
+        <div class="right">
+            <p><strong>{{ $act->customer_data['name'] ?? $act->customer?->name ?? '—' }}</strong></p>
+            @php $c = $act->customer_data ?? []; @endphp
+            @if(!empty($c['identification_code']))<p>Ідентифікаційний код ЄДРПОУ: {{ $c['identification_code'] }}</p>@endif
+            @if(!empty($c['vat_certificate']))<p>Свідоцтво ПДВ: №{{ $c['vat_certificate'] }}</p>@endif
+            @if(!empty($c['individual_tax_number']))<p>Індивідуальний податковий: №{{ $c['individual_tax_number'] }}</p>@endif
+            @if(!empty($c['bank_name']))<p>Банк ПАТ: {{ $c['bank_name'] }}</p>@endif
+            @if(!empty($c['mfo']))<p>МФО: {{ $c['mfo'] }}</p>@endif
+            @if(!empty($c['iban']))<p>IBAN: {{ $c['iban'] }}</p>@endif
+            @if(!empty($c['address']))<p>Адреса: {{ is_string($c['address']) ? str_replace("\n", ', ', $c['address']) : '' }}</p>@endif
+        </div>
+    </div>
 </body>
 </html>

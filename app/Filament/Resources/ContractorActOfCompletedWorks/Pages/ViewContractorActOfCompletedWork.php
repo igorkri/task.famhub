@@ -14,6 +14,12 @@ class ViewContractorActOfCompletedWork extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('pdf')
+                ->label('Завантажити PDF')
+                ->icon('heroicon-o-document-arrow-down')
+                ->url(fn () => route('admin.contractor-act-of-completed-works.pdf', ['act' => $this->record]))
+                ->openUrlInNewTab()
+                ->color('success'),
             Action::make('print')
                 ->label('Друк')
                 ->icon('heroicon-o-printer')

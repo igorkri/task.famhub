@@ -24,6 +24,8 @@ Route::get('/asana-test-projects', [\App\Http\Controllers\AsanaTestController::c
 Route::middleware(['web', 'auth'])->group(function () {
     Route::get('/admin/contractor-act-of-completed-works/{act}/print', \App\Http\Controllers\ContractorActOfCompletedWorkPrintController::class)
         ->name('admin.contractor-act-of-completed-works.print');
+    Route::get('/admin/contractor-act-of-completed-works/{act}/pdf', [\App\Http\Controllers\ContractorActOfCompletedWorkPrintController::class, 'pdf'])
+        ->name('admin.contractor-act-of-completed-works.pdf');
 });
 
 // GET route для верифікації Viber webhook

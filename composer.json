@@ -9,6 +9,7 @@
         "php": "^8.4",
         "ext-imagick": "*",
         "asana/asana": "^1.0",
+        "barryvdh/laravel-dompdf": "^3.1",
         "bezhansalleh/filament-shield": "^4.0",
         "filament/filament": "^4.0",
         "kwn/number-to-words": "^2.12",

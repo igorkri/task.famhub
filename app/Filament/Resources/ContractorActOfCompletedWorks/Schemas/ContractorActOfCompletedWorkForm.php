@@ -83,7 +83,7 @@ class ContractorActOfCompletedWorkForm
                             )
                             ->searchable()
                             ->preload()
-                            ->live(onBlur: true)
+                            ->live()
                             ->afterStateUpdated(function ($state, callable $set): void {
                                 if (!$state) {
                                     return;
@@ -93,16 +93,22 @@ class ContractorActOfCompletedWorkForm
                                     return;
                                 }
                                 $req = $customer->requisites ?? [];
-                                $set('customer_data.name', $req['name'] ?? $customer->full_name ?? $customer->name ?? '');
-                                $set('customer_data.director', $req['director'] ?? $customer->in_the_person_of ?? '');
-                                $set('customer_data.identification_code', $req['identification_code'] ?? '');
-                                $set('customer_data.vat_certificate', $req['vat_certificate'] ?? '');
-                                $set('customer_data.individual_tax_number', $req['individual_tax_number'] ?? $req['identification_code'] ?? '');
-                                $set('customer_data.bank_name', $req['bank_name'] ?? '');
-                                $set('customer_data.mfo', $req['mfo'] ?? '');
-                                $set('customer_data.iban', $req['iban'] ?? '');
-                                $addr = trim(($req['legal_address'] ?? ''));
-                                $set('customer_data.address', $addr);
+                                $name = $req['name'] ?? $customer->full_name ?? $customer->name ?? '';
+                                $address = trim(implode("\n", array_filter([
+                                    $req['legal_address'] ?? '',
+                                    $req['physical_address'] ?? '',
+                                ])));
+                                $set('customer_data', [
+                                    'name' => $name,
+                                    'director' => $req['director'] ?? $customer->in_the_person_of ?? '',
+                                    'identification_code' => $req['identification_code'] ?? '',
+                                    'vat_certificate' => $req['vat_certificate'] ?? '',
+                                    'individual_tax_number' => $req['individual_tax_number'] ?? $req['identification_code'] ?? '',
+                                    'bank_name' => $req['bank_name'] ?? '',
+                                    'mfo' => $req['mfo'] ?? '',
+                                    'iban' => $req['iban'] ?? '',
+                                    'address' => $address,
+                                ]);
 
                                 if ($customer->dogovor) {
                                     $set('agreement_number', $customer->dogovor['number'] ?? '');

@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\ContractorActOfCompletedWorks\Tables;
 
+use App\Models\ContractorActOfCompletedWork;
+use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -92,6 +94,11 @@ class ContractorActOfCompletedWorksTable
                     ->preload(),
             ])
             ->recordActions([
+                Action::make('pdf')
+                    ->label('PDF')
+                    ->icon('heroicon-o-document-arrow-down')
+                    ->url(fn (ContractorActOfCompletedWork $record): string => route('admin.contractor-act-of-completed-works.pdf', ['act' => $record]))
+                    ->openUrlInNewTab(),
                 ViewAction::make(),
                 EditAction::make(),
             ])
