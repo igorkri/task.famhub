@@ -101,6 +101,9 @@ class ContractorForm
                         TextInput::make('requisites.vat_certificate')
                             ->label('Свідоцтво ПДВ')
                             ->nullable(),
+                        TextInput::make('requisites.act_place')
+                            ->label('Місце складання акта виконаних робіт')
+                            ->visible(fn ($get) => $get('my_company') === true),
                         Textarea::make('requisites.taxation_note')
                             ->label('Примітка про оподаткування')
                             ->columnSpanFull()

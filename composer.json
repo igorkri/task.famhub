@@ -7,13 +7,14 @@
     "license": "MIT",
     "require": {
         "php": "^8.4",
+        "ext-imagick": "*",
         "asana/asana": "^1.0",
         "bezhansalleh/filament-shield": "^4.0",
         "filament/filament": "^4.0",
+        "kwn/number-to-words": "^2.12",
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1",
-        "pxlrbt/filament-excel": "^3.1",
-        "ext-imagick": "*"
+        "pxlrbt/filament-excel": "^3.1"
     },
     "require-dev": {
         "barryvdh/laravel-debugbar": "^3.16",

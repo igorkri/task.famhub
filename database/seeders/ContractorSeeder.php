@@ -41,6 +41,7 @@ class ContractorSeeder extends Seeder
                 'iban' => 'UA543071230000026000010537441',
                 'vat_certificate' => null,
                 'taxation_note' => 'Виконавець працює за спрощеною системою оподаткування. ПДВ не сплачується.',
+                'act_place' => 'м. Полтава',
             ],
         ]);
 
@@ -75,6 +76,7 @@ class ContractorSeeder extends Seeder
                 'individual_tax_number' => '№374009326557',
                 'director' => 'Гринюк Сергій Анатолійович',
                 'taxation_note' => null,
+                'act_place' => 'м. Київ',
             ],
         ]);
     }

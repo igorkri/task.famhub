@@ -20,6 +20,12 @@ Route::get('/ping', function () {
 
 Route::get('/asana-test-projects', [\App\Http\Controllers\AsanaTestController::class, 'projects']);
 
+// Друк акту виконаних робіт (захищено авторизацією)
+Route::middleware(['web', 'auth'])->group(function () {
+    Route::get('/admin/contractor-act-of-completed-works/{act}/print', \App\Http\Controllers\ContractorActOfCompletedWorkPrintController::class)
+        ->name('admin.contractor-act-of-completed-works.print');
+});
+
 // GET route для верифікації Viber webhook
 Route::get('/viber/webhook', function (Request $request) {
     $logFile = storage_path('logs/viber_webhook.log');
