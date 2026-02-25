@@ -22,6 +22,8 @@ Route::get('/asana-test-projects', [\App\Http\Controllers\AsanaTestController::c
 
 // Друк акту виконаних робіт (захищено авторизацією)
 Route::middleware(['web', 'auth'])->group(function () {
+    Route::get('/admin/export-contractor-acts-pdf', [\App\Http\Controllers\ContractorActOfCompletedWorkPrintController::class, 'exportBulkPdf'])
+        ->name('admin.contractor-act-of-completed-works.export-pdf');
     Route::get('/admin/contractor-act-of-completed-works/{act}/print', \App\Http\Controllers\ContractorActOfCompletedWorkPrintController::class)
         ->name('admin.contractor-act-of-completed-works.print');
     Route::get('/admin/contractor-act-of-completed-works/{act}/pdf', [\App\Http\Controllers\ContractorActOfCompletedWorkPrintController::class, 'pdf'])

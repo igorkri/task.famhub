@@ -4,6 +4,7 @@ namespace App\Filament\Resources\ContractorActOfCompletedWorks\Tables;
 
 use App\Models\ContractorActOfCompletedWork;
 use Filament\Actions\Action;
+use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -11,6 +12,7 @@ use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Collection;
 
 class ContractorActOfCompletedWorksTable
 {
@@ -104,6 +106,14 @@ class ContractorActOfCompletedWorksTable
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
+                    BulkAction::make('exportPdf')
+                        ->label('Експорт вибраних в PDF')
+                        ->icon('heroicon-o-document-arrow-down')
+                        ->action(function (Collection $records) {
+                            $ids = $records->pluck('id')->implode(',');
+                            return redirect()->route('admin.contractor-act-of-completed-works.export-pdf', ['ids' => $ids]);
+                        })
+                        ->deselectRecordsAfterCompletion(),
                     DeleteBulkAction::make(),
                 ]),
             ])

@@ -2,7 +2,7 @@
 <html lang="uk">
 <head>
     <meta charset="utf-8">
-    <title>Акт № {{ $act->number }}</title>
+    <title>Акти виконаних робіт</title>
 
     <style>
         @font-face {
@@ -35,9 +35,7 @@
 
         .text-center { text-align: center; }
         .text-right { text-align: right; }
-        /* У PDF DejaVu Sans має жирний варіант з кирилицею; Times-Bold (fallback) — лише Latin-1, тому для PDF використовуємо DejaVu Sans */
         .bold { font-size: 16px; }
-        /* .bold { font-weight: bold; } */
 
         .section { margin-bottom: 14px; }
 
@@ -70,54 +68,55 @@
         }
 
         .footer {
+            width: 100%;
+            border-collapse: collapse;
             margin-top: 30px;
             font-size: 13px;
-            border-top: 1px solid #000;
-            padding-top: 10px;
+            border: 1px solid #000;
         }
 
-    .footer {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 30px;
-        font-size: 13px;
-        border: 1px solid #000;
-    }
+        .footer td {
+            width: 50%;
+            vertical-align: top;
+            padding: 12px 14px;
+        }
 
-    .footer td {
-        width: 50%;
-        vertical-align: top;
-        padding: 12px 14px;
-    }
+        .footer td:first-child {
+            border-right: 1px solid #000;
+        }
 
-    .footer td:first-child {
-        border-right: 1px solid #000;
-    }
+        .footer .company-name {
+            font-size: 13px;
+            margin-bottom: 6px;
+        }
 
-    .footer .company-name {
-    
-        font-size: 13px;
-        margin-bottom: 6px;
-    }
+        .footer p {
+            margin: 3px 0;
+            line-height: 1.3;
+        }
 
-    .footer p {
-        margin: 3px 0;
-        line-height: 1.3;
-    }
+        .min-padding td,
+        .min-padding th {
+            padding: 0 10px;
+        }
 
-    .footer .label {
-        
-    }
+        /* Кожен акт — окрема сторінка в PDF */
+        .act-page {
+            page-break-after: always;
+        }
 
-    .min-padding td,
-    .min-padding th {
-        padding: 0 10px;
-    }
-</style>
+        .act-page:last-child {
+            page-break-after: auto;
+        }
+    </style>
 </head>
 <body>
 
-@include('contractor-act-of-completed-works.partials.act-content', ['act' => $act])
+@foreach($acts as $act)
+<div class="act-page">
+    @include('contractor-act-of-completed-works.partials.act-content', ['act' => $act])
+</div>
+@endforeach
 
 </body>
 </html>
