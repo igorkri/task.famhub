@@ -9,11 +9,10 @@ use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
 use Maatwebsite\Excel\Concerns\ToCollection;
-use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithCustomCsvSettings;
 use NumberToWords\NumberToWords;
 
-class PaymentsToContractorActsImport implements SkipsEmptyRows, ToCollection, WithChunkReading, WithCustomCsvSettings
+class PaymentsToContractorActsImport implements SkipsEmptyRows, ToCollection, WithCustomCsvSettings
 {
     private int $importedCount = 0;
 
@@ -26,72 +25,100 @@ class PaymentsToContractorActsImport implements SkipsEmptyRows, ToCollection, Wi
     /**
      * Очікуваний формат CSV / Excel (як у файлі UAH_PAYMENTS_TOV_"INHSOT"_28012026.csv):
      *
-     * Дата документа,Номер документа,Сума,Назва відправника,Призначення платежу
-     * 18.08.2025,242,18000.00,"ТОВ ""ІНГСОТ"" ","За підтримку та доопрацювання веб-сайту ... "
+     * Дата документа,Група,Номер документа,Сума,Назва відправника,Призначення платежу
+     * Рядки з однаковою Групою об'єднуються в один акт (дата = остання в групі, сума = сума по групі,
+     * номер акту = номер групи, номери документів — в поле description через кому).
      */
     private const COL_DOC_DATE = 0;
 
-    private const COL_DOC_NUMBER = 1;
+    private const COL_GROUP = 1;
 
-    private const COL_AMOUNT = 2;
+    private const COL_DOC_NUMBER = 2;
 
-    private const COL_CUSTOMER_NAME = 3;
+    private const COL_AMOUNT = 3;
 
-    private const COL_PURPOSE = 4;
+    private const COL_CUSTOMER_NAME = 4;
 
-    private const MIN_COLUMNS = 5;
+    private const COL_PURPOSE = 5;
+
+    private const MIN_COLUMNS = 6;
 
     public function collection(Collection $rows): void
     {
         $isFirst = true;
+        $grouped = [];
 
         foreach ($rows as $row) {
             $row = $row instanceof Collection ? $row : collect($row);
 
-            // Перша строка - заголовки
             if ($isFirst) {
                 $isFirst = false;
                 continue;
             }
 
+            $groupKey = trim((string) ($row[self::COL_GROUP] ?? ''));
+            if ($groupKey === '') {
+                $this->warnings[] = 'Рядок пропущено: порожня група';
+                $this->skippedCount++;
+                continue;
+            }
+
+            if ($row->count() < self::MIN_COLUMNS) {
+                $this->warnings[] = 'Рядок пропущено: замало колонок ('.$row->count().')';
+                $this->skippedCount++;
+                continue;
+            }
+
+            $docDate = $this->parseDate((string) ($row[self::COL_DOC_DATE] ?? ''));
+            if (! $docDate) {
+                $this->warnings[] = 'Рядок пропущено: невірна дата документа';
+                $this->skippedCount++;
+                continue;
+            }
+
+            $amount = $this->parseAmount((string) ($row[self::COL_AMOUNT] ?? ''));
+            if ($amount <= 0) {
+                $this->warnings[] = 'Рядок пропущено: сума ≤ 0';
+                $this->skippedCount++;
+                continue;
+            }
+
+            if (! isset($grouped[$groupKey])) {
+                $grouped[$groupKey] = [];
+            }
+            $grouped[$groupKey][] = [
+                'doc_date' => $docDate,
+                'doc_number' => trim((string) ($row[self::COL_DOC_NUMBER] ?? '')),
+                'amount' => $amount,
+                'customer_name' => trim(str_replace(['"', "'"], '', (string) ($row[self::COL_CUSTOMER_NAME] ?? ''))),
+                'purpose' => trim((string) ($row[self::COL_PURPOSE] ?? '')),
+            ];
+        }
+
+        foreach ($grouped as $groupNumber => $groupRows) {
             try {
-                $this->processRow($row);
+                $this->processGroup($groupNumber, collect($groupRows));
             } catch (\Throwable $e) {
-                $this->errors[] = 'Рядок: '.$e->getMessage();
+                $this->errors[] = "Група {$groupNumber}: ".$e->getMessage();
                 $this->skippedCount++;
             }
         }
     }
 
-    private function processRow(Collection $row): void
+    /**
+     * Створює один акт на групу: дата = остання в групі, сума = сума по групі,
+     * номер акту = номер групи, номери документів — в description через кому.
+     */
+    private function processGroup(string $groupNumber, Collection $groupRows): void
     {
-        if ($row->count() < self::MIN_COLUMNS) {
-            $this->warnings[] = 'Рядок пропущено: замало колонок ('.$row->count().')';
-            $this->skippedCount++;
+        $lastDate = $groupRows->max('doc_date');
+        $totalAmount = $groupRows->sum('amount');
+        $docNumbers = $groupRows->pluck('doc_number')->filter()->unique()->values()->all();
+        $docNumbersString = implode(', ', $docNumbers);
 
-            return;
-        }
-
-        $docDate = $this->parseDate((string) ($row[self::COL_DOC_DATE] ?? ''));
-        if (! $docDate) {
-            $this->warnings[] = 'Рядок пропущено: невірна дата документа';
-            $this->skippedCount++;
-
-            return;
-        }
-
-        $amount = $this->parseAmount((string) ($row[self::COL_AMOUNT] ?? ''));
-        if ($amount <= 0) {
-            $this->warnings[] = 'Рядок пропущено: сума ≤ 0';
-            $this->skippedCount++;
-
-            return;
-        }
-
-        $customerName = trim(str_replace(['"', "'"], '', (string) ($row[self::COL_CUSTOMER_NAME] ?? '')));
-        $documentNumber = trim((string) ($row[self::COL_DOC_NUMBER] ?? ''));
-        $documentDate = $docDate;
-        $purpose = trim((string) ($row[self::COL_PURPOSE] ?? ''));
+        $firstRow = $groupRows->first();
+        $customerName = $firstRow['customer_name'];
+        $purpose = $firstRow['purpose'] ?: 'Оплата за послуги';
 
         $myCompany = Contractor::myCompany()->first();
         if (! $myCompany) {
@@ -120,70 +147,63 @@ class PaymentsToContractorActsImport implements SkipsEmptyRows, ToCollection, Wi
             $customerData = ['name' => $customerName ?: '—'];
         }
 
-        $agreementNumber = null;
-        $agreementDate = null;
-
+        $agreementNumber = $groupNumber;
+        $agreementDate = $lastDate;
         if ($customer && $customer->dogovor) {
             $dogovor = $customer->dogovor;
-            $agreementNumber = $dogovor['number'] ?? null;
-
+            $agreementNumber = $dogovor['number'] ?? $groupNumber;
             if (! empty($dogovor['date'])) {
                 try {
                     $agreementDate = Carbon::parse($dogovor['date']);
                 } catch (\Throwable) {
-                    $agreementDate = null;
+                    $agreementDate = $lastDate;
                 }
             }
         }
 
-        if (! $agreementNumber) {
-            $agreementNumber = $documentNumber ?: null;
-        }
-
-        if (! $agreementDate) {
-            $agreementDate = $documentDate;
-        }
-
-        $exists = false;
-        if ($documentNumber !== '') {
-            $exists = ContractorActOfCompletedWork::where('number', $documentNumber)
-                ->whereDate('date', $docDate->format('Y-m-d'))
-                ->where('total_amount', $amount)
-                ->exists();
-        }
+        $exists = ContractorActOfCompletedWork::where('number', $groupNumber)
+            ->whereDate('date', $lastDate->format('Y-m-d'))
+            ->where('total_amount', $totalAmount)
+            ->exists();
 
         if ($exists) {
-            $this->warnings[] = "Запис вже існує: {$documentNumber} від {$docDate->format('d.m.Y')}, {$amount} грн";
+            $this->warnings[] = "Акт групи вже існує: {$groupNumber} від {$lastDate->format('d.m.Y')}, {$totalAmount} грн";
             $this->skippedCount++;
 
             return;
         }
 
-        $vatAmount = 0.0;
-        $totalWithVat = $amount;
         $amountInWords = '';
-
         try {
-            $amountInKopiyky = (int) round($amount * 100);
+            $amountInKopiyky = (int) round($totalAmount * 100);
             $amountInWords = NumberToWords::transformCurrency('ua', $amountInKopiyky, 'UAH');
         } catch (\Throwable) {
-            // ігноруємо, залишаємо порожнім
+            // ігноруємо
         }
 
+        $descriptionParts = [];
+        if ($docNumbersString !== '') {
+            $descriptionParts[] = 'Номери документів: '.$docNumbersString;
+        }
+        if ($purpose !== 'Оплата за послуги') {
+            $descriptionParts[] = $purpose;
+        }
+        $description = implode("\n", $descriptionParts) ?: null;
+
         $act = ContractorActOfCompletedWork::create([
-            'number' => $documentNumber ?: ('AUTO-'.now()->format('Ymd').'-'.str_pad((string) (ContractorActOfCompletedWork::whereDate('date', $docDate)->count() + 1), 3, '0', STR_PAD_LEFT)),
-            'date' => $docDate,
+            'number' => $groupNumber,
+            'date' => $lastDate,
             'place_of_compilation' => $myCompany->requisites['act_place'] ?? $myCompany->requisites['physical_address'] ?? null,
             'contractor_id' => $myCompany->id,
             'customer_id' => $customerId,
             'agreement_number' => $agreementNumber,
             'agreement_date' => $agreementDate,
             'customer_data' => $customerData,
-            'total_amount' => $amount,
-            'vat_amount' => $vatAmount,
-            'total_with_vat' => $totalWithVat,
+            'total_amount' => $totalAmount,
+            'vat_amount' => 0.0,
+            'total_with_vat' => $totalAmount,
             'total_amount_in_words' => $amountInWords ?: null,
-            'description' => $purpose ?: null,
+            'description' => $description,
             'status' => ContractorActOfCompletedWork::STATUS_DRAFT,
             'sort' => 0,
         ]);
@@ -191,11 +211,11 @@ class PaymentsToContractorActsImport implements SkipsEmptyRows, ToCollection, Wi
         ContractorActOfCompletedWorkItem::create([
             'contractor_act_of_completed_work_id' => $act->id,
             'sequence_number' => 1,
-            'service_description' => $purpose ?: 'Оплата за послуги',
+            'service_description' => $purpose,
             'unit' => 'Послуга',
             'quantity' => 1,
-            'unit_price' => $amount,
-            'amount' => $amount,
+            'unit_price' => $totalAmount,
+            'amount' => $totalAmount,
             'sort' => 0,
         ]);
 
@@ -271,11 +291,6 @@ class PaymentsToContractorActsImport implements SkipsEmptyRows, ToCollection, Wi
         } catch (\Throwable) {
             return null;
         }
-    }
-
-    public function chunkSize(): int
-    {
-        return 100;
     }
 
     public function getCsvSettings(): array

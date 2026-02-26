@@ -54,6 +54,11 @@ class Contractor extends Model
         return self::$typeList;
     }
 
+    public static function myCompany()
+    {
+        return self::where('my_company', true)->first();
+    }
+
     protected function casts(): array
     {
         return [
