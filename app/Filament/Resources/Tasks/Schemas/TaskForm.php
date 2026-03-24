@@ -12,7 +12,6 @@ use Filament\Forms\Components\Repeater;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\TimePicker;
 use Filament\Forms\Components\Toggle;
 use Filament\Forms\Components\ViewField;
 use Filament\Schemas\Components\Flex;
@@ -187,13 +186,30 @@ class TaskForm
                     ->schema([
                         // Первая строка: основная информация
                         Flex::make([
-                            TimePicker::make('duration')
+                            TextInput::make('duration')
                                 ->label('⏰ Час')
-                                ->seconds(true)
+                                ->placeholder('200:02:12')
+                                ->live()
+                                ->helperText(fn ($state): string => self::getDurationHelperText($state))
                                 ->required()
-                                ->dehydrateStateUsing(fn ($state) => $state)
+                                ->rule('regex:/^\d+:[0-5]\d:[0-5]\d$/')
+                                ->validationMessages([
+                                    'regex' => 'Використовуйте формат ГГ:ХХ:СС, наприклад 200:02:12.',
+                                ])
+                                ->dehydrateStateUsing(fn ($state) => trim((string) $state))
                                 ->afterStateHydrated(function ($component, $state) {
-                                    $component->state($state ?? '00:00:00');
+                                    if (is_numeric($state)) {
+                                        $seconds = (int) $state;
+                                        $hours = str_pad((string) floor($seconds / 3600), 2, '0', STR_PAD_LEFT);
+                                        $minutes = str_pad((string) floor(($seconds % 3600) / 60), 2, '0', STR_PAD_LEFT);
+                                        $remainingSeconds = str_pad((string) ($seconds % 60), 2, '0', STR_PAD_LEFT);
+
+                                        $component->state("{$hours}:{$minutes}:{$remainingSeconds}");
+
+                                        return;
+                                    }
+
+                                    $component->state($state ?: '00:00:00');
                                 })
                                 ->grow(false),
 
@@ -313,6 +329,27 @@ class TaskForm
             ->columnSpanFull();
     }
 
+    private static function getDurationHelperText(mixed $state): string
+    {
+        $defaultMessage = 'Формат: ГГ:ХХ:СС. Години можуть бути більше 24.';
+
+        if (! is_string($state)) {
+            return $defaultMessage;
+        }
+
+        if (! preg_match('/^(\d+):([0-5]\d):([0-5]\d)$/', $state, $matches)) {
+            return $defaultMessage;
+        }
+
+        $hours = (int) $matches[1];
+        $minutes = (int) $matches[2];
+
+        $days = (int) floor($hours / 24);
+        $remainingHours = $hours % 24;
+
+        return $defaultMessage." Це: {$days} дн {$remainingHours} год {$minutes} хв.";
+    }
+
     private static function commentsSection()
     {
         return Section::make('💬 Коментарі')
@@ -362,7 +399,7 @@ class TaskForm
                         $syncIcon = ! empty($state['asana_gid']) ? '✅' : '⏳';
                         $content = $state['content'] ?? 'Новий коментар';
                         $truncated = mb_substr($content, 0, 150, 'UTF-8');
-                        $truncated .= mb_strlen($content, 'UTF-8') > 150? '...' : '';
+                        $truncated .= mb_strlen($content, 'UTF-8') > 150 ? '...' : '';
 
                         return "{$syncIcon} {$truncated}";
                     })

@@ -4,12 +4,10 @@ namespace App\Filament\Resources\Times\Schemas;
 
 use App\Models\Task;
 use App\Models\Time;
-use App\Models\User;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
-use Filament\Forms\Components\TimePicker;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
@@ -30,7 +28,7 @@ class TimeForm
                     ->options(function () {
                         return \App\Models\User::usersList();
                     }),
-                TextInput::make('title')->label('Назва')->required()->maxLength(255),
+                TextInput::make('title')->label('Назва')->required()->maxLength(255)->columnSpanFull(),
                 Textarea::make('description')
                     ->label('Опис')
                     ->columnSpanFull(),
@@ -40,10 +38,31 @@ class TimeForm
                     ->default(1.2)
                     ->numeric(),
                 //                    ->options(Time::$coefficients),
-                TimePicker::make('duration')
-                    ->label('Тривалість (год:хв:сек)')
+                TextInput::make('duration')
+                    ->label('⏰ Час')
+                    ->placeholder('200:02:12')
+                    ->helperText('Формат: ГГ:ХХ:СС. Години можуть бути більше 24.')
                     ->required()
-                    ->default(0),
+                    ->rule('regex:/^\d+:[0-5]\d:[0-5]\d$/')
+                    ->validationMessages([
+                        'regex' => 'Використовуйте формат ГГ:ХХ:СС, наприклад 200:02:12.',
+                    ])
+                    ->dehydrateStateUsing(fn ($state) => trim((string) $state))
+                    ->afterStateHydrated(function ($component, $state) {
+                        if (is_numeric($state)) {
+                            $seconds = (int) $state;
+                            $hours = str_pad((string) floor($seconds / 3600), 2, '0', STR_PAD_LEFT);
+                            $minutes = str_pad((string) floor(($seconds % 3600) / 60), 2, '0', STR_PAD_LEFT);
+                            $remainingSeconds = str_pad((string) ($seconds % 60), 2, '0', STR_PAD_LEFT);
+
+                            $component->state("{$hours}:{$minutes}:{$remainingSeconds}");
+
+                            return;
+                        }
+
+                        $component->state($state ?: '00:00:00');
+                    })
+                    ->grow(false),
                 Select::make('status')
                     ->label('Статус')
                     ->options(Time::$statuses)
