@@ -67,6 +67,21 @@ class TaskResource extends Resource
         };
     }
 
+    public static function getNavigationUrl(): string
+    {
+        return static::getUrl('index', [
+            'filters' => [
+                'status' => [
+                    'values' => [Task::STATUS_NEW, Task::STATUS_IN_PROGRESS], // SelectFilter::make('status')->multiple()
+                ],
+                'user_id' => [
+                    'values' => [auth()->id()], // SelectFilter::make('user_id')->multiple()
+                ],
+            ],
+        ]);
+    }
+
+
     protected static ?string $recordTitleAttribute = 'title';
 
     public static function form(Schema $schema): Schema

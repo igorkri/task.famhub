@@ -331,7 +331,7 @@ class TaskForm
 
     private static function getDurationHelperText(mixed $state): string
     {
-        $defaultMessage = 'Формат: ГГ:ХХ:СС. Години можуть бути більше 24.';
+        $defaultMessage = 'Формат: ГГ:ХХ:СС.';
 
         if (! is_string($state)) {
             return $defaultMessage;
@@ -347,7 +347,7 @@ class TaskForm
         $days = (int) floor($hours / 24);
         $remainingHours = $hours % 24;
 
-        return $defaultMessage." Це: {$days} дн {$remainingHours} год {$minutes} хв.";
+        return $defaultMessage." {$days} дн {$remainingHours} год {$minutes} хв.";
     }
 
     private static function commentsSection()
